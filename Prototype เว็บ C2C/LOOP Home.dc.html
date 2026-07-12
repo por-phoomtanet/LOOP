@@ -1,0 +1,2515 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&amp;family=Noto+Sans+Thai:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#fff;color:#0a0a0a;font-family:"Helvetica Neue",Helvetica,"Noto Sans Thai",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  ::selection{background:#0a0a0a;color:#fff}
+  .arch{font-family:"Archivo","Noto Sans Thai","Helvetica Neue",sans-serif}
+  input{font-family:inherit}
+  button{font-family:inherit;cursor:pointer}
+  a{color:inherit;text-decoration:none}
+  ::-webkit-scrollbar{height:8px;width:8px}
+  ::-webkit-scrollbar-thumb{background:rgba(10,10,10,.18);border-radius:99px}
+</style>
+<script src="./image-slot.js"></script>
+</helmet>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140"><rect width="200" height="140" fill="#0a0a0a"></rect><text x="100" y="78" font-family="Helvetica, Arial, sans-serif" font-size="34" font-weight="900" fill="#fff" text-anchor="middle">LOOP.</text></svg></template>
+
+<div style="min-height:100vh;background:#fff">
+
+  <!-- announcement -->
+  <sc-if value="{{ showStorefront }}" hint-placeholder-val="{{ true }}">
+  <div style="background:#0a0a0a;color:#fff;text-align:center;font-size:12px;letter-spacing:.04em;padding:9px 16px;font-weight:500">
+    {{ t.announce }}
+  </div>
+
+  <!-- header -->
+  <header style="position:sticky;top:0;z-index:40;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(10,10,10,.1)">
+    <div style="max-width:1280px;margin:0 auto;padding:0 32px;height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px">
+      <div style="display:flex;align-items:center;gap:26px;min-width:0">
+        <a href="#" class="arch" style="font-weight:900;font-size:26px;letter-spacing:-.03em;flex:none">LOOP<span style="color:rgba(10,10,10,.35)">.</span></a>
+
+        <nav style="display:flex;align-items:center;gap:26px;flex:none">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="2">
+            <button onClick="{{ t.onClick }}" style="border:0;background:transparent;padding:4px 0;font-size:17px;letter-spacing:-.01em;font-weight:{{ t.weight }};color:{{ t.color }};position:relative;transition:color .12s">{{ t.label }}</button>
+          </sc-for>
+        </nav>
+      </div>
+
+      <nav style="display:flex;align-items:center;gap:14px;flex:none">
+
+        <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ onGoAdmin }}" style="font-size:13.5px;font-weight:600;border:0;background:transparent;color:#c96442;white-space:nowrap;padding:0">{{ adminNavLabel }}</button>
+        </sc-if>
+
+        <div style="display:flex;border:1.5px solid rgba(10,10,10,.14);border-radius:99px;overflow:hidden;flex:none">
+          <sc-for list="{{ langBtns }}" as="l" hint-placeholder-count="2">
+            <button onClick="{{ l.onClick }}" style="border:0;padding:7px 12px;font-size:12px;font-weight:700;letter-spacing:.03em;background:{{ l.bg }};color:{{ l.color }};transition:all .12s">{{ l.label }}</button>
+          </sc-for>
+        </div>
+
+        <button onClick="{{ onGoListItem }}" style="font-size:13.5px;font-weight:600;border:1.5px solid #0a0a0a;background:#fff;border-radius:99px;padding:9px 18px;color:#0a0a0a;white-space:nowrap;transition:all .15s" style-hover="background:#0a0a0a;color:#fff">{{ t.listItem }}</button>
+        <button aria-label="Saved" style="position:relative;border:0;background:transparent;padding:4px;display:flex">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="1.8"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.7-7.5 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"></path></svg>
+          <sc-if value="{{ hasFavs }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;background:#0a0a0a;color:#fff;border-radius:99px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px">{{ favCount }}</span></sc-if>
+        </button>
+
+        <div style="position:relative">
+          <button onClick="{{ onToggleMenu }}" aria-label="Account menu" style="border:0;background:none;padding:0;width:34px;height:34px;border-radius:99px;display:flex;position:relative">
+            <div style="width:34px;height:34px;border-radius:99px;background:{{ avatarBg }};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none">{{ avatarLetter }}</div>
+            <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+              <span style="position:absolute;bottom:-2px;right:-2px;width:12px;height:12px;border-radius:99px;background:#c96442;border:2px solid #fff"></span>
+            </sc-if>
+          </button>
+          <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ onToggleMenu }}" style="position:fixed;inset:0;z-index:45"></div>
+            <div onClick="{{ stopClick }}" style="position:absolute;top:44px;right:0;background:#fff;border:1px solid rgba(10,10,10,.1);border-radius:14px;box-shadow:0 12px 32px rgba(10,10,10,.14);min-width:180px;padding:8px;z-index:50">
+              <button onClick="{{ onGoRentals }}" style="display:block;width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;font-size:14px;font-weight:500;color:#0a0a0a;border-radius:8px" style-hover="background:rgba(10,10,10,.05)">{{ myRentalsLabel }}</button>
+              <button onClick="{{ onGoListings }}" style="display:block;width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;font-size:14px;font-weight:500;color:#0a0a0a;border-radius:8px" style-hover="background:rgba(10,10,10,.05)">{{ myListingsLabel }}</button>
+              <a href="#" style="display:block;padding:10px 12px;font-size:14px;font-weight:500;color:#0a0a0a;border-radius:8px" style-hover="background:rgba(10,10,10,.05)">{{ t.howItWorks }}</a>
+              <a href="#" style="display:block;padding:10px 12px;font-size:14px;font-weight:500;color:#0a0a0a;border-radius:8px" style-hover="background:rgba(10,10,10,.05)">{{ footHelp }}</a>
+              <div style="height:1px;background:rgba(10,10,10,.08);margin:6px 4px"></div>
+              <button onClick="{{ onGoSignup }}" style="display:block;width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;font-size:14px;font-weight:500;color:#0a0a0a;border-radius:8px" style-hover="background:rgba(10,10,10,.05)">{{ signupLabel }}</button>
+              <button onClick="{{ onToggleAdmin }}" style="display:block;width:100%;text-align:left;border:0;background:transparent;padding:10px 12px;font-size:14px;font-weight:500;color:#0a0a0a;border-radius:8px" style-hover="background:rgba(10,10,10,.05)">{{ adminToggleLabel }}</button>
+            </div>
+          </sc-if>
+        </div>
+      </nav>
+    </div>
+
+    <!-- search + category strip -->
+    <sc-if value="{{ isShop }}" hint-placeholder-val="{{ false }}">
+    <div style="background:rgba(10,10,10,.025)">
+      
+    <div style="max-width:1280px;margin:0 auto;padding:14px 32px;display:flex;align-items:center;gap:16px;overflow-x:auto">
+        <div style="flex: 1 1 260px; min-width: 220px; max-width: 400px; display: flex; align-items: center; gap: 10px; height: 37px; padding: 0 16px; background: #fff; border: 1.5px solid rgba(10,10,10,.14); border-radius: 99px; transition: border-color .15s; width: 330px" style-focus-within="border-color:#0a0a0a">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(10,10,10,.5)" stroke-width="2" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+          <input value="{{ query }}" onInput="{{ onSearch }}" placeholder="{{ t.searchPh }}" style="border:0;outline:0;background:transparent;width:100%;font-size:14px;color:#0a0a0a">
+        </div>
+        <div style="width:1px;height:24px;background:rgba(10,10,10,.12);flex:none"></div>
+        <div style="display:flex;gap:6px;flex:none">
+          <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6">
+            <button onClick="{{ c.onClick }}" style="flex:none;font-size:13.5px;font-weight:500;padding:8px 16px;border-radius:99px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};white-space:nowrap;transition:all .12s">{{ c.label }}</button>
+          </sc-for>
+        </div>
+      </div></div>
+    </sc-if>
+  </header>
+  </sc-if>
+
+  <!-- hero -->
+  <sc-if value="{{ showMain }}" hint-placeholder-val="{{ true }}">
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+  <section style="max-width:1280px;margin:0 auto;padding:56px 32px 40px">
+    <div style="display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center">
+      <div>
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(10,10,10,.45);margin-bottom:22px">{{ t.heroKicker }}</div>
+        <h1 class="arch" style="font-weight:800;font-size:60px;line-height:1.02;letter-spacing:-.035em;margin:0 0 22px;text-wrap:balance">{{ t.heroT1 }}<br>{{ t.heroT2 }}<br>{{ t.heroT3 }}</h1>
+        <p style="font-size:17px;line-height:1.55;color:rgba(10,10,10,.6);max-width:460px;margin:0 0 32px">{{ t.heroSub }}</p>
+        <div style="display:flex;gap:12px;align-items:center">
+          <button style="font-size:15px;font-weight:600;background:#0a0a0a;color:#fff;border:0;border-radius:99px;padding:15px 30px;transition:transform .12s" style-hover="transform:translateY(-2px)">{{ t.heroCta1 }}</button>
+          <button style="font-size:15px;font-weight:600;background:#fff;color:#0a0a0a;border:1.5px solid rgba(10,10,10,.15);border-radius:99px;padding:15px 26px;transition:border-color .12s" style-hover="border-color:#0a0a0a">{{ t.heroCta2 }}</button>
+        </div>
+        <div style="display:flex;gap:36px;margin-top:44px">
+          <div><div class="arch" style="font-weight:800;font-size:26px;letter-spacing:-.02em">12,400+</div><div style="font-size:12.5px;color:rgba(10,10,10,.5);margin-top:2px">{{ t.stat1 }}</div></div>
+          <div style="border-left:1px solid rgba(10,10,10,.12);padding-left:36px"><div class="arch" style="font-weight:800;font-size:26px;letter-spacing:-.02em">4.9<span style="color:rgba(10,10,10,.3)">★</span></div><div style="font-size:12.5px;color:rgba(10,10,10,.5);margin-top:2px">{{ t.stat2 }}</div></div>
+          <div style="border-left:1px solid rgba(10,10,10,.12);padding-left:36px"><div class="arch" style="font-weight:800;font-size:26px;letter-spacing:-.02em">48</div><div style="font-size:12.5px;color:rgba(10,10,10,.5);margin-top:2px">{{ t.stat3 }}</div></div>
+        </div>
+      </div>
+
+      <!-- hero mosaic -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;grid-template-rows:170px 170px;gap:14px">
+        <image-slot id="hero_a" src="https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=700&amp;h=900&amp;fit=crop&amp;crop=entropy&amp;q=80&amp;auto=format" credit="Photo by Freestocks on Unsplash" credit-href="https://unsplash.com/@freestocks" shape="rounded" radius="16" placeholder="Drop a photo" style="grid-row:span 2;width:100%;height:100%"></image-slot>
+        <image-slot id="hero_b" src="https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=500&amp;h=400&amp;fit=crop&amp;crop=entropy&amp;q=80&amp;auto=format" credit="Photo by Camylla Battani on Unsplash" credit-href="https://unsplash.com/@camylla93" shape="rounded" radius="16" placeholder="Drop a photo" style="width:100%;height:100%"></image-slot>
+        <image-slot id="hero_c" src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500&amp;h=400&amp;fit=crop&amp;crop=entropy&amp;q=80&amp;auto=format" credit="Photo by Becca McHaffie on Unsplash" credit-href="https://unsplash.com/@beccamchaffie" shape="rounded" radius="16" placeholder="Drop a photo" style="width:100%;height:100%"></image-slot>
+      </div>
+    </div>
+  </section>
+  </sc-if>
+
+  <!-- home search -->
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+  <div style="max-width:1280px;margin:0 auto;padding:36px 32px 0">
+    <div style="max-width:480px;display:flex;align-items:center;gap:10px;height:44px;padding:0 18px;background:#fff;border:1.5px solid rgba(10,10,10,.14);border-radius:99px;transition:border-color .15s" style-focus-within="border-color:#0a0a0a">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(10,10,10,.5)" stroke-width="2" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+      <input value="{{ query }}" onInput="{{ onSearch }}" placeholder="{{ t.searchPh }}" style="border:0;outline:0;background:transparent;width:100%;font-size:14px;color:#0a0a0a">
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- trending -->
+  <section style="max-width:1280px;margin:0 auto;padding:36px 32px 8px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:24px">
+      <div>
+        <h2 class="arch" style="font-weight:800;font-size:30px;letter-spacing:-.025em;margin:0">{{ gridTitle }}</h2>
+        <p style="font-size:14px;color:rgba(10,10,10,.5);margin:6px 0 0">{{ gridSub }}</p>
+      </div>
+      <a href="#" style="font-size:14px;font-weight:600;border-bottom:1.5px solid #0a0a0a;padding-bottom:2px">{{ t.viewAll }}</a>
+    </div>
+
+    <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px">
+        <sc-for list="{{ products }}" as="p" hint-placeholder-count="8">
+          <div style="display:flex;flex-direction:column;cursor:pointer" onClick="{{ p.onOpen }}">
+            <div style="position:relative;border-radius:14px;overflow:hidden;aspect-ratio:1/1;background:{{ p.bg }};transition:transform .18s" style-hover="transform:scale(.985)">
+              <image-slot id="{{ p.id }}" src="{{ p.img }}" shape="rounded" radius="14" placeholder="Drop product photo" style="position:absolute;inset:0;width:100%;height:100%"></image-slot>
+              <sc-if value="{{ p.badge }}" hint-placeholder-val="Popular">
+                <span style="position:absolute;top:12px;left:12px;z-index:2;background:#0a0a0a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 9px;border-radius:99px">{{ p.badge }}</span>
+              </sc-if>
+              <div style="position:absolute;top:10px;right:10px;z-index:2;display:flex;gap:8px">
+                <button onClick="{{ p.onOpenStop }}" aria-label="View details" style="width:34px;height:34px;border-radius:99px;border:0;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;transition:transform .12s" style-hover="transform:scale(1.1)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.3-4.3"></path></svg>
+                </button>
+                <button onClick="{{ p.onFav }}" aria-label="Save" style="width:34px;height:34px;border-radius:99px;border:0;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;transition:transform .12s" style-hover="transform:scale(1.1)">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="{{ p.favFill }}" stroke="#0a0a0a" stroke-width="1.8"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.7-7.5 1.1-1.1a5.5 5.5 0 0 0 0-7.8z"></path></svg>
+                </button>
+              </div>
+            </div>
+            <div style="padding:13px 2px 0">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+                <h3 style="font-size:15px;font-weight:600;margin:0;letter-spacing:-.01em;line-height:1.25">{{ p.title }}</h3>
+                <span style="font-size:12.5px;color:rgba(10,10,10,.55);white-space:nowrap;font-weight:500">★ {{ p.rating }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+                <div style="width:16px;height:16px;border-radius:99px;flex:none;background:{{ p.shopColor }};color:#fff;font-size:9.5px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ p.shopInitial }}</div>
+                <span style="font-size:12.5px;color:rgba(10,10,10,.65);font-weight:600">{{ p.shop }}</span>
+              </div>
+              <div style="font-size:13px;color:rgba(10,10,10,.5);margin-top:2px">{{ p.meta }}</div>
+              <div style="display:flex;align-items:baseline;gap:4px;margin-top:11px">
+                <span class="arch" style="font-size:19px;font-weight:800;letter-spacing:-.02em">{{ p.price }}</span>
+                <span style="font-size:13px;color:rgba(10,10,10,.5)">{{ p.perDay }}</span>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;padding:80px 0;color:rgba(10,10,10,.5)">
+        <div class="arch" style="font-size:20px;font-weight:700;color:#0a0a0a;margin-bottom:6px">{{ t.noMatch }}</div>
+        <div style="font-size:14px">{{ t.noMatchSub }}</div>
+      </div>
+    </sc-if>
+  </section>
+
+  <!-- browse by category -->
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+  <section style="max-width:1280px;margin:0 auto;padding:64px 32px 8px">
+    <h2 class="arch" style="font-weight:800;font-size:30px;letter-spacing:-.025em;margin:0 0 24px">{{ t.browseTitle }}</h2>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px">
+      <sc-for list="{{ tiles }}" as="ti" hint-placeholder-count="5">
+        <button onClick="{{ ti.onClick }}" style="text-align:left;border:0;padding:0;border-radius:14px;overflow:hidden;position:relative;aspect-ratio:3/4;background:{{ ti.bg }};transition:transform .18s" style-hover="transform:translateY(-4px)">
+          <sc-if value="{{ ti.hasImg }}" hint-placeholder-val="{{ false }}">{{ ti.imgNode }}</sc-if>
+          <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(10,10,10,.7),rgba(10,10,10,.05) 55%)"></div>
+          <div style="position:absolute;left:16px;bottom:16px;right:16px">
+            <div class="arch" style="color:#fff;font-weight:700;font-size:19px;letter-spacing:-.01em">{{ ti.label }}</div>
+            <div style="color:rgba(255,255,255,.8);font-size:12.5px;margin-top:2px">{{ ti.countLabel }}</div>
+          </div>
+        </button>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- how it works -->
+  <section style="background:#0a0a0a;color:#fff;margin-top:72px">
+    <div style="max-width:1280px;margin:0 auto;padding:72px 32px">
+      <div style="font-family:ui-monospace,Menlo,monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:16px">{{ t.howKicker }}</div>
+      <h2 class="arch" style="font-weight:800;font-size:38px;letter-spacing:-.03em;margin:0 0 48px;max-width:640px;line-height:1.05">{{ t.howTitle }}</h2>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="3">
+          <div style="border-top:1.5px solid rgba(255,255,255,.2);padding-top:22px">
+            <div class="arch" style="font-size:14px;font-weight:700;color:rgba(255,255,255,.4);margin-bottom:18px">{{ s.no }}</div>
+            <h3 class="arch" style="font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 10px">{{ s.title }}</h3>
+            <p style="font-size:14.5px;line-height:1.6;color:rgba(255,255,255,.65);margin:0">{{ s.body }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- trust / reviews -->
+  <section style="max-width:1280px;margin:0 auto;padding:72px 32px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:28px;gap:20px;flex-wrap:wrap">
+      <h2 class="arch" style="font-weight:800;font-size:30px;letter-spacing:-.025em;margin:0">{{ t.trustTitle }}</h2>
+      <div style="display:flex;align-items:center;gap:8px;font-size:14px;color:rgba(10,10,10,.55)"><span class="arch" style="font-size:20px;font-weight:800;color:#0a0a0a">4.9</span> {{ t.trustAvg }}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+      <sc-for list="{{ reviews }}" as="r" hint-placeholder-count="3">
+        <div style="border:1px solid rgba(10,10,10,.12);border-radius:16px;padding:26px">
+          <div style="font-size:14px;letter-spacing:.1em;margin-bottom:14px">★★★★★</div>
+          <p style="font-size:15px;line-height:1.6;margin:0 0 22px;color:#0a0a0a">{{ r.quote }}</p>
+          <div style="display: flex; align-items: center; gap: 11px; width: 336px; height: 35px">
+            <div style="width:38px;height:38px;border-radius:99px;background:{{ r.bg }};flex:none;overflow:hidden;position:relative">
+              <sc-if value="{{ r.hasAvatar }}" hint-placeholder-val="{{ false }}">{{ r.avatarNode }}</sc-if>
+            </div>
+            <div><div style="font-size:14px;font-weight:600">{{ r.name }}</div><div style="font-size:12.5px;color:rgba(10,10,10,.5)">{{ r.role }}</div></div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- cta band -->
+  <section style="max-width:1280px;margin:0 auto;padding:0 32px 72px">
+    <div style="border:1.5px solid #0a0a0a;border-radius:22px;padding:56px;display:flex;align-items:center;justify-content:space-between;gap:40px;flex-wrap:wrap">
+      <div>
+        <h2 class="arch" style="font-weight:800;font-size:34px;letter-spacing:-.03em;margin:0 0 10px;line-height:1.05">{{ t.ctaTitle }}</h2>
+        <p style="font-size:16px;color:rgba(10,10,10,.6);margin:0;max-width:480px">{{ t.ctaBody }}</p>
+      </div>
+      <button style="font-size:16px;font-weight:600;background:#0a0a0a;color:#fff;border:0;border-radius:99px;padding:17px 36px;flex:none;white-space:nowrap;transition:transform .12s" style-hover="transform:translateY(-2px)">{{ t.ctaBtn }}</button>
+    </div>
+  </section>
+  </sc-if>
+
+  <!-- footer -->
+  <footer style="border-top:1px solid rgba(10,10,10,.1)">
+    <div style="max-width:1280px;margin:0 auto;padding:56px 32px 40px;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:40px">
+      <div>
+        <div class="arch" style="font-weight:900;font-size:24px;letter-spacing:-.03em">LOOP<span style="color:rgba(10,10,10,.35)">.</span></div>
+        <p style="font-size:14px;color:rgba(10,10,10,.55);margin:14px 0 0;max-width:260px;line-height:1.55">{{ t.footTagline }}</p>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(10,10,10,.4);margin-bottom:16px">{{ t.footExplore }}</div>
+        <div style="display:flex;flex-direction:column;gap:11px;font-size:14px;color:rgba(10,10,10,.65)">
+          <sc-for list="{{ exploreLinks }}" as="e" hint-placeholder-count="4"><a href="#">{{ e.label }}</a></sc-for>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(10,10,10,.4);margin-bottom:16px">{{ t.footCompany }}</div>
+        <div style="display:flex;flex-direction:column;gap:11px;font-size:14px;color:rgba(10,10,10,.65)">
+          <sc-for list="{{ companyLinks }}" as="c" hint-placeholder-count="4"><a href="#">{{ c.label }}</a></sc-for>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(10,10,10,.4);margin-bottom:16px">{{ t.footApp }}</div>
+        <div style="display:flex;flex-direction:column;gap:11px;font-size:14px;color:rgba(10,10,10,.65)"><a href="#">iOS</a><a href="#">Android</a></div>
+      </div>
+    </div>
+    <div style="max-width:1280px;margin:0 auto;padding:20px 32px 40px;border-top:1px solid rgba(10,10,10,.08);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:12.5px;color:rgba(10,10,10,.45)">
+      <span>{{ t.copyright }}</span>
+      <span>{{ t.legal }}</span>
+    </div>
+  </footer>
+  </sc-if>
+
+  <!-- checkout -->
+  <sc-if value="{{ hasCheckout }}" hint-placeholder-val="{{ false }}">
+  <section style="max-width:920px;margin:0 auto;padding:48px 32px 96px">
+    <button onClick="{{ checkout.onBack }}" style="border:0;background:transparent;padding:0;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:rgba(10,10,10,.7);margin-bottom:28px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"></path></svg>{{ checkout.backLabel }}
+    </button>
+
+    <sc-if value="{{ checkout.done }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;padding:64px 24px;border:1.5px solid rgba(10,10,10,.1);border-radius:20px">
+        <div style="width:56px;height:56px;border-radius:99px;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 22px">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M20 6L9 17l-5-5"></path></svg>
+        </div>
+        <h2 class="arch" style="font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0 0 10px">{{ checkout.successTitle }}</h2>
+        <p style="font-size:14.5px;color:rgba(10,10,10,.6);margin:0 0 28px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.6">{{ checkout.successBody }}</p>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px">
+          <button onClick="{{ checkout.onBack }}" style="font-size:14.5px;font-weight:600;background:#fff;color:#0a0a0a;border:1.5px solid rgba(10,10,10,.15);border-radius:99px;padding:13px 26px">{{ checkout.backLabel }}</button>
+          <button onClick="{{ checkout.onGoRentals }}" style="font-size:14.5px;font-weight:600;background:#0a0a0a;color:#fff;border:0;border-radius:99px;padding:13px 26px">{{ checkout.goRentalsLabel }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ checkout.cancelConfirmOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ checkout.onDismissCancelConfirm }}" style="position:fixed;inset:0;z-index:100;background:rgba(10,10,10,.5);display:flex;align-items:center;justify-content:center;padding:24px">
+        <div onClick="{{ checkout.stopClick }}" style="background:#fff;border-radius:16px;max-width:400px;width:100%;padding:28px;text-align:center">
+          <h3 class="arch" style="font-weight:800;font-size:19px;letter-spacing:-.02em;margin:0 0 10px;color:#0a0a0a">{{ checkout.cancelConfirmTitle }}</h3>
+          <p style="font-size:14px;color:rgba(10,10,10,.6);line-height:1.6;margin:0 0 24px">{{ checkout.cancelConfirmBody }}</p>
+          <div style="display:flex;gap:10px">
+            <button onClick="{{ checkout.onDismissCancelConfirm }}" style="flex:1;font-size:14px;font-weight:600;background:#fff;color:#0a0a0a;border:1.5px solid rgba(10,10,10,.15);border-radius:99px;padding:12px">{{ checkout.cancelConfirmKeep }}</button>
+            <button onClick="{{ checkout.onConfirmCancelRequest }}" style="flex:1;font-size:14px;font-weight:600;background:#c96442;color:#fff;border:0;border-radius:99px;padding:12px">{{ checkout.cancelConfirmYes }}</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ checkout.active }}" hint-placeholder-val="{{ false }}">
+      <h1 class="arch" style="font-weight:800;font-size:30px;letter-spacing:-.025em;margin:0 0 28px">{{ checkout.title }}</h1>
+      <div style="display:grid;grid-template-columns:220px 1fr;gap:40px">
+        <div style="border-radius:14px;overflow:hidden;aspect-ratio:1/1;position:relative">{{ checkout.imgNode }}</div>
+        <div>
+          <h2 style="font-size:19px;font-weight:700;margin:0 0 6px;letter-spacing:-.01em">{{ checkout.name }}</h2>
+          <div style="font-size:13.5px;color:rgba(10,10,10,.55);margin-bottom:22px">★ {{ checkout.rating }} · {{ checkout.meta }}</div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:rgba(10,10,10,.6)">{{ checkout.startLabel }}
+              <input type="date" value="{{ checkout.start }}" onChange="{{ checkout.onStart }}" style="border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:10px 12px;font-size:14px;color:#0a0a0a">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:rgba(10,10,10,.6)">{{ checkout.endLabel }}
+              <input type="date" value="{{ checkout.end }}" onChange="{{ checkout.onEnd }}" style="border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:10px 12px;font-size:14px;color:#0a0a0a">
+            </label>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px">
+            <label style="font-size:12.5px;font-weight:600;color:rgba(10,10,10,.6)">{{ checkout.pickupLabel }}</label>
+            <select value="{{ checkout.pickupVal }}" onChange="{{ checkout.onPickupChange }}" style="border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:10px 12px;font-size:14px;color:#0a0a0a;background:#fff">
+              <option value="">—</option>
+              <sc-for list="{{ checkout.pickupChoices }}" as="pc" hint-placeholder-count="3">
+                <option value="{{ pc.value }}">{{ pc.label }}</option>
+              </sc-for>
+            </select>
+          </div>
+
+          <div style="margin-bottom:18px">
+            <label style="display:block;font-size:12.5px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ checkout.contactHeading }}</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <input type="tel" value="{{ checkout.phoneVal }}" onInput="{{ checkout.onPhoneChange }}" placeholder="{{ checkout.phonePlaceholder }}" style="border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:10px 12px;font-size:14px;color:#0a0a0a">
+              <input value="{{ checkout.lineVal }}" onInput="{{ checkout.onLineChange }}" placeholder="{{ checkout.linePlaceholder }}" style="border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:10px 12px;font-size:14px;color:#0a0a0a">
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:24px">
+            <label style="font-size:12.5px;font-weight:600;color:rgba(10,10,10,.6)">{{ checkout.noteLabel }}</label>
+            <textarea value="{{ checkout.noteVal }}" onInput="{{ checkout.onNoteChange }}" placeholder="{{ checkout.notePlaceholder }}" rows="3" style="border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:10px 12px;font-size:14px;color:#0a0a0a;resize:vertical;font-family:inherit"></textarea>
+          </div>
+
+          <div style="border-top:1px solid rgba(10,10,10,.1);padding-top:18px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;font-size:14px;color:rgba(10,10,10,.7)"><span>{{ checkout.rateLine }}</span><span>{{ checkout.subtotal }}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:14px;color:rgba(10,10,10,.7)"><span>{{ checkout.serviceLabel }}</span><span>{{ checkout.serviceFee }}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:14px;color:rgba(10,10,10,.7)"><span>{{ checkout.depositLabel }}</span><span>{{ checkout.deposit }}</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:800;padding-top:10px;border-top:1px solid rgba(10,10,10,.1)"><span>{{ checkout.totalLabel }}</span><span>{{ checkout.total }}</span></div>
+          </div>
+          <p style="font-size:12.5px;color:rgba(10,10,10,.45);margin:14px 0 24px;line-height:1.6">{{ checkout.depositNote }}</p>
+
+          <button onClick="{{ checkout.onConfirm }}" style="width:100%;font-size:15px;font-weight:600;background:#0a0a0a;color:#fff;border:0;border-radius:99px;padding:16px;transition:transform .12s" style-hover="transform:translateY(-2px)">{{ checkout.confirmBtn }}</button>
+        </div>
+      </div>
+    </sc-if>
+  </section>
+  </sc-if>
+
+  <!-- list your item -->
+  <sc-if value="{{ hasListPage }}" hint-placeholder-val="{{ false }}">
+  <section style="max-width:640px;margin:0 auto;padding:48px 32px 96px">
+
+    <sc-if value="{{ listForm.submitted }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;padding:64px 24px;border:1.5px solid rgba(10,10,10,.1);border-radius:20px">
+        <div style="width:56px;height:56px;border-radius:99px;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 22px">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M20 6L9 17l-5-5"></path></svg>
+        </div>
+        <h2 class="arch" style="font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0 0 10px">{{ listForm.successTitle }}</h2>
+        <p style="font-size:14.5px;color:rgba(10,10,10,.6);margin:0 0 28px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.6">{{ listForm.successBody }}</p>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px">
+          <button onClick="{{ listForm.onBackHome }}" style="font-size:14.5px;font-weight:600;background:#fff;color:#0a0a0a;border:1.5px solid rgba(10,10,10,.15);border-radius:99px;padding:13px 26px">{{ listForm.backHomeLabel }}</button>
+          <button onClick="{{ listForm.onListAnother }}" style="font-size:14.5px;font-weight:600;background:#0a0a0a;color:#fff;border:0;border-radius:99px;padding:13px 26px">{{ listForm.listAnotherLabel }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ listForm.notSubmitted }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(10,10,10,.4);margin-bottom:10px">{{ listForm.kicker }}</div>
+        <h1 class="arch" style="font-weight:800;font-size:30px;letter-spacing:-.025em;margin:0;color:#0a0a0a">{{ listForm.title }}</h1>
+        <p style="font-size:14.5px;color:rgba(10,10,10,.55);margin:10px 0 0">{{ listForm.subtitle }}</p>
+      </div>
+
+      <div style="margin:32px 0 20px">
+        <div style="font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:10px">{{ listForm.photoLabel }}</div>
+        <image-slot id="list_photo_1" shape="rounded" radius="14" placeholder="Add a photo" style="width:100%;height:220px"></image-slot>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ listForm.fieldTitleLabel }}</label>
+          <input value="{{ listForm.titleVal }}" onInput="{{ listForm.onTitle }}" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:12px 14px;font-size:14.5px;color:#0a0a0a">
+        </div>
+
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ listForm.fieldCategoryLabel }}</label>
+          <select value="{{ listForm.categoryVal }}" onChange="{{ listForm.onCategory }}" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:12px 14px;font-size:14.5px;color:#0a0a0a;background:#fff">
+            <option value="">—</option>
+            <sc-for list="{{ listForm.categoryOptions }}" as="op" hint-placeholder-count="5">
+              <option value="{{ op.value }}">{{ op.label }}</option>
+            </sc-for>
+          </select>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ listForm.fieldPriceLabel }}</label>
+          <div style="display:flex;align-items:center;gap:8px;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:0 14px" style-focus-within="border-color:#0a0a0a">
+            <span style="font-size:14.5px;color:rgba(10,10,10,.45);flex:none">฿</span>
+            <input type="number" value="{{ listForm.priceVal }}" onInput="{{ listForm.onPrice }}" style="width:100%;border:0;outline:0;padding:12px 0;font-size:14.5px;color:#0a0a0a">
+          </div>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ listForm.fieldDescLabel }}</label>
+          <textarea value="{{ listForm.descVal }}" onInput="{{ listForm.onDesc }}" rows="4" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:12px 14px;font-size:14.5px;color:#0a0a0a;resize:vertical;font-family:inherit"></textarea>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ listForm.pickupLabel }}</label>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <sc-for list="{{ listForm.pickupOptions }}" as="pk" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:10px;border:1.5px solid rgba(10,10,10,.14);border-radius:10px;padding:10px 12px">
+                <button onClick="{{ pk.onToggle }}" aria-label="Toggle location" style="flex:none;width:22px;height:22px;border-radius:6px;border:1.5px solid #0a0a0a;background:{{ pk.checkBg }};display:flex;align-items:center;justify-content:center;padding:0">
+                  <sc-if value="{{ pk.selected }}" hint-placeholder-val="{{ true }}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"></path></svg>
+                  </sc-if>
+                </button>
+                <div style="flex:1;font-size:14px;color:#0a0a0a">{{ pk.label }}</div>
+                <button onClick="{{ pk.onRemove }}" aria-label="Remove location" style="flex:none;border:0;background:transparent;padding:4px;color:rgba(10,10,10,.35)">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18"></path><path d="M6 6l12 12"></path></svg>
+                </button>
+              </div>
+            </sc-for>
+
+            <div style="display:flex;gap:8px;margin-top:4px">
+              <input value="{{ listForm.pickupNewVal }}" onInput="{{ listForm.onPickupNewChange }}" placeholder="{{ listForm.pickupPlaceholder }}" style="flex:1;box-sizing:border-box;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:10px 12px;font-size:14px;color:#0a0a0a">
+              <button onClick="{{ listForm.onPickupAdd }}" style="flex:none;font-size:13.5px;font-weight:600;background:#0a0a0a;color:#fff;border:0;border-radius:10px;padding:0 18px">{{ listForm.pickupAddLabel }}</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ listForm.mapLabel }}</label>
+          <div style="position:relative;width:100%;height:160px;border-radius:14px;overflow:hidden;border:1.5px solid rgba(10,10,10,.15);background:
+            linear-gradient(#e3e1db 1px,transparent 1px) 0 0/28px 28px,
+            linear-gradient(90deg,#e3e1db 1px,transparent 1px) 0 0/28px 28px,
+            #efeeeb">
+            <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at 50% 45%,rgba(10,10,10,.05),transparent 60%)"></div>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-100%)">
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="#0a0a0a"><path d="M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8z"></path><circle cx="12" cy="10" r="3" fill="#fff"></circle></svg>
+            </div>
+            <div style="position:absolute;bottom:10px;right:10px;background:#fff;border-radius:8px;padding:5px 10px;font-size:11.5px;font-weight:600;color:rgba(10,10,10,.55);box-shadow:0 2px 8px rgba(10,10,10,.1)">{{ listForm.mapPreviewLabel }}</div>
+          </div>
+          <input value="{{ listForm.locationVal }}" onInput="{{ listForm.onLocation }}" placeholder="{{ listForm.mapPlaceholder }}" style="width:100%;box-sizing:border-box;margin-top:8px;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:10px 12px;font-size:14px;color:#0a0a0a">
+        </div>
+      </div>
+
+      <button onClick="{{ listForm.onSubmit }}" style="margin-top:28px;width:100%;font-size:15px;font-weight:700;background:#0a0a0a;color:#fff;border:0;border-radius:99px;padding:15px">{{ listForm.submitLabel }}</button>
+    </sc-if>
+  </section>
+  </sc-if>
+
+  <!-- sign up -->
+  <sc-if value="{{ hasSignupPage }}" hint-placeholder-val="{{ false }}">
+  <section style="max-width:480px;margin:0 auto;padding:48px 32px 96px">
+
+    <sc-if value="{{ signup.isDone }}" hint-placeholder-val="{{ false }}">
+      <div style="text-align:center;padding:64px 24px;border:1.5px solid rgba(10,10,10,.1);border-radius:20px">
+        <div style="width:56px;height:56px;border-radius:99px;background:#0a0a0a;color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 22px">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M20 6L9 17l-5-5"></path></svg>
+        </div>
+        <h2 class="arch" style="font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0 0 10px">{{ signup.successTitle }}</h2>
+        <p style="font-size:14.5px;color:rgba(10,10,10,.6);margin:0 0 28px;max-width:380px;margin-left:auto;margin-right:auto;line-height:1.6">{{ signup.successBody }}</p>
+        <button onClick="{{ signup.onBackHome }}" style="font-size:14.5px;font-weight:600;background:#0a0a0a;color:#fff;border:0;border-radius:99px;padding:13px 26px">{{ signup.backHomeLabel }}</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ signup.isOtp }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(10,10,10,.4);margin-bottom:10px">{{ signup.otpKicker }}</div>
+        <h1 class="arch" style="font-weight:800;font-size:30px;letter-spacing:-.025em;margin:0;color:#0a0a0a">{{ signup.otpTitle }}</h1>
+      </div>
+
+      <div style="display:inline-flex;gap:4px;background:rgba(10,10,10,.05);border-radius:99px;padding:4px;margin:24px 0 18px">
+        <button onClick="{{ signup.onSelectEmail }}" style="border:0;border-radius:99px;padding:9px 18px;font-size:13.5px;font-weight:600;background:{{ signup.emailTabBg }};color:{{ signup.emailTabColor }};white-space:nowrap;transition:all .12s">{{ signup.otpMethodEmailLabel }}</button>
+        <sc-if value="{{ signup.hasPhone }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ signup.onSelectPhone }}" style="border:0;border-radius:99px;padding:9px 18px;font-size:13.5px;font-weight:600;background:{{ signup.phoneTabBg }};color:{{ signup.phoneTabColor }};white-space:nowrap;transition:all .12s">{{ signup.otpMethodPhoneLabel }}</button>
+        </sc-if>
+      </div>
+
+      <p style="font-size:14px;color:rgba(10,10,10,.6);margin:0 0 22px">{{ signup.otpSentTo }}</p>
+
+      <div>
+        <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ signup.otpCodeLabel }}</label>
+        <input value="{{ signup.otpCodeVal }}" onInput="{{ signup.onOtpCode }}" placeholder="123456" inputmode="numeric" style="width:100%;box-sizing:border-box;letter-spacing:.3em;font-size:18px;text-align:center;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:12px 14px;color:#0a0a0a">
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:24px">
+        <button onClick="{{ signup.onOtpBack }}" style="flex:1;font-size:14.5px;font-weight:600;background:#fff;color:#0a0a0a;border:1.5px solid rgba(10,10,10,.15);border-radius:99px;padding:13px">{{ signup.otpBackLabel }}</button>
+        <button onClick="{{ signup.onOtpVerify }}" style="flex:2;font-size:14.5px;font-weight:700;background:#0a0a0a;color:#fff;border:0;border-radius:99px;padding:13px">{{ signup.otpVerifyLabel }}</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ signup.isForm }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(10,10,10,.4);margin-bottom:10px">{{ signup.kicker }}</div>
+        <h1 class="arch" style="font-weight:800;font-size:30px;letter-spacing:-.025em;margin:0;color:#0a0a0a">{{ signup.title }}</h1>
+        <p style="font-size:14.5px;color:rgba(10,10,10,.55);margin:10px 0 0">{{ signup.subtitle }}</p>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:18px;margin-top:32px">
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ signup.accountTypeLabel }}</label>
+          <div style="display:inline-flex;gap:4px;background:rgba(10,10,10,.05);border-radius:99px;padding:4px">
+            <button onClick="{{ signup.onSelectIndividual }}" style="border:0;border-radius:99px;padding:9px 18px;font-size:13.5px;font-weight:600;background:{{ signup.individualTabBg }};color:{{ signup.individualTabColor }};white-space:nowrap;transition:all .12s">{{ signup.typeIndividualLabel }}</button>
+            <button onClick="{{ signup.onSelectShop }}" style="border:0;border-radius:99px;padding:9px 18px;font-size:13.5px;font-weight:600;background:{{ signup.shopTabBg }};color:{{ signup.shopTabColor }};white-space:nowrap;transition:all .12s">{{ signup.typeShopLabel }}</button>
+          </div>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ signup.nameLabel }}</label>
+          <input value="{{ signup.nameVal }}" onInput="{{ signup.onName }}" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:12px 14px;font-size:14.5px;color:#0a0a0a">
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ signup.emailLabel }}</label>
+          <input type="email" value="{{ signup.emailVal }}" onInput="{{ signup.onEmail }}" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:12px 14px;font-size:14.5px;color:#0a0a0a">
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ signup.phoneLabel }}</label>
+          <input type="tel" value="{{ signup.phoneVal }}" onInput="{{ signup.onPhone }}" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:12px 14px;font-size:14.5px;color:#0a0a0a">
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ signup.passwordLabel }}</label>
+          <input type="password" value="{{ signup.passwordVal }}" onInput="{{ signup.onPassword }}" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:12px 14px;font-size:14.5px;color:#0a0a0a">
+        </div>
+        <div>
+          <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ signup.idCardLabel }}</label>
+          <p style="font-size:12.5px;color:rgba(10,10,10,.45);margin:0 0 10px;line-height:1.5">{{ signup.idCardHint }}</p>
+          <image-slot id="signup_id_card" shape="rounded" radius="14" placeholder="ID card photo" style="width:100%;height:180px"></image-slot>
+
+          <button onClick="{{ signup.onScanId }}" style="margin-top:10px;font-size:13px;font-weight:600;background:transparent;color:#0a0a0a;border:1.5px solid rgba(10,10,10,.15);border-radius:99px;padding:9px 16px">{{ signup.scanIdLabel }}</button>
+
+          <sc-if value="{{ signup.ocrShown }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:14px;background:rgba(23,138,90,.06);border:1px solid rgba(23,138,90,.18);border-radius:10px;padding:14px 16px">
+              <div style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#178a5a;margin-bottom:10px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#178a5a" stroke-width="3"><path d="M20 6L9 17l-5-5"></path></svg>{{ signup.ocrDetectedLabel }}
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;font-size:13.5px;color:#0a0a0a">
+                <div><span style="color:rgba(10,10,10,.5)">{{ signup.ocrNameLabel }}:</span> {{ signup.ocrName }}</div>
+                <div><span style="color:rgba(10,10,10,.5)">{{ signup.ocrIdLabel }}:</span> {{ signup.ocrId }}</div>
+                <div><span style="color:rgba(10,10,10,.5)">{{ signup.ocrDobLabel }}:</span> {{ signup.ocrDob }}</div>
+                <div><span style="color:rgba(10,10,10,.5)">{{ signup.ocrExpiryLabel }}:</span> {{ signup.ocrExpiry }}</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ signup.faceVerified }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:10px;display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#178a5a;background:rgba(23,138,90,.08);border-radius:99px;padding:8px 14px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#178a5a" stroke-width="3"><path d="M20 6L9 17l-5-5"></path></svg>{{ signup.faceVerifiedLabel }}
+            </div>
+          </sc-if>
+          <sc-if value="{{ signup.faceNotVerified }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ signup.onOpenPhoneModal }}" style="margin-top:10px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;background:transparent;color:#0a0a0a;border:1.5px solid rgba(10,10,10,.15);border-radius:99px;padding:9px 16px">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"></rect><path d="M11 18h2"></path></svg>
+              {{ signup.verifyFaceLabel }}
+            </button>
+          </sc-if>
+        </div>
+      </div>
+
+      <button onClick="{{ signup.onSubmit }}" style="margin-top:28px;width:100%;font-size:15px;font-weight:700;background:#0a0a0a;color:#fff;border:0;border-radius:99px;padding:15px">{{ signup.submitLabel }}</button>
+    </sc-if>
+
+    <sc-if value="{{ signup.phoneModalOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ signup.onClosePhoneModal }}" style="position:fixed;inset:0;z-index:100;background:rgba(10,10,10,.55);display:flex;align-items:center;justify-content:center;padding:24px">
+        <div onClick="{{ signup.stopClick }}" style="background:#fff;border-radius:20px;max-width:360px;width:100%;padding:32px;text-align:center">
+          <h3 class="arch" style="font-weight:800;font-size:19px;letter-spacing:-.02em;margin:0 0 10px;color:#0a0a0a">{{ signup.phoneModalTitle }}</h3>
+          <p style="font-size:13.5px;color:rgba(10,10,10,.6);line-height:1.6;margin:0 0 22px">{{ signup.phoneModalBody }}</p>
+
+          <div style="width:180px;height:180px;margin:0 auto 18px;padding:12px;background:#fff;border:1.5px solid rgba(10,10,10,.12);border-radius:14px;position:relative">
+            <div style="position:absolute;inset:12px;background-image:repeating-conic-gradient(#0a0a0a 0% 25%, #fff 0% 50%);background-size:12px 12px;border-radius:2px"></div>
+            <div style="position:absolute;top:12px;left:12px;width:34px;height:34px;background:#fff;border:6px solid #0a0a0a;border-radius:4px"></div>
+            <div style="position:absolute;top:12px;right:12px;width:34px;height:34px;background:#fff;border:6px solid #0a0a0a;border-radius:4px"></div>
+            <div style="position:absolute;bottom:12px;left:12px;width:34px;height:34px;background:#fff;border:6px solid #0a0a0a;border-radius:4px"></div>
+            <div style="position:absolute;inset:0;margin:auto;width:36px;height:36px;background:#fff;border-radius:6px"></div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;font-size:12.5px;color:rgba(10,10,10,.5);margin-bottom:20px">
+            <span style="width:7px;height:7px;border-radius:99px;background:#c99842;flex:none"></span>{{ signup.phoneModalWaiting }}
+          </div>
+
+          <button onClick="{{ signup.onSimulateScan }}" style="width:100%;font-size:13.5px;font-weight:600;background:#0a0a0a;color:#fff;border:0;border-radius:99px;padding:12px">{{ signup.phoneModalSimulate }}</button>
+        </div>
+      </div>
+    </sc-if>
+  </section>
+  </sc-if>
+
+  <!-- my listings -->
+  <sc-if value="{{ hasListingsPage }}" hint-placeholder-val="{{ false }}">
+  <section style="max-width:1000px;margin:0 auto;padding:48px 32px 96px">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:8px">
+      <div>
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(10,10,10,.4);margin-bottom:10px">{{ listings.kicker }}</div>
+        <h1 class="arch" style="font-weight:800;font-size:30px;letter-spacing:-.025em;margin:0;color:#0a0a0a">{{ listings.title }}</h1>
+        <p style="font-size:14.5px;color:rgba(10,10,10,.55);margin:10px 0 0;max-width:560px">{{ listings.subtitle }}</p>
+      </div>
+      <button onClick="{{ listings.onAdd }}" style="flex:none;font-size:14px;font-weight:600;background:#0a0a0a;color:#fff;border:0;border-radius:10px;padding:11px 20px;white-space:nowrap">{{ listings.addLabel }}</button>
+    </div>
+
+    <div style="display:inline-flex;gap:4px;background:rgba(10,10,10,.05);border-radius:99px;padding:4px;margin:24px 0 4px">
+      <button onClick="{{ listings.onGoItems }}" style="border:0;border-radius:99px;padding:9px 18px;font-size:13.5px;font-weight:600;background:{{ listings.itemsTabBg }};color:{{ listings.itemsTabColor }};white-space:nowrap;transition:all .12s">{{ listings.itemsTabLabel }}</button>
+      <button onClick="{{ listings.onGoOrders }}" style="border:0;border-radius:99px;padding:9px 18px;font-size:13.5px;font-weight:600;background:{{ listings.ordersTabBg }};color:{{ listings.ordersTabColor }};white-space:nowrap;transition:all .12s">{{ listings.ordersTabLabel }}</button>
+    </div>
+
+    <sc-if value="{{ listings.isItems }}" hint-placeholder-val="{{ true }}">
+      <sc-if value="{{ listings.hasRows }}" hint-placeholder-val="{{ true }}">
+        <div style="margin-top:20px;border:1px solid rgba(10,10,10,.1);border-radius:14px;overflow:hidden">
+          <sc-for list="{{ listings.rows }}" as="l" hint-placeholder-count="4">
+            <div style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-top:1px solid rgba(10,10,10,.08)">
+              <div style="width:56px;height:56px;border-radius:10px;overflow:hidden;flex:none;background:rgba(10,10,10,.06);position:relative">
+                <image-slot id="{{ l.id }}" src="{{ l.img }}" shape="rounded" radius="10" placeholder="Product photo" style="position:absolute;inset:0;width:100%;height:100%"></image-slot>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14.5px;font-weight:700;color:#0a0a0a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ l.title }}</div>
+                <div style="font-size:13px;color:rgba(10,10,10,.55);margin-top:3px">{{ l.priceLabel }}</div>
+              </div>
+              <div style="flex:none"><span style="display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:{{ l.statusBg }};color:{{ l.statusColor }};white-space:nowrap">{{ l.statusLabel }}</span></div>
+              <div style="display:flex;gap:8px;flex:none">
+                <button onClick="{{ l.onTogglePause }}" style="border:1.5px solid rgba(10,10,10,.15);background:#fff;color:#0a0a0a;border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:600;white-space:nowrap">{{ l.pauseToggleLabel }}</button>
+                <button onClick="{{ l.onRemove }}" aria-label="Remove" style="border:0;background:transparent;padding:6px;border-radius:8px" style-hover="background:rgba(201,100,66,.1)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c96442" stroke-width="2"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
+                </button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ listings.hasNoRows }}" hint-placeholder-val="{{ false }}">
+        <p style="font-size:14px;color:rgba(10,10,10,.5);padding:40px 0;text-align:center">{{ listings.emptyLabel }}</p>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ listings.isOrders }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ listings.hasOrders }}" hint-placeholder-val="{{ true }}">
+        <div style="margin-top:20px;border:1px solid rgba(10,10,10,.1);border-radius:14px;overflow:hidden">
+          <sc-for list="{{ listings.orders }}" as="o" hint-placeholder-count="3">
+            <div style="padding:16px 20px;border-top:1px solid rgba(10,10,10,.08)">
+            <div style="display:flex;align-items:center;gap:16px">
+              <div style="width:56px;height:56px;border-radius:10px;overflow:hidden;flex:none;background:rgba(10,10,10,.06);position:relative">
+                <image-slot id="{{ o.id }}" src="{{ o.img }}" shape="rounded" radius="10" placeholder="Product photo" style="position:absolute;inset:0;width:100%;height:100%"></image-slot>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14.5px;font-weight:700;color:#0a0a0a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ o.title }}</div>
+                <div style="font-size:13px;color:rgba(10,10,10,.55);margin-top:3px">{{ listings.colRenter }}: {{ o.renter }} · {{ o.dates }}</div>
+              </div>
+              <div style="font-size:14px;font-weight:700;color:#0a0a0a;flex:none">{{ o.total }}</div>
+              <div style="flex:none"><span style="display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:{{ o.statusBg }};color:{{ o.statusColor }};white-space:nowrap">{{ o.statusLabel }}</span></div>
+              <sc-if value="{{ o.isPending }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:8px;flex:none">
+                  <button onClick="{{ o.onApprove }}" style="border:0;background:#178a5a;color:#fff;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;white-space:nowrap">{{ listings.approveReq }}</button>
+                  <button onClick="{{ o.onDecline }}" style="border:0;background:transparent;color:#c96442;padding:8px 8px;font-size:12.5px;font-weight:600;white-space:nowrap">{{ listings.declineReq }}</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ o.isApproved }}" hint-placeholder-val="{{ false }}">
+                <div style="flex:none">
+                  <button onClick="{{ o.onOpenShip }}" style="border:0;background:#0a0a0a;color:#fff;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;white-space:nowrap">{{ o.confirmShipLabel }}</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ o.isShipped }}" hint-placeholder-val="{{ false }}">
+                <div style="flex:none">
+                  <button onClick="{{ o.onOpenReturn }}" style="border:1.5px solid rgba(10,10,10,.15);background:#fff;color:#0a0a0a;border-radius:8px;padding:8px 14px;font-size:12.5px;font-weight:600;white-space:nowrap">{{ o.confirmReturnLabel }}</button>
+                </div>
+              </sc-if>
+            </div>
+            <sc-if value="{{ o.isApproved }}" hint-placeholder-val="{{ false }}">
+              <div style="margin:14px 0 0 72px;background:rgba(23,138,90,.06);border:1px solid rgba(23,138,90,.18);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+                <div style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#178a5a">{{ o.contactLabel }}</div>
+                <div style="font-size:13.5px;color:#0a0a0a"><span style="color:rgba(10,10,10,.5)">{{ o.phoneLabel }}:</span> {{ o.phone }}</div>
+                <div style="font-size:13.5px;color:#0a0a0a"><span style="color:rgba(10,10,10,.5)">{{ o.lineLabel }}:</span> {{ o.line }}</div>
+              </div>
+            </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ listings.hasNoOrders }}" hint-placeholder-val="{{ false }}">
+        <p style="font-size:14px;color:rgba(10,10,10,.5);padding:40px 0;text-align:center">{{ listings.emptyOrders }}</p>
+      </sc-if>
+    </sc-if>
+
+    <sc-if value="{{ listings.shipModalOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ listings.onCloseShip }}" style="position:fixed;inset:0;z-index:100;background:rgba(10,10,10,.55);display:flex;align-items:center;justify-content:center;padding:24px">
+        <div onClick="{{ listings.stopClick }}" style="background:#fff;border-radius:20px;max-width:380px;width:100%;padding:32px">
+          <h3 class="arch" style="font-weight:800;font-size:19px;letter-spacing:-.02em;margin:0 0 10px;color:#0a0a0a">{{ listings.shipModalTitle }}</h3>
+          <p style="font-size:13.5px;color:rgba(10,10,10,.6);line-height:1.6;margin:0 0 18px">{{ listings.shipModalBody }}</p>
+
+          <div style="margin-bottom:20px">
+            <div style="font-size:12.5px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ listings.shipPhotoLabel }}</div>
+            <image-slot id="ship_photo" shape="rounded" radius="14" placeholder="Shipment photo" style="width:100%;height:180px"></image-slot>
+          </div>
+
+          <button onClick="{{ listings.onConfirmShip }}" style="width:100%;font-size:14px;font-weight:700;background:#0a0a0a;color:#fff;border:0;border-radius:99px;padding:13px">{{ listings.shipConfirmLabel }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ listings.returnModalOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ listings.onCloseReturn }}" style="position:fixed;inset:0;z-index:100;background:rgba(10,10,10,.55);display:flex;align-items:center;justify-content:center;padding:24px">
+        <div onClick="{{ listings.stopClick }}" style="background:#fff;border-radius:20px;max-width:380px;width:100%;padding:32px">
+          <h3 class="arch" style="font-weight:800;font-size:19px;letter-spacing:-.02em;margin:0 0 10px;color:#0a0a0a">{{ listings.returnModalTitle }}</h3>
+          <p style="font-size:13.5px;color:rgba(10,10,10,.6);line-height:1.6;margin:0 0 18px">{{ listings.returnModalBody }}</p>
+
+          <div style="margin-bottom:20px">
+            <div style="font-size:12.5px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ listings.returnPhotoLabel }}</div>
+            <image-slot id="return_photo" shape="rounded" radius="14" placeholder="Return photo" style="width:100%;height:180px"></image-slot>
+          </div>
+
+          <button onClick="{{ listings.onConfirmReturn }}" style="width:100%;font-size:14px;font-weight:700;background:#0a0a0a;color:#fff;border:0;border-radius:99px;padding:13px">{{ listings.returnConfirmLabel }}</button>
+        </div>
+      </div>
+    </sc-if>
+  </section>
+  </sc-if>
+
+  <!-- my rentals -->
+  <sc-if value="{{ hasRentalsPage }}" hint-placeholder-val="{{ false }}">
+  <section style="max-width:1000px;margin:0 auto;padding:48px 32px 96px">
+    <div style="margin-bottom:8px">
+      <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(10,10,10,.4);margin-bottom:10px">{{ rentals.kicker }}</div>
+      <h1 class="arch" style="font-weight:800;font-size:30px;letter-spacing:-.025em;margin:0;color:#0a0a0a">{{ rentals.title }}</h1>
+      <p style="font-size:14.5px;color:rgba(10,10,10,.55);margin:10px 0 0;max-width:560px">{{ rentals.subtitle }}</p>
+    </div>
+
+    <sc-if value="{{ rentals.hasHistory }}" hint-placeholder-val="{{ true }}">
+        <div style="border:1px solid rgba(10,10,10,.1);border-radius:14px;overflow:hidden">
+          <sc-for list="{{ rentals.history }}" as="h" hint-placeholder-count="3">
+            <div onClick="{{ h.onOpen }}" style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-top:1px solid rgba(10,10,10,.08);cursor:pointer" style-hover="background:rgba(10,10,10,.02)">
+              <div style="width:56px;height:56px;border-radius:10px;overflow:hidden;flex:none;background:rgba(10,10,10,.06);position:relative">
+                <image-slot id="{{ h.id }}" src="{{ h.img }}" shape="rounded" radius="10" placeholder="Product photo" style="position:absolute;inset:0;width:100%;height:100%"></image-slot>
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:14.5px;font-weight:700;color:#0a0a0a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.title }}</div>
+                <div style="font-size:13px;color:rgba(10,10,10,.55);margin-top:3px">{{ h.dates }}</div>
+              </div>
+              <div style="font-size:14px;font-weight:700;color:#0a0a0a;flex:none">{{ h.total }}</div>
+              <div style="flex:none"><span style="display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:{{ h.statusBg }};color:{{ h.statusColor }};white-space:nowrap">{{ h.statusLabel }}</span></div>
+              <sc-if value="{{ h.isActive }}" hint-placeholder-val="{{ false }}">
+                <div style="flex:none">
+                  <button onClick="{{ h.onOpenReturnStop }}" style="border:1.5px solid rgba(10,10,10,.15);background:#fff;color:#0a0a0a;border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:600;white-space:nowrap">{{ h.returnItemLabel }}</button>
+                </div>
+              </sc-if>
+              <sc-if value="{{ h.isPending }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;align-items:center;gap:6px;flex:none">
+                  <sc-if value="{{ h.canCancel }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+                      <button onClick="{{ h.onCancelStop }}" style="flex:none;border:0;background:transparent;font-size:12.5px;font-weight:600;color:#c96442;padding:7px 8px;white-space:nowrap">{{ h.cancelLabel }}</button>
+                      <div style="font-size:11px;color:rgba(10,10,10,.4);font-variant-numeric:tabular-nums;white-space:nowrap">{{ h.cancelCountdown }}</div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+    <sc-if value="{{ rentals.hasNoHistory }}" hint-placeholder-val="{{ false }}">
+      <p style="font-size:14px;color:rgba(10,10,10,.5);padding:40px 0;text-align:center">{{ rentals.emptyHistory }}</p>
+    </sc-if>
+  </section>
+
+  <sc-if value="{{ rentals.confirmDialogOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ rentals.onDismissConfirm }}" style="position:fixed;inset:0;z-index:100;background:rgba(10,10,10,.5);display:flex;align-items:center;justify-content:center;padding:24px">
+      <div onClick="{{ rentals.stopClick }}" style="background:#fff;border-radius:16px;max-width:400px;width:100%;padding:28px;text-align:center">
+        <h3 class="arch" style="font-weight:800;font-size:19px;letter-spacing:-.02em;margin:0 0 10px;color:#0a0a0a">{{ rentals.confirmDialogTitle }}</h3>
+        <p style="font-size:14px;color:rgba(10,10,10,.6);line-height:1.6;margin:0 0 24px">{{ rentals.confirmDialogBody }}</p>
+        <div style="display:flex;gap:10px">
+          <button onClick="{{ rentals.onDismissConfirm }}" style="flex:1;font-size:14px;font-weight:600;background:#fff;color:#0a0a0a;border:1.5px solid rgba(10,10,10,.15);border-radius:99px;padding:12px">{{ rentals.confirmDialogKeep }}</button>
+          <button onClick="{{ rentals.onConfirmCancel }}" style="flex:1;font-size:14px;font-weight:600;background:#c96442;color:#fff;border:0;border-radius:99px;padding:12px">{{ rentals.confirmDialogYes }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ rentals.returnRequestOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ rentals.onCloseReturnRequest }}" style="position:fixed;inset:0;z-index:100;background:rgba(10,10,10,.55);display:flex;align-items:center;justify-content:center;padding:24px">
+      <div onClick="{{ rentals.stopClick }}" style="background:#fff;border-radius:20px;max-width:380px;width:100%;padding:32px">
+        <h3 class="arch" style="font-weight:800;font-size:19px;letter-spacing:-.02em;margin:0 0 10px;color:#0a0a0a">{{ rentals.returnRequestTitle }}</h3>
+        <p style="font-size:13.5px;color:rgba(10,10,10,.6);line-height:1.6;margin:0 0 18px">{{ rentals.returnRequestBody }}</p>
+
+        <div style="margin-bottom:20px">
+          <div style="font-size:12.5px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ rentals.returnRequestPhotoLabel }}</div>
+          <image-slot id="renter_return_photo" shape="rounded" radius="14" placeholder="Return photo" style="width:100%;height:180px"></image-slot>
+        </div>
+
+        <button onClick="{{ rentals.onSubmitReturnRequest }}" style="width:100%;font-size:14px;font-weight:700;background:#0a0a0a;color:#fff;border:0;border-radius:99px;padding:13px">{{ rentals.returnRequestSubmit }}</button>
+      </div>
+    </div>
+  </sc-if>
+  </sc-if>
+
+  <!-- admin: category master -->
+  <sc-if value="{{ hasAdminPage }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;min-height:100vh;background:#f4f5f7;font-family:'Helvetica Neue',Helvetica,'Noto Sans Thai',Arial,sans-serif">
+
+    <!-- sidebar -->
+    <aside style="width:{{ admin.sidebarWidth }};flex:none;background:#0f1b2d;color:#fff;display:flex;flex-direction:column;transition:width .15s;overflow:hidden">
+      <div style="padding:22px 20px;display:flex;align-items:center;gap:8px;white-space:nowrap">
+        <span class="arch" style="font-weight:900;font-size:19px;letter-spacing:-.02em">LOOP<span style="color:rgba(255,255,255,.35)">.</span></span>
+        <span style="font-size:11px;color:rgba(255,255,255,.4)">Admin</span>
+      </div>
+
+      <nav style="flex:1;padding:6px 12px;display:flex;flex-direction:column;gap:2px;overflow:hidden">
+        <button onClick="{{ admin.onGoDashboard }}" style="display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:8px;border:0;background:{{ admin.dashNavBg }};color:{{ admin.dashNavColor }};font-size:14px;font-weight:600;white-space:nowrap;text-align:left">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:none"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
+          {{ admin.navDashboard }}
+        </button>
+
+        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.3);padding:16px 10px 6px;white-space:nowrap">{{ admin.navMasterGroup }}</div>
+
+        <button onClick="{{ admin.onGoCategories }}" style="display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:8px;border:0;background:{{ admin.catNavBg }};color:{{ admin.catNavColor }};font-size:14px;font-weight:600;white-space:nowrap;text-align:left">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:none"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
+          {{ admin.navCategoryMaster }}
+        </button>
+
+        <button onClick="{{ admin.onGoUsers }}" style="display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:8px;border:0;background:{{ admin.userNavBg }};color:{{ admin.userNavColor }};font-size:14px;font-weight:600;white-space:nowrap;text-align:left">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:none"><circle cx="9" cy="8" r="3"></circle><path d="M4 19c0-3 2.5-5 5-5s5 2 5 5"></path><circle cx="17" cy="8" r="2.5"></circle><path d="M15.5 14.2c2.2.3 3.8 2.1 3.8 4.8"></path></svg>
+          {{ admin.navUsers }}
+        </button>
+
+        <button onClick="{{ admin.onGoProducts }}" style="display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:8px;border:0;background:{{ admin.productNavBg }};color:{{ admin.productNavColor }};font-size:14px;font-weight:600;white-space:nowrap;text-align:left">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:none"><path d="M20.5 7.5 12 3 3.5 7.5 12 12l8.5-4.5Z"></path><path d="M3.5 7.5v9L12 21l8.5-4.5v-9"></path><path d="M12 12v9"></path></svg>
+          {{ admin.navProducts }}
+        </button>
+
+        <button onClick="{{ admin.onGoPayments }}" style="display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:8px;border:0;background:{{ admin.paymentsNavBg }};color:{{ admin.paymentsNavColor }};font-size:14px;font-weight:600;white-space:nowrap;text-align:left">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:none"><rect x="2" y="5" width="20" height="15" rx="2"></rect><path d="M2 10h20"></path><path d="M6 15h4"></path></svg>
+          {{ admin.navPayments }}
+        </button>
+
+        <button onClick="{{ admin.onGoSettings }}" style="display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:8px;border:0;background:{{ admin.settingsNavBg }};color:{{ admin.settingsNavColor }};font-size:14px;font-weight:600;white-space:nowrap;text-align:left">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:none"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.35a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.65 15 1.7 1.7 0 0 0 3 14V13a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.65 1.7 1.7 0 0 0 10 3H11a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.65a1.7 1.7 0 0 0 1.87.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.35 9a1.7 1.7 0 0 0 1.65 1H21a2 2 0 1 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15Z"></path></svg>
+          {{ admin.navSettings }}
+        </button>
+
+        <sc-for list="{{ admin.disabledNav }}" as="dn" hint-placeholder-count="0">
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:8px;color:rgba(255,255,255,.3);font-size:14px;white-space:nowrap;cursor:default">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex:none"><circle cx="12" cy="12" r="9"></circle></svg>
+            {{ dn.label }}
+          </div>
+        </sc-for>
+      </nav>
+
+      <div style="padding:14px 16px;border-top:1px solid rgba(255,255,255,.08)">
+        <button onClick="{{ admin.onToggleSidebar }}" aria-label="Toggle sidebar" style="border:0;background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="{{ admin.collapseIcon }}"></path></svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- main -->
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+      <div style="height:64px;flex:none;background:#fff;border-bottom:1px solid rgba(10,10,10,.08);display:flex;align-items:center;justify-content:flex-end;gap:16px;padding:0 32px">
+        <button onClick="{{ admin.onExit }}" style="border:0;background:transparent;font-size:13px;font-weight:600;color:rgba(10,10,10,.5);white-space:nowrap">{{ admin.exitLabel }}</button>
+        <div style="width:32px;height:32px;border-radius:99px;background:#e3e5e8;flex:none"></div>
+        <div style="font-size:13.5px;color:#0a0a0a;white-space:nowrap"><strong>{{ admin.userName }}</strong> <span style="color:rgba(10,10,10,.45)">({{ admin.userRole }})</span></div>
+      </div>
+
+      <div style="flex:1;overflow:auto;padding:40px 40px 80px">
+        <sc-if value="{{ admin.isDashboard }}" hint-placeholder-val="{{ true }}">
+        <div style="margin-bottom:8px">
+          <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#2f6feb;margin-bottom:10px">{{ admin.dashboard.kicker }}</div>
+          <h1 class="arch" style="font-weight:800;font-size:26px;letter-spacing:-.025em;margin:0;color:#0a0a0a">{{ admin.dashboard.title }}</h1>
+          <p style="font-size:14px;color:rgba(10,10,10,.55);margin:8px 0 0">{{ admin.dashboard.subtitle }}</p>
+        </div>
+
+        <div style="margin-top:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px">
+          <sc-for list="{{ admin.dashboard.stats }}" as="st" hint-placeholder-count="6">
+            <div style="background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:12px;padding:18px 20px">
+              <div style="font-size:12.5px;font-weight:600;color:rgba(10,10,10,.5);margin-bottom:8px">{{ st.label }}</div>
+              <div style="font-family:ui-monospace,Menlo,monospace;font-size:26px;font-weight:700;color:#0a0a0a;letter-spacing:-.02em">{{ st.value }}</div>
+              <sc-if value="{{ st.sub }}" hint-placeholder-val="{{ false }}">
+                <div style="font-size:12px;font-weight:600;color:#a8752f;margin-top:6px">{{ st.sub }}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="margin-top:32px">
+          <h2 style="font-size:15px;font-weight:700;color:#0a0a0a;margin:0 0 14px">{{ admin.dashboard.catBreakdownTitle }}</h2>
+          <div style="background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px">
+            <sc-for list="{{ admin.dashboard.cats }}" as="c" hint-placeholder-count="5">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:6px">
+                  <span style="font-weight:600;color:#0a0a0a">{{ c.name }}</span>
+                  <span style="color:rgba(10,10,10,.5)">{{ c.count }}</span>
+                </div>
+                <div style="height:6px;background:rgba(10,10,10,.06);border-radius:99px;overflow:hidden">
+                  <div style="height:100%;width:{{ c.pct }}%;background:#2f6feb;border-radius:99px"></div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ admin.isCategories }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:8px">
+          <div>
+            <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#2f6feb;margin-bottom:10px">{{ admin.kicker }}</div>
+            <h1 class="arch" style="font-weight:800;font-size:26px;letter-spacing:-.025em;margin:0;color:#0a0a0a">{{ admin.title }}</h1>
+            <p style="font-size:14px;color:rgba(10,10,10,.55);margin:8px 0 0">{{ admin.subtitle }}</p>
+          </div>
+          <button onClick="{{ admin.onStartAdd }}" style="flex:none;font-size:14px;font-weight:600;background:#0a0a0a;color:#fff;border:0;border-radius:10px;padding:11px 20px;white-space:nowrap">{{ admin.addLabel }}</button>
+        </div>
+
+        <div style="margin-top:24px;background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:12px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1fr 140px 110px;padding:14px 20px;background:rgba(10,10,10,.03);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:rgba(10,10,10,.45)">
+            <div>{{ admin.nameLabel }}</div>
+            <div>{{ admin.itemsLabel }}</div>
+            <div>{{ admin.actionsLabel }}</div>
+          </div>
+
+          <sc-if value="{{ admin.adding }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid;grid-template-columns:1fr 140px 110px;padding:12px 20px;gap:10px;align-items:center;border-top:1px solid rgba(10,10,10,.08);background:rgba(47,111,235,.05)">
+              <input value="{{ admin.newName }}" onInput="{{ admin.onNewName }}" placeholder="{{ admin.nameLabel }}" style="border:1.5px solid rgba(10,10,10,.15);border-radius:8px;padding:8px 10px;font-size:14px">
+              <input type="number" value="{{ admin.newCount }}" onInput="{{ admin.onNewCount }}" placeholder="0" style="border:1.5px solid rgba(10,10,10,.15);border-radius:8px;padding:8px 10px;font-size:14px;width:100px">
+              <div style="display:flex;gap:8px">
+                <button onClick="{{ admin.onSaveAdd }}" aria-label="Save" style="border:0;background:#0a0a0a;color:#fff;border-radius:8px;padding:7px 10px;font-size:12.5px;font-weight:600">{{ admin.save }}</button>
+                <button onClick="{{ admin.onCancelAdd }}" aria-label="Cancel" style="border:0;background:transparent;color:rgba(10,10,10,.5);padding:7px 4px;font-size:12.5px">{{ admin.cancel }}</button>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-for list="{{ admin.rows }}" as="row" hint-placeholder-count="5">
+            <sc-if value="{{ row.editing }}" hint-placeholder-val="{{ false }}">
+              <div style="display:grid;grid-template-columns:1fr 140px 110px;padding:12px 20px;gap:10px;align-items:center;border-top:1px solid rgba(10,10,10,.08);background:rgba(47,111,235,.05)">
+                <input value="{{ row.editName }}" onInput="{{ row.onEditName }}" style="border:1.5px solid rgba(10,10,10,.15);border-radius:8px;padding:8px 10px;font-size:14px">
+                <input type="number" value="{{ row.editCount }}" onInput="{{ row.onEditCount }}" style="border:1.5px solid rgba(10,10,10,.15);border-radius:8px;padding:8px 10px;font-size:14px;width:100px">
+                <div style="display:flex;gap:8px">
+                  <button onClick="{{ row.onSaveEdit }}" aria-label="Save" style="border:0;background:#0a0a0a;color:#fff;border-radius:8px;padding:7px 10px;font-size:12.5px;font-weight:600">{{ admin.save }}</button>
+                  <button onClick="{{ row.onCancelEdit }}" aria-label="Cancel" style="border:0;background:transparent;color:rgba(10,10,10,.5);padding:7px 4px;font-size:12.5px">{{ admin.cancel }}</button>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ row.notEditing }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid;grid-template-columns:1fr 140px 110px;padding:14px 20px;align-items:center;border-top:1px solid rgba(10,10,10,.08)">
+                <div style="font-size:14.5px;font-weight:600;color:#0a0a0a">{{ row.name }}</div>
+                <div style="font-size:14px;color:rgba(10,10,10,.6)">{{ row.countLabel }}</div>
+                <div style="display:flex;gap:6px">
+                  <button onClick="{{ row.onEdit }}" aria-label="Edit" style="border:0;background:transparent;padding:6px;border-radius:8px" style-hover="background:rgba(10,10,10,.06)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+                  </button>
+                  <button onClick="{{ row.onDelete }}" aria-label="Delete" style="border:0;background:transparent;padding:6px;border-radius:8px" style-hover="background:rgba(201,100,66,.1)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c96442" stroke-width="2"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>
+                  </button>
+                </div>
+              </div>
+            </sc-if>
+          </sc-for>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ admin.isUsers }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:8px">
+          <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#2f6feb;margin-bottom:10px">{{ admin.users.kicker }}</div>
+          <h1 class="arch" style="font-weight:800;font-size:26px;letter-spacing:-.025em;margin:0;color:#0a0a0a">{{ admin.users.title }}</h1>
+          <p style="font-size:14px;color:rgba(10,10,10,.55);margin:8px 0 0">{{ admin.users.subtitle }}</p>
+        </div>
+
+        <div style="margin-top:24px;background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:12px;overflow-x:auto">
+          <div style="min-width:760px">
+          <div style="display:grid;grid-template-columns:minmax(120px,1fr) minmax(170px,1.3fr) 110px 100px 110px minmax(160px,auto);gap:10px;padding:14px 20px;background:rgba(10,10,10,.03);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:rgba(10,10,10,.45)">
+            <div>{{ admin.users.colName }}</div>
+            <div>{{ admin.users.colEmail }}</div>
+            <div>{{ admin.users.colJoined }}</div>
+            <div>{{ admin.users.colType }}</div>
+            <div>{{ admin.users.colStatus }}</div>
+            <div>{{ admin.users.colActions }}</div>
+          </div>
+
+          <sc-for list="{{ admin.users.rows }}" as="u" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:minmax(120px,1fr) minmax(170px,1.3fr) 110px 100px 110px minmax(160px,auto);gap:10px;padding:14px 20px;align-items:center;border-top:1px solid rgba(10,10,10,.08)">
+              <div style="font-size:14.5px;font-weight:600;color:#0a0a0a;white-space:nowrap">{{ u.name }}</div>
+              <div style="font-size:13.5px;color:rgba(10,10,10,.6);white-space:nowrap">{{ u.email }}</div>
+              <div style="font-size:13.5px;color:rgba(10,10,10,.6);white-space:nowrap">{{ u.joined }}</div>
+              <div style="font-size:13.5px;color:rgba(10,10,10,.6);white-space:nowrap">{{ u.typeLabel }}</div>
+              <div><span style="display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:{{ u.statusBg }};color:{{ u.statusColor }};white-space:nowrap">{{ u.statusLabel }}</span></div>
+              <sc-if value="{{ u.isPending }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:8px;min-width:0">
+                  <button onClick="{{ u.onApprove }}" style="border:0;background:#178a5a;color:#fff;border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:600;white-space:nowrap;flex:none">{{ admin.users.approve }}</button>
+                  <button onClick="{{ u.onReject }}" style="border:0;background:transparent;color:#c96442;padding:7px 8px;font-size:12.5px;font-weight:600;white-space:nowrap;flex:none">{{ admin.users.reject }}</button>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ admin.isProducts }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:8px">
+          <div>
+            <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#2f6feb;margin-bottom:10px">{{ admin.products.kicker }}</div>
+            <h1 class="arch" style="font-weight:800;font-size:26px;letter-spacing:-.025em;margin:0;color:#0a0a0a">{{ admin.products.title }}</h1>
+            <p style="font-size:14px;color:rgba(10,10,10,.55);margin:8px 0 0">{{ admin.products.subtitle }}</p>
+          </div>
+          <div style="flex:none;font-size:13px;font-weight:600;color:rgba(10,10,10,.5);white-space:nowrap">{{ admin.products.countLabel }}</div>
+        </div>
+
+        <div style="margin-top:24px;background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:12px;overflow-x:auto">
+          <div style="min-width:760px">
+          <div style="display:grid;grid-template-columns:64px minmax(160px,1.4fr) 130px minmax(120px,1fr) 90px 80px minmax(100px,auto);gap:14px;padding:14px 20px;background:rgba(10,10,10,.03);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:rgba(10,10,10,.45)">
+            <div></div>
+            <div>{{ admin.products.colProduct }}</div>
+            <div>{{ admin.products.colCategory }}</div>
+            <div>{{ admin.products.colSeller }}</div>
+            <div>{{ admin.products.colPrice }}</div>
+            <div>{{ admin.products.colRating }}</div>
+            <div>{{ admin.products.colLocation }}</div>
+          </div>
+
+          <sc-for list="{{ admin.products.rows }}" as="p" hint-placeholder-count="8">
+            <div style="display:grid;grid-template-columns:64px minmax(160px,1.4fr) 130px minmax(120px,1fr) 90px 80px minmax(100px,auto);gap:14px;padding:12px 20px;align-items:center;border-top:1px solid rgba(10,10,10,.08)">
+              <div style="width:44px;height:44px;border-radius:8px;overflow:hidden;background:rgba(10,10,10,.06);position:relative">
+                <image-slot id="{{ p.id }}" src="{{ p.img }}" shape="rounded" radius="8" placeholder="Product photo" style="position:absolute;inset:0;width:100%;height:100%"></image-slot>
+              </div>
+              <div style="font-size:14px;font-weight:600;color:#0a0a0a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</div>
+              <div style="font-size:13.5px;color:rgba(10,10,10,.6);white-space:nowrap">{{ p.category }}</div>
+              <div style="font-size:13.5px;color:rgba(10,10,10,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.seller }}</div>
+              <div style="font-size:13.5px;color:rgba(10,10,10,.6);white-space:nowrap">{{ p.price }}</div>
+              <div style="font-size:13.5px;color:rgba(10,10,10,.6);white-space:nowrap">★ {{ p.rating }}</div>
+              <div style="font-size:13.5px;color:rgba(10,10,10,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.location }}</div>
+            </div>
+          </sc-for>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ admin.isPayments }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:8px">
+          <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#2f6feb;margin-bottom:10px">{{ admin.payments.kicker }}</div>
+          <h1 class="arch" style="font-weight:800;font-size:26px;letter-spacing:-.025em;margin:0;color:#0a0a0a">{{ admin.payments.title }}</h1>
+          <p style="font-size:14px;color:rgba(10,10,10,.55);margin:8px 0 0">{{ admin.payments.subtitle }}</p>
+        </div>
+
+        <div style="margin-top:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+          <sc-for list="{{ admin.payments.stats }}" as="st" hint-placeholder-count="3">
+            <div style="background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:12px;padding:18px 20px">
+              <div style="font-size:12.5px;font-weight:600;color:rgba(10,10,10,.5);margin-bottom:8px">{{ st.label }}</div>
+              <div style="font-family:ui-monospace,Menlo,monospace;font-size:24px;font-weight:700;color:#0a0a0a;letter-spacing:-.02em">{{ st.value }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ admin.payments.hasRows }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:24px;background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:12px;overflow-x:auto">
+            <div style="min-width:640px">
+            <div style="display:grid;grid-template-columns:minmax(160px,1.4fr) minmax(120px,1fr) 100px 100px minmax(130px,auto);gap:14px;padding:14px 20px;background:rgba(10,10,10,.03);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:rgba(10,10,10,.45)">
+              <div>{{ admin.payments.colTxn }}</div>
+              <div>{{ admin.payments.colRenter }}</div>
+              <div>{{ admin.payments.colAmount }}</div>
+              <div>{{ admin.payments.colFee }}</div>
+              <div>{{ admin.payments.colPayStatus }}</div>
+            </div>
+            <sc-for list="{{ admin.payments.rows }}" as="p" hint-placeholder-count="4">
+              <div style="display:grid;grid-template-columns:minmax(160px,1.4fr) minmax(120px,1fr) 100px 100px minmax(130px,auto);gap:14px;padding:14px 20px;align-items:center;border-top:1px solid rgba(10,10,10,.08)">
+                <div style="font-size:14px;font-weight:600;color:#0a0a0a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.title }}</div>
+                <div style="font-size:13.5px;color:rgba(10,10,10,.6);white-space:nowrap">{{ p.renter }}</div>
+                <div style="font-size:13.5px;color:#0a0a0a;font-weight:600;white-space:nowrap">{{ p.amount }}</div>
+                <div style="font-size:13.5px;color:rgba(10,10,10,.6);white-space:nowrap">{{ p.fee }}</div>
+                <div><span style="display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:{{ p.statusBg }};color:{{ p.statusColor }};white-space:nowrap">{{ p.statusLabel }}</span></div>
+              </div>
+            </sc-for>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ admin.payments.hasNoRows }}" hint-placeholder-val="{{ false }}">
+          <p style="font-size:14px;color:rgba(10,10,10,.5);padding:40px 0;text-align:center">{{ admin.payments.emptyLabel }}</p>
+        </sc-if>
+        </sc-if>
+
+        <sc-if value="{{ admin.isSettings }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-bottom:8px;max-width:520px">
+          <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#2f6feb;margin-bottom:10px">{{ admin.settings.kicker }}</div>
+          <h1 class="arch" style="font-weight:800;font-size:26px;letter-spacing:-.025em;margin:0;color:#0a0a0a">{{ admin.settings.title }}</h1>
+          <p style="font-size:14px;color:rgba(10,10,10,.55);margin:8px 0 0">{{ admin.settings.subtitle }}</p>
+        </div>
+
+        <div style="margin-top:24px;max-width:520px;background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:12px;padding:28px;display:flex;flex-direction:column;gap:20px">
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ admin.settings.platformNameLabel }}</label>
+            <input value="{{ admin.settings.platformNameVal }}" onInput="{{ admin.settings.onPlatformName }}" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:11px 14px;font-size:14px;color:#0a0a0a">
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ admin.settings.currencyLabel }}</label>
+            <input value="{{ admin.settings.currencyVal }}" onInput="{{ admin.settings.onCurrency }}" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:11px 14px;font-size:14px;color:#0a0a0a">
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ admin.settings.feeLabel }}</label>
+            <input type="number" value="{{ admin.settings.feeVal }}" onInput="{{ admin.settings.onFee }}" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:11px 14px;font-size:14px;color:#0a0a0a">
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:rgba(10,10,10,.6);margin-bottom:8px">{{ admin.settings.emailLabel }}</label>
+            <input type="email" value="{{ admin.settings.emailVal }}" onInput="{{ admin.settings.onEmail }}" style="width:100%;box-sizing:border-box;border:1.5px solid rgba(10,10,10,.15);border-radius:10px;padding:11px 14px;font-size:14px;color:#0a0a0a">
+          </div>
+
+          <div style="height:1px;background:rgba(10,10,10,.08)"></div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+            <label style="font-size:14px;font-weight:600;color:#0a0a0a">{{ admin.settings.idVerifyLabel }}</label>
+            <button onClick="{{ admin.settings.onToggleIdVerify }}" style="flex:none;width:44px;height:26px;border-radius:99px;border:0;background:{{ admin.settings.idVerifyBg }};position:relative;transition:background .15s">
+              <span style="position:absolute;top:2px;left:{{ admin.settings.idVerifyKnob }};width:22px;height:22px;border-radius:99px;background:#fff;transition:left .15s"></span>
+            </button>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+            <label style="font-size:14px;font-weight:600;color:#0a0a0a">{{ admin.settings.maintenanceLabel }}</label>
+            <button onClick="{{ admin.settings.onToggleMaintenance }}" style="flex:none;width:44px;height:26px;border-radius:99px;border:0;background:{{ admin.settings.maintenanceBg }};position:relative;transition:background .15s">
+              <span style="position:absolute;top:2px;left:{{ admin.settings.maintenanceKnob }};width:22px;height:22px;border-radius:99px;background:#fff;transition:left .15s"></span>
+            </button>
+          </div>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- product detail modal -->
+  <sc-if value="{{ hasDetail }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ detail.onClose }}" style="position:fixed;inset:0;z-index:100;background:rgba(10,10,10,.55);display:flex;align-items:center;justify-content:center;padding:32px">
+      <div onClick="{{ detail.stop }}" style="background:#fff;border-radius:20px;max-width:920px;width:100%;max-height:88vh;overflow:auto;display:grid;grid-template-columns:1fr 1fr">
+        <div style="position:relative;background:#efeeeb">
+          <div style="position:relative;aspect-ratio:1/1;overflow:hidden">
+            {{ detail.imgNode }}
+            <sc-if value="{{ detail.badge }}" hint-placeholder-val="{{ false }}">
+              <span style="position:absolute;top:16px;left:16px;background:#0a0a0a;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:5px 9px;border-radius:99px">{{ detail.badge }}</span>
+            </sc-if>
+            <button onClick="{{ detail.onPrev }}" aria-label="Previous photo" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:99px;border:0;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2"><path d="M15 18l-6-6 6-6"></path></svg>
+            </button>
+            <button onClick="{{ detail.onNext }}" aria-label="Next photo" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:99px;border:0;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2"><path d="M9 6l6 6-6 6"></path></svg>
+            </button>
+            <div style="position:absolute;bottom:14px;left:0;right:0;display:flex;justify-content:center;gap:6px">
+              <sc-for list="{{ detail.dots }}" as="d" hint-placeholder-count="3">
+                <button onClick="{{ d.onClick }}" aria-label="Go to photo" style="width:{{ d.size }};height:7px;border-radius:99px;border:0;background:{{ d.bg }};padding:0;transition:all .15s"></button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        <div style="padding:36px;display:flex;flex-direction:column">
+          <button onClick="{{ detail.onClose }}" aria-label="Close" style="align-self:flex-end;border:0;background:transparent;padding:6px;margin:-6px -6px 8px 0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+          </button>
+          <h2 class="arch" style="font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0 0 8px;line-height:1.15">{{ detail.title }}</h2>
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:10px">
+            <div style="width:22px;height:22px;border-radius:99px;flex:none;background:{{ detail.shopColor }};color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ detail.shopInitial }}</div>
+            <span style="font-size:13.5px;font-weight:600;color:rgba(10,10,10,.75)">{{ detail.shop }}</span>
+          </div>
+          <div style="font-size:14px;color:rgba(10,10,10,.6);margin-bottom:20px">★ {{ detail.rating }} · {{ detail.meta }}</div>
+          <div style="display:flex;align-items:baseline;gap:5px;padding-bottom:22px;border-bottom:1px solid rgba(10,10,10,.1);margin-bottom:22px">
+            <span class="arch" style="font-size:28px;font-weight:800;letter-spacing:-.02em">{{ detail.price }}</span>
+            <span style="font-size:14px;color:rgba(10,10,10,.5)">{{ detail.perDay }}</span>
+          </div>
+          <p style="font-size:14.5px;line-height:1.7;color:rgba(10,10,10,.65);margin:0 0 20px">{{ detail.desc }}</p>
+
+          <sc-if value="{{ detail.hasCompare }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-bottom:24px">
+              <div style="font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:rgba(10,10,10,.45);margin-bottom:10px">{{ detail.compareLabel }}</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ detail.compareItems }}" as="ci" hint-placeholder-count="3">
+                  <button onClick="{{ ci.onClick }}" style="display:flex;align-items:center;gap:12px;border:1px solid rgba(10,10,10,.1);border-radius:12px;padding:10px 12px;background:#fff;text-align:left;transition:border-color .12s" style-hover="border-color:rgba(10,10,10,.3)">
+                    <div style="width:44px;height:44px;border-radius:8px;overflow:hidden;flex:none;background:#efeeeb">
+                      <sc-if value="{{ ci.hasImg }}" hint-placeholder-val="{{ false }}">{{ ci.imgNode }}</sc-if>
+                    </div>
+                    <div style="flex:1;min-width:0">
+                      <div style="font-size:13.5px;font-weight:600;color:#0a0a0a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ci.title }}</div>
+                      <div style="display:flex;align-items:center;gap:5px;margin-top:2px">
+                        <div style="width:13px;height:13px;border-radius:99px;flex:none;background:{{ ci.shopColor }};color:#fff;font-size:7.5px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ ci.shopInitial }}</div>
+                        <span style="font-size:12px;color:rgba(10,10,10,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ci.shop }}</span>
+                      </div>
+                      <div style="font-size:12px;color:rgba(10,10,10,.5);margin-top:2px">★ {{ ci.rating }} · {{ ci.location }}</div>
+                    </div>
+                    <div style="flex:none;text-align:right">
+                      <span class="arch" style="font-size:14.5px;font-weight:800;color:{{ ci.priceColor }}">{{ ci.price }}</span>
+                      <span style="font-size:12px;color:rgba(10,10,10,.45)">{{ ci.perDay }}</span>
+                    </div>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <button onClick="{{ detail.onRent }}" style="margin-top:auto;font-size:15px;font-weight:600;background:#0a0a0a;color:#fff;border:0;border-radius:99px;padding:15px 28px;width:100%;transition:transform .12s" style-hover="transform:translateY(-2px)">{{ detail.cta }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { activeCat: "all", query: "", favs: {}, tab: "home", lang: "th", detailId: null, galleryIndex: 0,
+    checkoutId: null, checkoutStart: "", checkoutEnd: "", checkoutDone: false, menuOpen: false, isAdmin: false,
+    categories: [
+      { id:"electronics", name:"Electronics", count:3120 },
+      { id:"cameras", name:"Cameras", count:1840 },
+      { id:"fashion", name:"Fashion", count:2460 },
+      { id:"outdoor", name:"Outdoor & Camp", count:1970 },
+      { id:"tools", name:"Tools & Home", count:3010 }
+    ],
+    catAdding: false, catNewName: "", catNewCount: "",
+    catEditingId: null, catEditName: "", catEditCount: "",
+    adminSidebarOpen: true, adminSection: "dashboard",
+    settings: { platformName: "LOOP", currency: "THB (฿)", serviceFeePct: "10", supportEmail: "support@loop.co.th", requireIdVerification: true, maintenanceMode: false },
+    // rentalRequests removed — this page is renter-only
+    users: [
+      { id:"u1", name:"Napat T.", email:"napat.t@example.com", joined:"2026-06-28", status:"pending", type:"individual" },
+      { id:"u2", name:"Ploy S.", email:"ploy.s@example.com", joined:"2026-06-30", status:"pending", type:"shop" },
+      { id:"u3", name:"James K.", email:"james.k@example.com", joined:"2026-07-01", status:"approved", type:"individual" },
+      { id:"u4", name:"Anong W.", email:"anong.w@example.com", joined:"2026-07-02", status:"pending", type:"shop" },
+      { id:"u5", name:"Krit P.", email:"krit.p@example.com", joined:"2026-06-20", status:"rejected", type:"individual" }
+    ],
+    cancelConfirmId: null, checkoutCancelConfirm: false,
+    checkoutNote: "", checkoutPickup: "", checkoutPhone: "", checkoutLine: "",
+    signupForm: { name: "", email: "", phone: "", password: "", accountType: "individual" },
+    signupStage: "form",
+    signupOtpMethod: "email", signupOtpCode: "",
+    signupOcrShown: false,
+    signupPhoneModalOpen: false, signupFaceVerified: false,
+    listForm: { title: "", category: "", price: "", description: "" },
+    pickupOptions: [
+      { id: "p1", label: "BTS Siam", selected: true },
+      { id: "p2", label: "Central World", selected: true },
+      { id: "p3", label: "Camera House shop", selected: true },
+      { id: "p4", label: "Grab delivery (extra fee)", selected: true }
+    ],
+    pickupNewLabel: "",
+    listSubmitted: false,
+    myListings: [
+      { id:"l1", productId:"a1", status:"active" },
+      { id:"l2", productId:"c2", status:"active" },
+      { id:"l3", productId:"b4", status:"under_review" },
+      { id:"l4", productId:"d1", status:"paused" }
+    ],
+    listingsTab: "items",
+    shipModalOrderId: null,
+    returnModalOrderId: null,
+    returnRequestItemId: null,
+    orders: [
+      { id:"o1", productId:"a1", renter:"Napat T.", phone:"081-234-5678", line:"napat.t", start:"2026-07-12", end:"2026-07-15", total:"฿3,060", status:"pending" },
+      { id:"o2", productId:"c2", renter:"Ploy S.", phone:"082-345-6789", line:"ploy_s", start:"2026-07-10", end:"2026-07-11", total:"฿770", status:"pending" },
+      { id:"o3", productId:"b4", renter:"James K.", phone:"083-456-7890", line:"jameskk", start:"2026-07-05", end:"2026-07-07", total:"฿840", status:"completed" },
+      { id:"o4", productId:"a1", renter:"Anong W.", phone:"084-567-8901", line:"anongw", start:"2026-06-28", end:"2026-06-29", total:"฿1,020", status:"declined" },
+      { id:"o5", productId:"d1", renter:"Krit P.", phone:"085-678-9012", line:"kritp", start:"2026-06-15", end:"2026-06-17", total:"฿1,400", status:"completed" }
+    ],
+    rentalHistory: [
+      { id:"h1", productId:"a5", start:"2026-06-20", end:"2026-06-22", total:"฿1,680", status:"completed" },
+      { id:"h2", productId:"b1", start:"2026-07-14", end:"2026-07-18", total:"฿4,920", status:"active" },
+      { id:"h3", productId:"c4", start:"2026-07-20", end:"2026-07-21", total:"฿490", status:"pending", requestedAt: Date.now() - 3 * 60 * 1000 },
+      { id:"h5", productId:"a7", start:"2026-07-09", end:"2026-07-11", total:"฿1,060", status:"confirmed" },
+      { id:"h4", productId:"d1", start:"2026-06-01", end:"2026-06-03", total:"฿700", status:"cancelled" }
+    ] };
+
+  galleryPool() {
+    const U = (id) => `https://images.unsplash.com/photo-${id}?w=800&h=800&fit=crop&crop=entropy&q=80&auto=format`;
+    return {
+      cameras: [U("1502920917128-1aa500764cbd"), U("1516035069371-29a1b244cc32"), U("1526170375885-4d8ecf77b99f")],
+      electronics: [U("1517336714731-489689fd1ca8"), U("1544244015-0df4b3ffc6b0"), U("1606813907291-d86efa9b94db")],
+      fashion: [U("1595777457583-95e059d581b8"), U("1584917865442-de89df76afd3"), U("1594938298603-c8148c4dae35")],
+      outdoor: [U("1504280390367-361c6d9f38f4"), U("1478131143081-80f7f84ca84d"), U("1553062407-98eeb64c6a62")],
+      tools: [U("1504148455328-c376907d081c"), U("1504148455328-c376907d081c"), U("1504148455328-c376907d081c")]
+    };
+  }
+
+  openDetail(id) { this.setState({ detailId: id, galleryIndex: 0 }); }
+  closeDetail() { this.setState({ detailId: null }); }
+
+  fmtDate(d) { const p = n => String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`; }
+  openCheckout(id) {
+    const today = new Date(); const tmr = new Date(); tmr.setDate(tmr.getDate() + 3);
+    this.setState({
+      detailId: null, checkoutId: id, checkoutDone: false,
+      checkoutStart: this.fmtDate(today), checkoutEnd: this.fmtDate(tmr)
+    });
+    window.scrollTo({ top: 0 });
+  }
+  closeCheckout() { this.setState({ checkoutId: null, checkoutDone: false, checkoutSubmittedAt: null }); }
+  confirmCheckout() { this.setState({ checkoutDone: true, checkoutSubmittedAt: Date.now() }); }
+  askCancelRequest() { this.setState({ checkoutCancelConfirm: true }); }
+  dismissCancelRequest() { this.setState({ checkoutCancelConfirm: false }); }
+  cancelRequest() { this.setState({ checkoutId: null, checkoutDone: false, checkoutSubmittedAt: null, checkoutCancelConfirm: false }); }
+  askCancelHistoryItem(id) { this.setState({ cancelConfirmId: id }); }
+  dismissCancelConfirm() { this.setState({ cancelConfirmId: null }); }
+  cancelHistoryItem(id) {
+    this.setState(s => ({ rentalHistory: s.rentalHistory.map(h => h.id === id ? { ...h, status: "cancelled" } : h), cancelConfirmId: null }));
+  }
+  confirmHistoryItem(id) {
+    this.setState(s => ({ rentalHistory: s.rentalHistory.map(h => h.id === id ? { ...h, status: "confirmed" } : h) }));
+  }
+  openReturnRequest(id) { this.setState({ returnRequestItemId: id }); }
+  closeReturnRequest() { this.setState({ returnRequestItemId: null }); }
+  submitReturnRequest() {
+    const id = this.state.returnRequestItemId;
+    if (!id) return;
+    this.setState(s => ({ rentalHistory: s.rentalHistory.map(h => h.id === id ? { ...h, status: "returning" } : h), returnRequestItemId: null }));
+  }
+
+  goSignup() { this.setState({ tab: "signup", menuOpen: false, signupStage: "form", signupOtpMethod: "email", signupOtpCode: "", signupOcrShown: false, signupForm: { name: "", email: "", phone: "", password: "", accountType: "individual" } }); window.scrollTo({ top: 0 }); }
+  scanIdCard() { this.setState({ signupOcrShown: true }); }
+  openPhoneModal() { this.setState({ signupPhoneModalOpen: true }); }
+  closePhoneModal() { this.setState({ signupPhoneModalOpen: false }); }
+  simulatePhoneScan() { this.setState({ signupFaceVerified: true, signupPhoneModalOpen: false }); }
+  setSignupField(field, value) { this.setState(s => ({ signupForm: { ...s.signupForm, [field]: value } })); }
+  submitSignup() {
+    const f = this.state.signupForm;
+    if (!f.name.trim() || !f.email.trim() || !f.password.trim()) return;
+    this.setState({ signupStage: "otp", signupOtpMethod: f.email.trim() ? "email" : "phone", signupOtpCode: "" });
+  }
+  setOtpMethod(method) { this.setState({ signupOtpMethod: method, signupOtpCode: "" }); }
+  setOtpCode(value) { this.setState({ signupOtpCode: value }); }
+  backToSignupForm() { this.setState({ signupStage: "form" }); }
+  verifySignupOtp() {
+    if (!this.state.signupOtpCode.trim()) return;
+    this.setState({ signupStage: "done" });
+  }
+
+  toggleListingPause(id) {
+    this.setState(s => ({ myListings: s.myListings.map(l => l.id === id ? { ...l, status: l.status === "paused" ? "active" : "paused" } : l) }));
+  }
+  removeListing(id) {
+    this.setState(s => ({ myListings: s.myListings.filter(l => l.id !== id) }));
+  }
+  setOrderStatus(id, status) {
+    this.setState(s => ({ orders: s.orders.map(o => o.id === id ? { ...o, status } : o) }));
+  }
+  openShipModal(id) { this.setState({ shipModalOrderId: id }); }
+  closeShipModal() { this.setState({ shipModalOrderId: null }); }
+  confirmShipment() {
+    const id = this.state.shipModalOrderId;
+    if (!id) return;
+    this.setState(s => ({ orders: s.orders.map(o => o.id === id ? { ...o, status: "shipped" } : o), shipModalOrderId: null }));
+  }
+  openReturnModal(id) { this.setState({ returnModalOrderId: id }); }
+  closeReturnModal() { this.setState({ returnModalOrderId: null }); }
+  confirmReturnReceived() {
+    const id = this.state.returnModalOrderId;
+    if (!id) return;
+    this.setState(s => ({ orders: s.orders.map(o => o.id === id ? { ...o, status: "completed" } : o), returnModalOrderId: null }));
+  }
+
+  goListItem() { this.setState({ tab: "list", menuOpen: false, listSubmitted: false, listForm: { title: "", category: "", price: "", description: "", location: "" } }); window.scrollTo({ top: 0 }); }
+  togglePickupOption(id) {
+    this.setState(s => ({ pickupOptions: s.pickupOptions.map(o => o.id === id ? { ...o, selected: !o.selected } : o) }));
+  }
+  setPickupNewLabel(v) { this.setState({ pickupNewLabel: v }); }
+  addPickupOption() {
+    const label = this.state.pickupNewLabel.trim();
+    if (!label) return;
+    this.setState(s => ({
+      pickupOptions: [...s.pickupOptions, { id: `p-${Date.now()}`, label, selected: true }],
+      pickupNewLabel: ""
+    }));
+  }
+  removePickupOption(id) {
+    this.setState(s => ({ pickupOptions: s.pickupOptions.filter(o => o.id !== id) }));
+  }
+  setListField(field, value) { this.setState(s => ({ listForm: { ...s.listForm, [field]: value } })); }
+  submitListing() {
+    if (!this.state.listForm.title.trim()) return;
+    this.setState({ listSubmitted: true });
+  }
+
+  componentDidMount() {
+    this._cancelWindowTimer = setInterval(() => this.forceUpdate(), 1000);
+  }
+  formatCountdown(ms) {
+    const total = Math.max(0, Math.ceil(ms / 1000));
+    const m = Math.floor(total / 60);
+    const sec = total % 60;
+    return `${m}:${sec < 10 ? "0" : ""}${sec}`;
+  }
+  componentWillUnmount() {
+    if (this._cancelWindowTimer) clearInterval(this._cancelWindowTimer);
+  }
+
+  startAddCat() { this.setState({ catAdding: true, catNewName: "", catNewCount: "" }); }
+  cancelAddCat() { this.setState({ catAdding: false }); }
+  saveAddCat() {
+    const name = this.state.catNewName.trim();
+    if (!name) return;
+    const id = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || ("cat-" + Date.now());
+    const count = parseInt(this.state.catNewCount, 10) || 0;
+    this.setState(s => ({ categories: [...s.categories, { id, name, count }], catAdding: false }));
+  }
+  startEditCat(id, name, count) { this.setState({ catEditingId: id, catEditName: name, catEditCount: String(count) }); }
+  cancelEditCat() { this.setState({ catEditingId: null }); }
+  saveEditCat() {
+    const name = this.state.catEditName.trim();
+    if (!name) return;
+    const count = parseInt(this.state.catEditCount, 10) || 0;
+    this.setState(s => ({
+      categories: s.categories.map(c => c.id === s.catEditingId ? { ...c, name, count } : c),
+      catEditingId: null
+    }));
+  }
+  deleteCat(id) { this.setState(s => ({ categories: s.categories.filter(c => c.id !== id) })); }
+
+  setUserStatus(id, status) {
+    this.setState(s => ({ users: s.users.map(u => u.id === id ? { ...u, status } : u) }));
+  }
+  setSetting(field, value) { this.setState(s => ({ settings: { ...s.settings, [field]: value } })); }
+
+
+
+  buildAdmin(t) {
+    const s = this.state;
+    const rows = s.categories.map(c => {
+      const editing = s.catEditingId === c.id;
+      return {
+        editing, notEditing: !editing,
+        name: c.name, countLabel: `${c.count.toLocaleString("en-US")} ${t.itemsUnit}`,
+        editName: s.catEditName, editCount: s.catEditCount,
+        onEditName: (e) => this.setState({ catEditName: e.target.value }),
+        onEditCount: (e) => this.setState({ catEditCount: e.target.value }),
+        onEdit: () => this.startEditCat(c.id, c.name, c.count),
+        onSaveEdit: () => this.saveEditCat(),
+        onCancelEdit: () => this.cancelEditCat(),
+        onDelete: () => this.deleteCat(c.id)
+      };
+    });
+    return {
+      kicker: t.adminKicker, title: t.adminTitle, subtitle: t.adminSubtitle,
+      addLabel: t.addCategory, nameLabel: t.catName, itemsLabel: t.catItems, actionsLabel: t.catActions,
+      save: t.save, cancel: t.cancel,
+      adding: s.catAdding, newName: s.catNewName, newCount: s.catNewCount,
+      onNewName: (e) => this.setState({ catNewName: e.target.value }),
+      onNewCount: (e) => this.setState({ catNewCount: e.target.value }),
+      onStartAdd: () => this.startAddCat(),
+      onSaveAdd: () => this.saveAddCat(),
+      onCancelAdd: () => this.cancelAddCat(),
+      rows,
+      sidebarWidth: s.adminSidebarOpen ? "232px" : "64px",
+      collapseIcon: s.adminSidebarOpen ? "M15 18l-6-6 6-6" : "M9 6l6 6-6 6",
+      onToggleSidebar: () => this.setState(st => ({ adminSidebarOpen: !st.adminSidebarOpen })),
+      navDashboard: t.navDashboard, navMasterGroup: t.navMasterGroup, navCategoryMaster: t.navCategoryMaster,
+      navUsers: t.navUsers,
+      onGoDashboard: () => this.setState({ adminSection: "dashboard" }),
+      onGoCategories: () => this.setState({ adminSection: "categories" }),
+      onGoUsers: () => this.setState({ adminSection: "users" }),
+      onGoProducts: () => this.setState({ adminSection: "products" }),
+      navProducts: t.navProducts,
+      isDashboard: s.adminSection === "dashboard",
+      isCategories: s.adminSection === "categories",
+      isUsers: s.adminSection === "users",
+      isProducts: s.adminSection === "products",
+      dashNavBg: s.adminSection === "dashboard" ? "#2f6feb" : "transparent",
+      dashNavColor: s.adminSection === "dashboard" ? "#fff" : "rgba(255,255,255,.55)",
+      catNavBg: s.adminSection === "categories" ? "#2f6feb" : "transparent",
+      catNavColor: s.adminSection === "categories" ? "#fff" : "rgba(255,255,255,.55)",
+      userNavBg: s.adminSection === "users" ? "#2f6feb" : "transparent",
+      userNavColor: s.adminSection === "users" ? "#fff" : "rgba(255,255,255,.55)",
+      productNavBg: s.adminSection === "products" ? "#2f6feb" : "transparent",
+      productNavColor: s.adminSection === "products" ? "#fff" : "rgba(255,255,255,.55)",
+      onGoPayments: () => this.setState({ adminSection: "payments" }),
+      navPayments: t.navPayments,
+      isPayments: s.adminSection === "payments",
+      paymentsNavBg: s.adminSection === "payments" ? "#2f6feb" : "transparent",
+      paymentsNavColor: s.adminSection === "payments" ? "#fff" : "rgba(255,255,255,.55)",
+      onGoSettings: () => this.setState({ adminSection: "settings" }),
+      navSettings: t.navSettings,
+      isSettings: s.adminSection === "settings",
+      settingsNavBg: s.adminSection === "settings" ? "#2f6feb" : "transparent",
+      settingsNavColor: s.adminSection === "settings" ? "#fff" : "rgba(255,255,255,.55)",
+      disabledNav: [],
+      exitLabel: t.exitLabel, userName: t.adminUserName, userRole: t.adminUserRole,
+      onExit: () => this.setState({ isAdmin: false, tab: "home" }),
+      users: this.buildUsers(t),
+      products: this.buildAdminProducts(t),
+      dashboard: this.buildAdminDashboard(t),
+      settings: this.buildAdminSettings(t),
+      payments: this.buildAdminPayments(t)
+    };
+  }
+
+  buildAdminPayments(t) {
+    const s = this.state;
+    const allProducts = this.data();
+    const findProduct = (id) => allProducts.find(p => p.id === id) || { title: "—" };
+    const parseAmt = (str) => parseInt(String(str).replace(/[^\d]/g, ""), 10) || 0;
+    const feeBadge = {
+      paid:    { bg: "rgba(23,138,90,.1)",  color: "#178a5a", label: t.payPaid },
+      pending: { bg: "rgba(201,152,66,.12)", color: "#a8752f", label: t.payPending },
+      refunded:{ bg: "rgba(201,100,66,.1)", color: "#c96442", label: t.payRefunded }
+    };
+    const payStatusMap = { pending: "pending", approved: "pending", shipped: "pending", completed: "paid", declined: "refunded" };
+    let totalRevenue = 0, totalFees = 0, totalPending = 0;
+    const rows = s.orders.map(o => {
+      const p = findProduct(o.productId);
+      const amount = parseAmt(o.total);
+      const fee = Math.round(amount * (parseInt(s.settings.serviceFeePct, 10) || 0) / 100);
+      const payStatus = payStatusMap[o.status] || "pending";
+      const b = feeBadge[payStatus];
+      if (payStatus === "paid") { totalRevenue += amount; totalFees += fee; }
+      if (payStatus === "pending") totalPending += amount;
+      const fmt = (n) => `฿${n.toLocaleString("en-US")}`;
+      return {
+        id: `pay-${o.id}`, title: p.title, renter: o.renter,
+        amount: fmt(amount), fee: fmt(fee),
+        statusLabel: b.label, statusBg: b.bg, statusColor: b.color
+      };
+    });
+    const fmt = (n) => `฿${n.toLocaleString("en-US")}`;
+    return {
+      kicker: t.paymentsKicker, title: t.paymentsTitle, subtitle: t.paymentsSubtitle,
+      stats: [
+        { label: t.paySettled, value: fmt(totalRevenue) },
+        { label: t.payFees, value: fmt(totalFees) },
+        { label: t.payPendingTotal, value: fmt(totalPending) }
+      ],
+      colTxn: t.colTxn, colRenter: t.colRenter, colAmount: t.colAmount, colFee: t.colFee, colPayStatus: t.colPayStatus,
+      rows, hasRows: rows.length > 0, hasNoRows: rows.length === 0, emptyLabel: t.emptyOrders
+    };
+  }
+
+  buildAdminSettings(t) {
+    const s = this.state.settings;
+    return {
+      kicker: t.settingsKicker, title: t.settingsTitle, subtitle: t.settingsSubtitle,
+      platformNameLabel: t.settingsPlatformName, currencyLabel: t.settingsCurrency,
+      feeLabel: t.settingsFee, emailLabel: t.settingsEmail,
+      idVerifyLabel: t.settingsIdVerify, maintenanceLabel: t.settingsMaintenance,
+      platformNameVal: s.platformName, onPlatformName: (e) => this.setSetting("platformName", e.target.value),
+      currencyVal: s.currency, onCurrency: (e) => this.setSetting("currency", e.target.value),
+      feeVal: s.serviceFeePct, onFee: (e) => this.setSetting("serviceFeePct", e.target.value),
+      emailVal: s.supportEmail, onEmail: (e) => this.setSetting("supportEmail", e.target.value),
+      idVerifyOn: s.requireIdVerification, onToggleIdVerify: () => this.setSetting("requireIdVerification", !s.requireIdVerification),
+      maintenanceOn: s.maintenanceMode, onToggleMaintenance: () => this.setSetting("maintenanceMode", !s.maintenanceMode),
+      idVerifyBg: s.requireIdVerification ? "#0a0a0a" : "rgba(10,10,10,.15)",
+      maintenanceBg: s.maintenanceMode ? "#0a0a0a" : "rgba(10,10,10,.15)",
+      idVerifyKnob: s.requireIdVerification ? "22px" : "2px",
+      maintenanceKnob: s.maintenanceMode ? "22px" : "2px",
+      saveLabel: t.save
+    };
+  }
+
+  buildAdminDashboard(t) {
+    const s = this.state;
+    const allProducts = this.data();
+    const totalProducts = allProducts.length;
+    const totalCategories = s.categories.length;
+    const totalUsers = s.users.length;
+    const pendingUsers = s.users.filter(u => u.status === "pending").length;
+    const totalListings = s.myListings.length;
+    const totalOrders = s.orders.length;
+    const pendingOrders = s.orders.filter(o => o.status === "pending").length;
+    const parseAmt = (str) => parseInt(String(str).replace(/[^\d]/g, ""), 10) || 0;
+    const revenue = s.orders.filter(o => o.status !== "declined").reduce((sum, o) => sum + parseAmt(o.total), 0);
+    const fmt = (n) => `฿${n.toLocaleString("en-US")}`;
+    const cats = s.categories.map(c => ({
+      name: c.name, count: c.count,
+      pct: Math.round((c.count / s.categories.reduce((a, x) => a + x.count, 0)) * 100)
+    })).sort((a, b) => b.count - a.count);
+    return {
+      kicker: t.dashKicker, title: t.dashTitle, subtitle: t.dashSubtitle,
+      stats: [
+        { label: t.dashTotalProducts, value: String(totalProducts) },
+        { label: t.dashTotalUsers, value: String(totalUsers), sub: pendingUsers ? t.dashPendingSub.replace("{n}", String(pendingUsers)) : "" },
+        { label: t.dashTotalOrders, value: String(totalOrders), sub: pendingOrders ? t.dashPendingSub.replace("{n}", String(pendingOrders)) : "" },
+        { label: t.dashRevenue, value: fmt(revenue) },
+        { label: t.dashTotalCategories, value: String(totalCategories) },
+        { label: t.dashTotalListings, value: String(totalListings) }
+      ],
+      catBreakdownTitle: t.dashCatBreakdown,
+      cats
+    };
+  }
+
+  buildAdminProducts(t) {
+    const all = this.data();
+    const catName = (id) => {
+      const c = this.state.categories.find(c => c.id === id);
+      return c ? c.name : id;
+    };
+    const sellers = this.state.users.length ? this.state.users : [{ name: "—" }];
+    const rows = all.map((p, i) => ({
+      id: `adp-${p.id}`, img: p.img, title: p.title, category: catName(p.cat),
+      price: p.price, rating: p.rating, location: p.location,
+      seller: sellers[i % sellers.length].name
+    }));
+    return {
+      kicker: t.productsKicker, title: t.productsTitle, subtitle: t.productsSubtitle,
+      colProduct: t.colProduct, colCategory: t.colCategory, colPrice: t.colPrice, colRating: t.colRating, colLocation: t.colLocation,
+      colSeller: t.colSeller,
+      rows, countLabel: t.productsCount.replace("{n}", String(rows.length))
+    };
+  }
+
+  buildListings(t) {
+    const s = this.state;
+    const allProducts = this.data();
+    const findProduct = (id) => allProducts.find(p => p.id === id) || { title: "—", img: "", price: "" };
+    const badge = {
+      active:        { bg: "rgba(23,138,90,.1)",  color: "#178a5a", label: t.listingActive },
+      under_review:  { bg: "rgba(201,152,66,.12)", color: "#a8752f", label: t.listingReview },
+      paused:        { bg: "rgba(10,10,10,.07)",  color: "rgba(10,10,10,.55)", label: t.listingPaused }
+    };
+    const rows = s.myListings.map(l => {
+      const p = findProduct(l.productId);
+      const b = badge[l.status] || badge.active;
+      return {
+        id: `ml-${l.id}`, title: p.title, img: p.img, priceLabel: `${p.price}${t.perDay}`,
+        statusLabel: b.label, statusBg: b.bg, statusColor: b.color,
+        isPaused: l.status === "paused",
+        pauseToggleLabel: l.status === "paused" ? t.listingResume : t.listingPause,
+        onTogglePause: () => this.toggleListingPause(l.id),
+        onRemove: () => this.removeListing(l.id)
+      };
+    });
+    const orderBadge = {
+      pending:  { bg: "rgba(10,10,10,.07)",  color: "rgba(10,10,10,.55)", label: t.stPending },
+      approved: { bg: "rgba(23,138,90,.1)",  color: "#178a5a", label: t.stApproved },
+      shipped:  { bg: "rgba(47,111,235,.1)", color: "#2f6feb", label: t.stShipped },
+      completed:{ bg: "rgba(23,138,90,.1)",  color: "#178a5a", label: t.stReturned },
+      declined: { bg: "rgba(201,100,66,.1)", color: "#c96442", label: t.stDeclined }
+    };
+    const orders = s.orders.map(o => {
+      const p = findProduct(o.productId);
+      const b = orderBadge[o.status] || orderBadge.pending;
+      return {
+        id: `ord-${o.id}`, title: p.title, img: p.img, renter: o.renter,
+        dates: `${o.start} → ${o.end}`, total: o.total,
+        statusLabel: b.label, statusBg: b.bg, statusColor: b.color,
+        isPending: o.status === "pending",
+        isApproved: o.status === "approved",
+        contactLabel: t.orderContactLabel,
+        phoneLabel: t.orderPhoneLabel, lineLabel: t.orderLineLabel,
+        phone: o.phone, line: o.line,
+        isShipped: o.status === "shipped",
+        confirmShipLabel: t.confirmShipment,
+        confirmReturnLabel: t.confirmReturnReceived,
+        onOpenShip: () => this.openShipModal(o.id),
+        onOpenReturn: () => this.openReturnModal(o.id),
+        onApprove: () => this.setOrderStatus(o.id, "approved"),
+        onDecline: () => this.setOrderStatus(o.id, "declined")
+      };
+    });
+    const shipOrder = s.shipModalOrderId ? s.orders.find(o => o.id === s.shipModalOrderId) : null;
+    const shipProduct = shipOrder ? findProduct(shipOrder.productId) : null;
+    const returnOrder = s.returnModalOrderId ? s.orders.find(o => o.id === s.returnModalOrderId) : null;
+    const returnProduct = returnOrder ? findProduct(returnOrder.productId) : null;
+
+    return {
+      kicker: t.listingsKicker, title: t.listingsTitle, subtitle: t.listingsSubtitle,
+      colItem: t.listingColItem, colPrice: t.listingColPrice, colStatus: t.listingColStatus, colActions: t.listingColActions,
+      rows, hasRows: rows.length > 0, hasNoRows: rows.length === 0, emptyLabel: t.listingsEmpty,
+      addLabel: t.listItem, onAdd: () => this.goListItem(),
+      itemsTabLabel: t.listingsItemsTab, ordersTabLabel: t.listingsOrdersTab,
+      isItems: s.listingsTab === "items", isOrders: s.listingsTab === "orders",
+      onGoItems: () => this.setState({ listingsTab: "items" }),
+      onGoOrders: () => this.setState({ listingsTab: "orders" }),
+      itemsTabBg: s.listingsTab === "items" ? "#0a0a0a" : "transparent",
+      itemsTabColor: s.listingsTab === "items" ? "#fff" : "rgba(10,10,10,.6)",
+      ordersTabBg: s.listingsTab === "orders" ? "#0a0a0a" : "transparent",
+      ordersTabColor: s.listingsTab === "orders" ? "#fff" : "rgba(10,10,10,.6)",
+      colRenter: t.colRenter, colDates: t.colDates, colTotal: t.colTotal,
+      approveReq: t.approveReq, declineReq: t.declineReq,
+      orders, hasOrders: orders.length > 0, hasNoOrders: orders.length === 0, emptyOrders: t.emptyOrders,
+      shipModalOpen: !!shipOrder,
+      shipModalTitle: t.shipModalTitle,
+      shipModalBody: shipOrder ? t.shipModalBody.replace("{item}", shipProduct.title) : "",
+      shipPhotoLabel: t.shipPhotoLabel,
+      shipConfirmLabel: t.shipConfirmLabel,
+      onCloseShip: () => this.closeShipModal(),
+      onConfirmShip: () => this.confirmShipment(),
+      returnModalOpen: !!returnOrder,
+      returnModalTitle: t.returnModalTitle,
+      returnModalBody: returnOrder ? t.returnModalBody.replace("{item}", returnProduct.title) : "",
+      returnPhotoLabel: t.returnPhotoLabel,
+      returnConfirmLabel: t.returnConfirmLabel,
+      onCloseReturn: () => this.closeReturnModal(),
+      onConfirmReturn: () => this.confirmReturnReceived(),
+      stopClick: (e) => e.stopPropagation()
+    };
+  }
+
+  buildSignup(t) {
+    const s = this.state;
+    const f = s.signupForm;
+    const isEmail = s.signupOtpMethod === "email";
+    const maskEmail = (v) => { const [u, d] = (v || "").split("@"); if (!d) return v || ""; return `${u.slice(0,2)}***@${d}`; };
+    const maskPhone = (v) => (v || "").length > 4 ? `${v.slice(0,3)}***${v.slice(-2)}` : (v || "");
+    return {
+      stage: s.signupStage,
+      isForm: s.signupStage === "form", isOtp: s.signupStage === "otp", isDone: s.signupStage === "done",
+      kicker: t.signupKicker, title: t.signupTitle, subtitle: t.signupSubtitle,
+      nameLabel: t.signupNameLabel, emailLabel: t.signupEmailLabel,
+      phoneLabel: t.signupPhoneLabel, passwordLabel: t.signupPasswordLabel,
+      nameVal: f.name, onName: (e) => this.setSignupField("name", e.target.value),
+      emailVal: f.email, onEmail: (e) => this.setSignupField("email", e.target.value),
+      phoneVal: f.phone, onPhone: (e) => this.setSignupField("phone", e.target.value),
+      passwordVal: f.password, onPassword: (e) => this.setSignupField("password", e.target.value),
+      idCardLabel: t.signupIdCardLabel, idCardHint: t.signupIdCardHint,
+      scanIdLabel: t.signupScanId, onScanId: () => this.scanIdCard(),
+      ocrShown: s.signupOcrShown, ocrDetectedLabel: t.signupOcrDetected,
+      ocrNameLabel: t.signupOcrName, ocrIdLabel: t.signupOcrId, ocrDobLabel: t.signupOcrDob, ocrExpiryLabel: t.signupOcrExpiry,
+      ocrName: f.name.trim() || "SOMCHAI JAIDEE", ocrId: "1-2345-67890-12-3", ocrDob: "12 Mar 1994", ocrExpiry: "11 Mar 2032",
+      faceVerified: s.signupFaceVerified, faceNotVerified: !s.signupFaceVerified,
+      verifyFaceLabel: t.signupVerifyFace, faceVerifiedLabel: t.signupFaceVerified,
+      onOpenPhoneModal: () => this.openPhoneModal(),
+      phoneModalOpen: s.signupPhoneModalOpen,
+      phoneModalTitle: t.signupPhoneModalTitle, phoneModalBody: t.signupPhoneModalBody,
+      phoneModalWaiting: t.signupPhoneModalWaiting, phoneModalSimulate: t.signupPhoneModalSimulate,
+      onClosePhoneModal: () => this.closePhoneModal(), onSimulateScan: () => this.simulatePhoneScan(),
+      stopClick: (e) => e.stopPropagation(),
+      accountTypeLabel: t.signupAccountType,
+      isShopType: f.accountType === "shop", isIndividualType: f.accountType !== "shop",
+      shopTabBg: f.accountType === "shop" ? "#0a0a0a" : "transparent", shopTabColor: f.accountType === "shop" ? "#fff" : "rgba(10,10,10,.6)",
+      individualTabBg: f.accountType !== "shop" ? "#0a0a0a" : "transparent", individualTabColor: f.accountType !== "shop" ? "#fff" : "rgba(10,10,10,.6)",
+      onSelectShop: () => this.setSignupField("accountType", "shop"),
+      onSelectIndividual: () => this.setSignupField("accountType", "individual"),
+      typeShopLabel: t.typeShop, typeIndividualLabel: t.typeIndividual,
+      submitLabel: t.signupSubmit, onSubmit: () => this.submitSignup(),
+      hasPhone: !!f.phone.trim(),
+      otpKicker: t.otpKicker, otpTitle: t.otpTitle,
+      otpMethodEmailLabel: t.otpMethodEmail, otpMethodPhoneLabel: t.otpMethodPhone,
+      isEmailMethod: isEmail, isPhoneMethod: !isEmail,
+      onSelectEmail: () => this.setOtpMethod("email"), onSelectPhone: () => this.setOtpMethod("phone"),
+      emailTabBg: isEmail ? "#0a0a0a" : "transparent", emailTabColor: isEmail ? "#fff" : "rgba(10,10,10,.6)",
+      phoneTabBg: !isEmail ? "#0a0a0a" : "transparent", phoneTabColor: !isEmail ? "#fff" : "rgba(10,10,10,.6)",
+      otpSentTo: isEmail ? t.otpSentToEmail(maskEmail(f.email)) : t.otpSentToPhone(maskPhone(f.phone)),
+      otpCodeVal: s.signupOtpCode, onOtpCode: (e) => this.setOtpCode(e.target.value),
+      otpCodeLabel: t.otpCodeLabel, otpVerifyLabel: t.otpVerify, otpBackLabel: t.otpBack,
+      onOtpBack: () => this.backToSignupForm(), onOtpVerify: () => this.verifySignupOtp(),
+      successTitle: t.signupSuccessTitle, successBody: t.signupSuccessBody,
+      backHomeLabel: t.listBackHome, onBackHome: () => { this.setState({ tab: "home" }); window.scrollTo({ top: 0 }); }
+    };
+  }
+
+  buildListForm(t) {
+    const s = this.state;
+    const f = s.listForm;
+    const pickupOptions = s.pickupOptions.map(o => ({
+      id: o.id, label: o.label, selected: o.selected,
+      checkBg: o.selected ? "#0a0a0a" : "#fff",
+      onToggle: () => this.togglePickupOption(o.id),
+      onRemove: () => this.removePickupOption(o.id)
+    }));
+    return {
+      submitted: s.listSubmitted, notSubmitted: !s.listSubmitted,
+      kicker: t.listKicker, title: t.listTitle, subtitle: t.listSubtitle,
+      pickupLabel: t.listPickupLabel, pickupOptions,
+      pickupNewVal: s.pickupNewLabel, pickupPlaceholder: t.listPickupPlaceholder,
+      onPickupNewChange: (e) => this.setPickupNewLabel(e.target.value),
+      onPickupAdd: () => this.addPickupOption(),
+      pickupAddLabel: t.listPickupAdd,
+      fieldTitleLabel: t.listFieldTitle, fieldCategoryLabel: t.listFieldCategory,
+      fieldPriceLabel: t.listFieldPrice, fieldDescLabel: t.listFieldDesc,
+      mapLabel: t.listMapLabel, mapPlaceholder: t.listMapPlaceholder, mapPreviewLabel: t.listMapPreview,
+      locationVal: f.location, onLocation: (e) => this.setListField("location", e.target.value),
+      titleVal: f.title, onTitle: (e) => this.setListField("title", e.target.value),
+      categoryVal: f.category, onCategory: (e) => this.setListField("category", e.target.value),
+      priceVal: f.price, onPrice: (e) => this.setListField("price", e.target.value),
+      descVal: f.description, onDesc: (e) => this.setListField("description", e.target.value),
+      categoryOptions: this.state.categories.map(c => ({ value: c.id, label: c.name })),
+      photoLabel: t.listPhotoLabel,
+      submitLabel: t.listSubmit, onSubmit: () => this.submitListing(),
+      successTitle: t.listSuccessTitle, successBody: t.listSuccessBody,
+      backHomeLabel: t.listBackHome, onBackHome: () => { this.setState({ tab: "home" }); window.scrollTo({ top: 0 }); },
+      listAnotherLabel: t.listAnother, onListAnother: () => this.goListItem()
+    };
+  }
+
+  buildRentals(t) {
+    const s = this.state;
+    const allProducts = this.data();
+    const findProduct = (id) => allProducts.find(p => p.id === id) || { title: "—", img: "" };
+
+    const histBadge = {
+      pending:   { bg: "rgba(201,152,66,.12)", color: "#a8752f", label: t.stAwaitingConfirm },
+      confirmed: { bg: "rgba(47,111,235,.1)", color: "#2f6feb", label: t.stAwaitingPickup },
+      returning: { bg: "rgba(201,152,66,.12)", color: "#a8752f", label: t.stReturnPending },
+      active:    { bg: "rgba(47,111,235,.1)", color: "#2f6feb", label: t.stActive },
+      completed: { bg: "rgba(23,138,90,.1)",  color: "#178a5a", label: t.stCompleted },
+      cancelled: { bg: "rgba(201,100,66,.1)", color: "#c96442", label: t.stCancelled }
+    };
+    const now = Date.now();
+    const history = s.rentalHistory.map(h => {
+      const p = findProduct(h.productId);
+      const b = histBadge[h.status] || histBadge.pending;
+      const canCancel = h.status === "pending" && h.requestedAt && (now - h.requestedAt) < 10 * 60 * 1000;
+      const cancelCountdown = canCancel ? t.cancelWindowLabel(this.formatCountdown(10 * 60 * 1000 - (now - h.requestedAt))) : "";
+      return {
+        id: `rh-${h.id}`, title: p.title, img: p.img,
+        dates: `${h.start} → ${h.end}`, total: h.total,
+        statusLabel: b.label, statusBg: b.bg, statusColor: b.color,
+        isPending: h.status === "pending",
+        isActive: h.status === "active",
+        canCancel, cancelCountdown, cancelLabel: t.cancelRequest,
+        confirmLabel: t.confirmRequest,
+        returnItemLabel: t.returnItemLabel,
+        onCancel: () => this.askCancelHistoryItem(h.id),
+        onCancelStop: (e) => { e.stopPropagation(); this.askCancelHistoryItem(h.id); },
+        onConfirm: () => this.confirmHistoryItem(h.id),
+        onOpenReturnStop: (e) => { e.stopPropagation(); this.openReturnRequest(h.id); },
+        onOpen: () => this.openDetail(h.productId)
+      };
+    });
+    const returnItem = s.returnRequestItemId ? s.rentalHistory.find(h => h.id === s.returnRequestItemId) : null;
+    const returnItemProduct = returnItem ? findProduct(returnItem.productId) : null;
+
+    return {
+      kicker: t.rentalsKicker, title: t.rentalsTitle, subtitle: t.rentalsSubtitle,
+      colDates: t.colDates, colTotal: t.colTotal, colStatus: t.colStatus,
+      history, hasHistory: history.length > 0, hasNoHistory: history.length === 0, emptyHistory: t.emptyHistory,
+      confirmDialogOpen: !!s.cancelConfirmId,
+      confirmDialogTitle: t.cancelConfirmTitle, confirmDialogBody: t.cancelConfirmBody,
+      confirmDialogKeep: t.cancelConfirmKeep, confirmDialogYes: t.cancelConfirmYes,
+      onDismissConfirm: () => this.dismissCancelConfirm(),
+      onConfirmCancel: () => this.cancelHistoryItem(s.cancelConfirmId),
+      returnRequestOpen: !!returnItem,
+      returnRequestTitle: t.returnRequestTitle,
+      returnRequestBody: returnItem ? t.returnRequestBody.replace("{item}", returnItemProduct.title) : "",
+      returnRequestPhotoLabel: t.returnRequestPhotoLabel,
+      returnRequestSubmit: t.returnRequestSubmit,
+      onCloseReturnRequest: () => this.closeReturnRequest(),
+      onSubmitReturnRequest: () => this.submitReturnRequest(),
+      stopClick: (e) => e.stopPropagation()
+    };
+  }
+
+  buildUsers(t) {
+    const s = this.state;
+    const badge = {
+      pending:  { bg: "rgba(10,10,10,.07)",  color: "rgba(10,10,10,.55)", label: t.statusPending },
+      approved: { bg: "rgba(23,138,90,.1)",  color: "#178a5a", label: t.statusApproved },
+      rejected: { bg: "rgba(201,100,66,.1)", color: "#c96442", label: t.statusRejected }
+    };
+    const rows = s.users.map(u => {
+      const b = badge[u.status] || badge.pending;
+      return {
+        name: u.name, email: u.email, joined: u.joined,
+        typeLabel: u.type === "shop" ? t.typeShop : t.typeIndividual,
+        statusLabel: b.label, statusBg: b.bg, statusColor: b.color,
+        isPending: u.status === "pending",
+        onApprove: () => this.setUserStatus(u.id, "approved"),
+        onReject: () => this.setUserStatus(u.id, "rejected")
+      };
+    });
+    return {
+      kicker: t.usersKicker, title: t.usersTitle, subtitle: t.usersSubtitle,
+      colName: t.colName, colEmail: t.colEmail, colJoined: t.colJoined, colType: t.colType, colStatus: t.colStatus, colActions: t.colActions,
+      approve: t.approve, reject: t.reject,
+      rows
+    };
+  }
+  gallerySize(cat) { return (this.galleryPool()[cat] || this.galleryPool().cameras).length; }
+  prevImg(cat) { const n = this.gallerySize(cat); this.setState(s => ({ galleryIndex: (s.galleryIndex - 1 + n) % n })); }
+  nextImg(cat) { const n = this.gallerySize(cat); this.setState(s => ({ galleryIndex: (s.galleryIndex + 1) % n })); }
+
+  dict() {
+    return {
+      en: {
+        announce: "Every rental is ID-verified and damage-protected — borrow with confidence.",
+        howItWorks: "How it works", listItem: "List your item",
+        listKicker: "New listing", listTitle: "List your item", listSubtitle: "Add a few details and start earning from things you already own.",
+        listFieldTitle: "Item title", listFieldCategory: "Category", listFieldPrice: "Price per day", listFieldDesc: "Description",
+        listMapLabel: "Item location", listMapPlaceholder: "e.g. Sukhumvit Soi 24, Bangkok", listMapPreview: "Map preview",
+        listPhotoLabel: "Photo", listSubmit: "Submit listing",
+        listPickupLabel: "Pickup locations", listPickupPlaceholder: "Add another location…", listPickupAdd: "Add",
+        listSuccessTitle: "Listing submitted!", listSuccessBody: "Your item is now under review. We'll notify you once it's live on LOOP.",
+        listBackHome: "Back to home", listAnother: "List another item",
+        signupLabel: "Sign up", signupKicker: "Create account", signupTitle: "Sign up for LOOP", signupSubtitle: "Join to start renting and lending items near you.",
+        signupNameLabel: "Username", signupEmailLabel: "Email", signupPhoneLabel: "Phone", signupPasswordLabel: "Password",
+        signupSubmit: "Create account",
+        signupIdCardLabel: "National ID card", signupIdCardHint: "Used to verify your identity for secure rentals. Not shared with other users.",
+        signupScanId: "Extract info from photo (demo)", signupOcrDetected: "Detected from ID card",
+        signupOcrName: "Name", signupOcrId: "ID number", signupOcrDob: "Date of birth", signupOcrExpiry: "Expiry date",
+        signupVerifyFace: "Verify face via phone", signupFaceVerified: "Face verified",
+        signupPhoneModalTitle: "Scan with your phone", signupPhoneModalBody: "Open your phone's camera and scan this code to take a live selfie for face verification.",
+        signupPhoneModalWaiting: "Waiting for your phone…", signupPhoneModalSimulate: "Simulate scan complete (demo)",
+        otpKicker: "Verify it's you", otpTitle: "Enter verification code",
+        otpMethodEmail: "Email", otpMethodPhone: "Phone",
+        otpSentToEmail: (m) => `We sent a 6-digit code to ${m}`,
+        otpSentToPhone: (m) => `We sent a 6-digit code to ${m}`,
+        otpCodeLabel: "Verification code", otpVerify: "Verify & create account", otpBack: "Back",
+        signupAccountType: "Account type",
+        signupSuccessTitle: "Account created!", signupSuccessBody: "Welcome to LOOP. You can now start browsing or list your first item.",
+        searchPh: "Search cameras, tents, dresses, drills…",
+        searchLabel: "Find your next rental", chipCameras: "Cameras", chipTents: "Tents", chipDresses: "Dresses", chipDrills: "Drills",
+        heroKicker: "Peer-to-peer rentals",
+        heroT1: "Rent anything", heroT2: "from people", heroT3: "near you.",
+        heroSub: "Borrow the gear you need for a day, a weekend, or a trip — and earn from the things you already own.",
+        heroCta1: "Start browsing", heroCta2: "List an item →",
+        stat1: "items to rent", stat2: "avg. rating", stat3: "cities",
+        viewAll: "View all →", perDay: "/ day", reviews: "reviews", compareLabel: "Compare similar items",
+        noMatch: "No matches", noMatchSub: "Try a different search or category.",
+        browseTitle: "Browse by category", items: "items",
+        howKicker: "How it works", howTitle: "Three steps between you and almost anything.",
+        trustTitle: "Trusted by the community", trustAvg: "average across 8,200 rentals",
+        ctaTitle: "Got things gathering dust?",
+        ctaBody: "List them in minutes and earn while they wait. You set the price, the dates, and the deposit.",
+        ctaBtn: "List your first item",
+        footTagline: "The peer-to-peer marketplace for renting almost anything.",
+        footExplore: "Explore", footCompany: "Company", footApp: "Get the app", footHelp: "Help center",
+        switchToAdmin: "Switch to admin", switchToUser: "Switch to user account",
+        myRentals: "My rentals", myListings: "My listings",
+        listingsKicker: "Your listings", listingsTitle: "My listings", listingsSubtitle: "Manage the items you've listed for rent.",
+        listingColItem: "Item", listingColPrice: "Price", listingColStatus: "Status", listingColActions: "Actions",
+        listingActive: "Active", listingReview: "Under review", listingPaused: "Paused",
+        listingPause: "Pause", listingResume: "Resume", listingsEmpty: "You haven't listed anything yet.",
+        listingsItemsTab: "Listings", listingsOrdersTab: "Orders",
+        colRenter: "Renter", colDates: "Dates", colTotal: "Total",
+        approveReq: "Approve", declineReq: "Decline",
+        stPending: "Pending", stApproved: "Awaiting shipment", stDeclined: "Declined",
+        emptyOrders: "No orders yet.",
+        orderContactLabel: "Renter contact", orderPhoneLabel: "Phone", orderLineLabel: "LINE ID",
+        stShipped: "Shipped", confirmShipment: "Confirm shipment",
+        shipModalTitle: "Confirm shipment", shipModalBody: "Take a photo of \"{item}\" as proof of condition before shipping.",
+        shipPhotoLabel: "Shipment photo", shipConfirmLabel: "Confirm shipment",
+        stReturned: "Returned", confirmReturnReceived: "Confirm return received",
+        returnModalTitle: "Confirm return received", returnModalBody: "Take a photo of \"{item}\" to record its condition on return.",
+        returnPhotoLabel: "Return photo", returnConfirmLabel: "Confirm return received",
+        rentalsKicker: "Your rentals", rentalsTitle: "My rentals", rentalsSubtitle: "Track the items you've rented and their status.",
+        colDates: "Dates", colTotal: "Total", colStatus: "Status",
+        stPending: "Pending", stCompleted: "Completed", stActive: "Active", stCancelled: "Cancelled",
+        stAwaitingPickup: "Awaiting pickup", stAwaitingConfirm: "Awaiting confirmation",
+        stReturnPending: "Return submitted", returnItemLabel: "Return item",
+        returnRequestTitle: "Return item", returnRequestBody: "Take a photo of \"{item}\" showing its condition before returning to the owner.",
+        returnRequestPhotoLabel: "Return photo", returnRequestSubmit: "Submit return",
+        emptyHistory: "No rental history yet.",
+        adminNavLabel: "Admin panel",
+        adminKicker: "Admin", adminTitle: "Category master",
+        adminSubtitle: "Manage the categories shown across LOOP's home and shop pages.",
+        addCategory: "+ Add category", catName: "Category name", catItems: "Items", catActions: "Actions",
+        save: "Save", cancel: "Cancel", itemsUnit: "items",
+        navDashboard: "Dashboard", navMasterGroup: "Master data", navCategoryMaster: "Categories",
+        navProducts: "Products", navUsers: "Users", navSettings: "Settings",
+        dashKicker: "Admin", dashTitle: "Dashboard", dashSubtitle: "A quick overview of what's happening on LOOP.",
+        dashTotalProducts: "Total products", dashTotalUsers: "Total users", dashTotalOrders: "Total orders",
+        dashRevenue: "Gross rental value", dashTotalCategories: "Categories", dashTotalListings: "Active listings",
+        dashPendingSub: "{n} pending", dashCatBreakdown: "Products by category",
+        settingsKicker: "Admin", settingsTitle: "Settings", settingsSubtitle: "General platform configuration for LOOP.",
+        settingsPlatformName: "Platform name", settingsCurrency: "Currency", settingsFee: "Service fee (%)", settingsEmail: "Support email",
+        settingsIdVerify: "Require ID verification to sign up", settingsMaintenance: "Maintenance mode",
+        navPayments: "Payments",
+        paymentsKicker: "Admin", paymentsTitle: "Payments", paymentsSubtitle: "Transactions and payouts across LOOP rentals.",
+        paySettled: "Settled revenue", payFees: "Service fees collected", payPendingTotal: "Pending amount",
+        colTxn: "Item", colAmount: "Amount", colFee: "Fee", colPayStatus: "Payment status",
+        payPaid: "Paid", payPending: "Pending", payRefunded: "Refunded",
+        productsKicker: "Admin", productsTitle: "Products", productsSubtitle: "All items currently listed for rent across LOOP.",
+        colProduct: "Product", colCategory: "Category", colPrice: "Price", colRating: "Rating", colLocation: "Location", colSeller: "Seller",
+        productsCount: "{n} products",
+        exitLabel: "Exit admin", adminUserName: "Admin", adminUserRole: "Administrator",
+        usersKicker: "Admin", usersTitle: "Users", usersSubtitle: "Review new signups and manage access to LOOP.",
+        colName: "Name", colEmail: "Email", colJoined: "Joined", colType: "Type", colStatus: "Status", colActions: "Actions",
+        typeShop: "Shop", typeIndividual: "Individual",
+        statusPending: "Pending", statusApproved: "Approved", statusRejected: "Rejected",
+        approve: "Approve", reject: "Reject",
+        checkoutTitle: "Confirm your rental", checkoutBack: "Back",
+        checkoutPickupLabel: "Pickup location", checkoutNoteLabel: "Note to owner", checkoutNotePlaceholder: "Anything the owner should know? (optional)",
+        checkoutContactHeading: "Your contact info", checkoutPhoneLabel: "Phone", checkoutPhonePlaceholder: "081-234-5678",
+        checkoutLineLabel: "LINE ID", checkoutLinePlaceholder: "your.line.id",
+        startLabel: "Start date", endLabel: "End date",
+        rateLine: (n, rate) => `${rate} × ${n} ${n === 1 ? "day" : "days"}`,
+        serviceLabel: "Service fee", depositLabel: "Refundable deposit", totalLabel: "Due today",
+        depositNote: "The deposit is fully refundable and released within 3 days after the item is returned in its original condition.",
+        confirmBtn: "Confirm rental", requestBtn: "Request to rent",
+        successTitle: "Rental confirmed!", successBody: "You're all set. Pickup and return details have been sent to your email.",
+        cancelRequest: "Cancel request", confirmRequest: "Confirm (demo)",
+        cancelConfirmTitle: "Cancel this request?", cancelConfirmBody: "This can't be undone. The owner will be notified that you're no longer interested.",
+        cancelConfirmKeep: "Keep request", cancelConfirmYes: "Yes, cancel",
+        cancelWindowLabel: (m) => `Cancel window: ${m}`,
+        copyright: "© 2026 LOOP. A concept prototype.", legal: "Terms · Privacy · Cookies",
+        trending: "Trending this week", shopAll: "Shop all items",
+        results: (q) => `Results for “${q}”`,
+        gridSub: (n) => `${n} items available now`,
+        catLabels: { all:"All items", electronics:"Electronics", cameras:"Cameras", fashion:"Fashion", outdoor:"Outdoor & Camp", tools:"Tools & Home" },
+        gridLabels: { electronics:"Electronics", cameras:"Cameras & drones", fashion:"Fashion & accessories", outdoor:"Outdoor & camping", tools:"Tools & home" },
+        tileLabels: { cameras:"Cameras", electronics:"Electronics", fashion:"Fashion", outdoor:"Outdoor", tools:"Tools & Home" },
+        tabLabels: { home:"Home", shop:"Shop" },
+        steps: [
+          { title:"Find it", body:"Search by category or location, compare owners by rating, and check real availability on the calendar." },
+          { title:"Book the dates", body:"Request the days you need. Pay securely with a refundable deposit held until the item comes back." },
+          { title:"Pick up & return", body:"Meet the owner or arrange delivery. Every rental is ID-verified and covered by damage protection." }
+        ],
+        reviewsData: [
+          { quote:"Rented a full camera kit for a weekend shoot — cheaper than any rental house and the owner was lovely.", role:"Rented a Sony A7 IV" },
+          { quote:"Listed my old drone and it's basically paid for itself. The deposit system means I never worry.", role:"Owner · 60+ rentals" },
+          { quote:"Needed a tent for one trip, no point buying. Booked in five minutes, picked up nearby. Perfect.", role:"Rented a dome tent" }
+        ],
+        companyLinks: ["How it works","Protection","Trust & safety","Help center"]
+      },
+      th: {
+        announce: "ทุกการเช่ายืนยันตัวตนและคุ้มครองความเสียหาย — เช่าได้อย่างมั่นใจ",
+        howItWorks: "วิธีใช้งาน", listItem: "ลงประกาศให้เช่า",
+        listKicker: "ลงประกาศใหม่", listTitle: "ลงขายสินค้าของคุณ", listSubtitle: "ใส่รายละเอียดสั้นๆ แล้วเริ่มสร้างรายได้จากของที่คุณมีอยู่แล้ว",
+        listFieldTitle: "ชื่อสินค้า", listFieldCategory: "หมวดหมู่", listFieldPrice: "ราคาต่อวัน", listFieldDesc: "รายละเอียด",
+        listMapLabel: "ที่ตั้งสินค้า", listMapPlaceholder: "เช่น สุขุมวิท ซอย 24 กรุงเทพฯ", listMapPreview: "ตัวอย่างแผนที่",
+        listPhotoLabel: "รูปภาพ", listSubmit: "ส่งประกาศ",
+        listPickupLabel: "สถานที่นัดรับ", listPickupPlaceholder: "เพิ่มสถานที่อื่น…", listPickupAdd: "เพิ่ม",
+        listSuccessTitle: "ส่งประกาศแล้ว!", listSuccessBody: "สินค้าของคุณกำลังรอตรวจสอบ เราจะแจ้งเตือนเมื่อประกาศพร้อมใช้งานบน LOOP",
+        listBackHome: "กลับหน้าแรก", listAnother: "ลงประกาศเพิ่ม",
+        signupLabel: "สมัครสมาชิก", signupKicker: "สร้างบัญชี", signupTitle: "สมัครใช้งาน LOOP", signupSubtitle: "สมัครสมาชิกเพื่อเริ่มเช่าและปล่อยเช่าสินค้าใกล้คุณ",
+        signupNameLabel: "ชื่อผู้ใช้", signupEmailLabel: "อีเมล", signupPhoneLabel: "เบอร์โทร", signupPasswordLabel: "รหัสผ่าน",
+        signupSubmit: "สร้างบัญชี",
+        signupIdCardLabel: "รูปบัตรประชาชน", signupIdCardHint: "ใช้เพื่อยืนยันตัวตนสำหรับการเช่าที่ปลอดภัย ไม่เปิดเผยต่อผู้ใช้อื่น",
+        signupScanId: "ดึงข้อมูลจากรูปภาพ (จำลอง)", signupOcrDetected: "ตรวจพบจากบัตรประชาชน",
+        signupOcrName: "ชื่อ", signupOcrId: "เลขบัตรประชาชน", signupOcrDob: "วันเกิด", signupOcrExpiry: "วันหมดอายุ",
+        signupVerifyFace: "ยืนยันใบหน้าผ่านโทรศัพท์", signupFaceVerified: "ยืนยันใบหน้าแล้ว",
+        signupPhoneModalTitle: "สแกนด้วยโทรศัพท์ของคุณ", signupPhoneModalBody: "เปิดกล้องโทรศัพท์แล้วสแกนโค้ดนี้เพื่อถ่ายเซลฟี่สดสำหรับยืนยันใบหน้า",
+        signupPhoneModalWaiting: "กำลังรอโทรศัพท์ของคุณ…", signupPhoneModalSimulate: "จำลองว่าสแกนเสร็จแล้ว (จำลอง)",
+        otpKicker: "ยืนยันตัวตน", otpTitle: "กรอกรหัสยืนยัน",
+        otpMethodEmail: "อีเมล", otpMethodPhone: "เบอร์โทร",
+        otpSentToEmail: (m) => `เราส่งรหัส 6 หลักไปที่ ${m}`,
+        otpSentToPhone: (m) => `เราส่งรหัส 6 หลักไปที่ ${m}`,
+        otpCodeLabel: "รหัสยืนยัน", otpVerify: "ยืนยันและสร้างบัญชี", otpBack: "ย้อนกลับ",
+        signupAccountType: "ประเภทบัญชี",
+        signupSuccessTitle: "สร้างบัญชีสำเร็จ!", signupSuccessBody: "ยินดีต้อนรับสู่ LOOP คุณสามารถเริ่มเลือกดูหรือลงประกาศสินค้าชิ้นแรกได้แล้ว",
+        searchPh: "ค้นหา กล้อง เต็นท์ ชุด สว่าน…",
+        searchLabel: "หาของเช่าที่ใช่สำหรับคุณ", chipCameras: "กล้อง", chipTents: "เต็นท์", chipDresses: "ชุด", chipDrills: "สว่าน",
+        heroKicker: "เช่าต่อกันแบบ P2P",
+        heroT1: "เช่าอะไรก็ได้", heroT2: "จากผู้คน", heroT3: "ใกล้ตัวคุณ",
+        heroSub: "ยืมอุปกรณ์ที่ต้องใช้เป็นวัน สุดสัปดาห์ หรือทั้งทริป — และสร้างรายได้จากของที่คุณมีอยู่แล้ว",
+        heroCta1: "เริ่มเลือกดู", heroCta2: "ลงประกาศ →",
+        stat1: "รายการให้เช่า", stat2: "คะแนนเฉลี่ย", stat3: "เมือง",
+        viewAll: "ดูทั้งหมด →", perDay: "/ วัน", reviews: "รีวิว", compareLabel: "เปรียบเทียบสินค้าคล้ายกัน",
+        noMatch: "ไม่พบรายการ", noMatchSub: "ลองค้นหาหรือเลือกหมวดอื่น",
+        browseTitle: "เลือกตามหมวดหมู่", items: "รายการ",
+        howKicker: "วิธีใช้งาน", howTitle: "สามขั้นตอนระหว่างคุณกับเกือบทุกสิ่ง",
+        trustTitle: "ได้รับความไว้วางใจจากชุมชน", trustAvg: "คะแนนเฉลี่ยจาก 8,200 การเช่า",
+        ctaTitle: "มีของที่วางทิ้งไว้เฉยๆ ไหม?",
+        ctaBody: "ลงประกาศในไม่กี่นาทีแล้วสร้างรายได้ คุณกำหนดราคา วันที่ และเงินมัดจำเองได้",
+        ctaBtn: "ลงประกาศชิ้นแรก",
+        footTagline: "มาร์เก็ตเพลสเช่าต่อกัน สำหรับเช่าเกือบทุกอย่าง",
+        footExplore: "สำรวจ", footCompany: "บริษัท", footApp: "ดาวน์โหลดแอป", footHelp: "ศูนย์ช่วยเหลือ",
+        switchToAdmin: "สลับเป็นแอดมิน", switchToUser: "สลับกลับเป็นผู้ใช้",
+        myRentals: "รายการเช่าของฉัน", myListings: "รายการปล่อยเช่าของฉัน",
+        listingsKicker: "รายการของคุณ", listingsTitle: "รายการปล่อยเช่าของฉัน", listingsSubtitle: "จัดการสินค้าที่คุณลงประกาศให้เช่า",
+        listingColItem: "สินค้า", listingColPrice: "ราคา", listingColStatus: "สถานะ", listingColActions: "การจัดการ",
+        listingActive: "ใช้งาน", listingReview: "รอตรวจสอบ", listingPaused: "หยุดชั่วคราว",
+        listingPause: "หยุดชั่วคราว", listingResume: "เปิดใช้งาน", listingsEmpty: "คุณยังไม่มีสินค้าที่ลงประกาศ",
+        listingsItemsTab: "รายการสินค้า", listingsOrdersTab: "ออเดอร์",
+        colRenter: "ผู้เช่า", colDates: "วันที่", colTotal: "ยอดรวม",
+        approveReq: "อนุมัติ", declineReq: "ปฏิเสธ",
+        stPending: "รอตรวจสอบ", stApproved: "รอส่งสินค้า", stDeclined: "ปฏิเสธแล้ว",
+        emptyOrders: "ยังไม่มีออเดอร์",
+        orderContactLabel: "ข้อมูลติดต่อผู้เช่า", orderPhoneLabel: "เบอร์โทร", orderLineLabel: "ไลน์ไอดี",
+        stShipped: "จัดส่งแล้ว", confirmShipment: "ยืนยันการส่ง",
+        shipModalTitle: "ยืนยันการส่งสินค้า", shipModalBody: "ถ่ายรูป \"{item}\" เพื่อเป็นหลักฐานสภาพสินค้าก่อนจัดส่ง",
+        shipPhotoLabel: "รูปตอนจัดส่ง", shipConfirmLabel: "ยืนยันการส่ง",
+        stReturned: "คืนสินค้าแล้ว", confirmReturnReceived: "ยืนยันรับคืนสินค้า",
+        returnModalTitle: "ยืนยันรับคืนสินค้า", returnModalBody: "ถ่ายรูป \"{item}\" เพื่อบันทึกสภาพสินค้าตอนรับคืน",
+        returnPhotoLabel: "รูปตอนรับคืน", returnConfirmLabel: "ยืนยันรับคืนสินค้า",
+        rentalsKicker: "รายการของคุณ", rentalsTitle: "รายการเช่าของฉัน", rentalsSubtitle: "ติดตามสินค้าที่คุณเช่าและสถานะการเช่า",
+        colDates: "วันที่", colTotal: "ยอดรวม", colStatus: "สถานะ",
+        stPending: "รอตรวจสอบ", stCompleted: "เสร็จสิ้น", stActive: "กำลังเช่า", stCancelled: "ยกเลิกแล้ว",
+        stAwaitingPickup: "รอรับสินค้า", stAwaitingConfirm: "รอการยืนยัน",
+        stReturnPending: "ส่งคืนแล้ว รอยืนยัน", returnItemLabel: "คืนสินค้า",
+        returnRequestTitle: "คืนสินค้า", returnRequestBody: "ถ่ายรูป \"{item}\" แสดงสภาพสินค้าก่อนส่งคืนเจ้าของ",
+        returnRequestPhotoLabel: "รูปตอนคืนสินค้า", returnRequestSubmit: "ส่งคำขอคืนสินค้า",
+        emptyHistory: "ยังไม่มีประวัติการเช่า",
+        adminNavLabel: "แผงแอดมิน",
+        adminKicker: "แอดมิน", adminTitle: "จัดการหมวดหมู่สินค้า",
+        adminSubtitle: "จัดการหมวดหมู่ที่แสดงในหน้า Home และ Shop ของ LOOP",
+        addCategory: "+ เพิ่มหมวดหมู่", catName: "ชื่อหมวดหมู่", catItems: "จำนวนสินค้า", catActions: "การจัดการ",
+        save: "บันทึก", cancel: "ยกเลิก", itemsUnit: "รายการ",
+        navDashboard: "แดชบอร์ด", navMasterGroup: "ข้อมูลหลัก", navCategoryMaster: "ประเภทสินค้า",
+        navProducts: "สินค้า", navUsers: "ผู้ใช้", navSettings: "ตั้งค่า",
+        dashKicker: "แอดมิน", dashTitle: "แดชบอร์ด", dashSubtitle: "ภาพรวมสิ่งที่เกิดขึ้นบน LOOP",
+        dashTotalProducts: "สินค้าทั้งหมด", dashTotalUsers: "ผู้ใช้ทั้งหมด", dashTotalOrders: "ออเดอร์ทั้งหมด",
+        dashRevenue: "มูลค่าการเช่ารวม", dashTotalCategories: "หมวดหมู่", dashTotalListings: "รายการที่ปล่อยเช่า",
+        dashPendingSub: "รอตรวจสอบ {n} รายการ", dashCatBreakdown: "สินค้าตามหมวดหมู่",
+        settingsKicker: "แอดมิน", settingsTitle: "ตั้งค่า", settingsSubtitle: "การตั้งค่าทั่วไปของแพลตฟอร์ม LOOP",
+        settingsPlatformName: "ชื่อแพลตฟอร์ม", settingsCurrency: "สกุลเงิน", settingsFee: "ค่าบริการ (%)", settingsEmail: "อีเมลฝ่ายช่วยเหลือ",
+        settingsIdVerify: "บังคับยืนยันตัวตนตอนสมัครสมาชิก", settingsMaintenance: "โหมดปิดปรับปรุงระบบ",
+        navPayments: "การชำระเงิน",
+        paymentsKicker: "แอดมิน", paymentsTitle: "การชำระเงิน", paymentsSubtitle: "ธุรกรรมและยอดเงินการเช่าทั้งหมดบน LOOP",
+        paySettled: "รายได้ที่ชำระแล้ว", payFees: "ค่าบริการที่เก็บได้", payPendingTotal: "ยอดรอดำเนินการ",
+        colTxn: "รายการ", colAmount: "ยอดเงิน", colFee: "ค่าบริการ", colPayStatus: "สถานะการชำระเงิน",
+        payPaid: "ชำระแล้ว", payPending: "รอดำเนินการ", payRefunded: "คืนเงินแล้ว",
+        productsKicker: "แอดมิน", productsTitle: "สินค้า", productsSubtitle: "สินค้าทั้งหมดที่ลงขายให้เช่าบน LOOP",
+        colProduct: "สินค้า", colCategory: "หมวดหมู่", colPrice: "ราคา", colRating: "คะแนน", colLocation: "สถานที่", colSeller: "ผู้ขาย",
+        productsCount: "{n} รายการ",
+        exitLabel: "ออกจากแอดมิน", adminUserName: "ผู้ดูแลระบบ", adminUserRole: "แอดมิน",
+        usersKicker: "แอดมิน", usersTitle: "ผู้ใช้", usersSubtitle: "ตรวจสอบผู้สมัครใหม่และจัดการสิทธิ์การเข้าใช้งาน LOOP",
+        colName: "ชื่อ", colEmail: "อีเมล", colJoined: "วันที่สมัคร", colType: "ประเภท", colStatus: "สถานะ", colActions: "การจัดการ",
+        typeShop: "ร้านค้า", typeIndividual: "บุคคล",
+        statusPending: "รอตรวจสอบ", statusApproved: "อนุมัติแล้ว", statusRejected: "ปฏิเสธ",
+        approve: "อนุมัติ", reject: "ปฏิเสธ",
+        checkoutTitle: "ยืนยันการเช่า", checkoutBack: "ย้อนกลับ",
+        checkoutPickupLabel: "สถานที่นัดรับ", checkoutNoteLabel: "โน้ตถึงร้านค้า", checkoutNotePlaceholder: "มีอะไรอยากแจ้งร้านค้าไหม? (ไม่บังคับ)",
+        checkoutContactHeading: "ข้อมูลติดต่อของคุณ", checkoutPhoneLabel: "เบอร์โทร", checkoutPhonePlaceholder: "081-234-5678",
+        checkoutLineLabel: "ไลน์ไอดี", checkoutLinePlaceholder: "ไลน์ไอดีของคุณ",
+        startLabel: "วันที่เริ่ม", endLabel: "วันที่คืน",
+        rateLine: (n, rate) => `${rate} × ${n} วัน`,
+        serviceLabel: "ค่าบริการ", depositLabel: "เงินมัดจำ (คืนได้)", totalLabel: "ยอดชำระวันนี้",
+        depositNote: "เงินมัดจำคืนเต็มจำนวนภายใน 3 วันหลังส่งคืนสินค้าในสภาพเดิม",
+        confirmBtn: "ยืนยันการเช่า", requestBtn: "ขอเช่าสินค้านี้",
+        successTitle: "ยืนยันการเช่าแล้ว!", successBody: "เรียบร้อยแล้ว รายละเอียดการรับ-คืนสินค้าถูกส่งไปยังอีเมลของคุณ",
+        cancelRequest: "ยกเลิกคำขอ", confirmRequest: "ยืนยัน (จำลอง)",
+        cancelConfirmTitle: "ยกเลิกคำขอนี้ใช่ไหม?", cancelConfirmBody: "การกระทำนี้ไม่สามารถย้อนกลับได้ เจ้าของสินค้าจะได้รับแจ้งว่าคุณไม่ต้องการเช่าแล้ว",
+        cancelConfirmKeep: "เก็บคำขอไว้", cancelConfirmYes: "ใช่ ยกเลิก",
+        cancelWindowLabel: (m) => `ยกเลิกได้ภายใน: ${m}`,
+        copyright: "© 2026 LOOP ต้นแบบเชิงแนวคิด", legal: "ข้อกำหนด · ความเป็นส่วนตัว · คุกกี้",
+        trending: "มาแรงสัปดาห์นี้", shopAll: "สินค้าทั้งหมด",
+        results: (q) => `ผลการค้นหา “${q}”`,
+        gridSub: (n) => `มีให้เช่าตอนนี้ ${n} รายการ`,
+        catLabels: { all:"ทั้งหมด", electronics:"อิเล็กทรอนิกส์", cameras:"กล้อง", fashion:"แฟชั่น", outdoor:"แคมป์ & กลางแจ้ง", tools:"เครื่องมือ & บ้าน" },
+        gridLabels: { electronics:"อิเล็กทรอนิกส์", cameras:"กล้อง & โดรน", fashion:"แฟชั่น & เครื่องประดับ", outdoor:"กลางแจ้ง & แคมป์", tools:"เครื่องมือ & บ้าน" },
+        tileLabels: { cameras:"กล้อง", electronics:"อิเล็กทรอนิกส์", fashion:"แฟชั่น", outdoor:"กลางแจ้ง", tools:"เครื่องมือ & บ้าน" },
+        tabLabels: { home:"หน้าแรก", shop:"ช้อป" },
+        steps: [
+          { title:"ค้นหา", body:"ค้นตามหมวดหรือทำเล เทียบเจ้าของจากคะแนนรีวิว และเช็ควันว่างจริงบนปฏิทิน" },
+          { title:"จองวันเช่า", body:"เลือกวันที่ต้องการ จ่ายอย่างปลอดภัยพร้อมเงินมัดจำที่คืนได้เมื่อส่งของกลับ" },
+          { title:"รับและคืน", body:"นัดรับกับเจ้าของหรือให้จัดส่ง ทุกการเช่ายืนยันตัวตนและคุ้มครองความเสียหาย" }
+        ],
+        reviewsData: [
+          { quote:"เช่าชุดกล้องครบเซ็ตไปถ่ายงานสุดสัปดาห์ — ถูกกว่าร้านเช่าและเจ้าของน่ารักมาก", role:"เช่า Sony A7 IV" },
+          { quote:"เอาโดรนเก่ามาปล่อยเช่า แทบจะคืนทุนแล้ว ระบบมัดจำทำให้ไม่ต้องกังวลเลย", role:"เจ้าของ · เช่าไปแล้ว 60+ ครั้ง" },
+          { quote:"ต้องใช้เต็นท์แค่ทริปเดียว ไม่คุ้มที่จะซื้อ จองห้านาที รับใกล้บ้าน เพอร์เฟกต์", role:"เช่าเต็นท์โดม" }
+        ],
+        companyLinks: ["วิธีใช้งาน","ความคุ้มครอง","ความปลอดภัย","ศูนย์ช่วยเหลือ"]
+      }
+    };
+  }
+
+  data() {
+    const shades = [
+      "repeating-linear-gradient(135deg,#efeeeb 0 13px,#e6e5e1 13px 26px)",
+      "repeating-linear-gradient(135deg,#eceae6 0 13px,#e2e0db 13px 26px)",
+      "repeating-linear-gradient(135deg,#f1f0ed 0 13px,#e8e7e3 13px 26px)",
+      "repeating-linear-gradient(135deg,#edecea 0 13px,#e4e3df 13px 26px)"
+    ];
+    const U = (id) => `https://images.unsplash.com/photo-${id}?w=600&h=600&fit=crop&crop=entropy&q=80&auto=format`;
+    const POOL = {
+      camA:"1502920917128-1aa500764cbd", camB:"1516035069371-29a1b244cc32", camC:"1526170375885-4d8ecf77b99f",
+      drone:"1473968512647-3e447244af8f",
+      mac:"1517336714731-489689fd1ca8", ipad:"1544244015-0df4b3ffc6b0",
+      console:"1606813907291-d86efa9b94db", monitor:"1527443224154-c4a3942d3acf",
+      headphones:"1505740420928-5e560c06d30e",
+      dress:"1595777457583-95e059d581b8", handbag:"1584917865442-de89df76afd3",
+      suit:"1594938298603-c8148c4dae35", shoes:"1543163521-1bf539c55dd2", jewelry:"1515562141207-7a88fb7ce338",
+      tent:"1504280390367-361c6d9f38f4", camp:"1478131143081-80f7f84ca84d",
+      backpack:"1553062407-98eeb64c6a62", kayak:"1544551763-46a013bb70d5",
+      tools:"1504148455328-c376907d081c"
+    };
+    const img = (k) => U(POOL[k]);
+    const P = [
+      // Cameras
+      { id:"a1", title:"Sony A7 IV + 24-70mm kit", cat:"cameras", price:"฿1,020", rating:"5.0", reviews:41, location:"Bangkok", badge:"Popular", img:img("camA") },
+      { id:"a2", title:"Canon EOS R6 Mark II", cat:"cameras", price:"฿950", rating:"4.9", reviews:28, location:"Chiang Mai", badge:"", img:img("camB") },
+      { id:"a3", title:"Fujifilm X-T5 body", cat:"cameras", price:"฿770", rating:"4.8", reviews:19, location:"Bangkok", badge:"", img:img("camC") },
+      { id:"a4", title:"Nikon Z6 II", cat:"cameras", price:"฿840", rating:"4.7", reviews:15, location:"Phuket", badge:"", img:img("camA") },
+      { id:"a5", title:"DJI Mini 4 Pro drone", cat:"cameras", price:"฿840", rating:"4.9", reviews:33, location:"Chiang Mai", badge:"Popular", img:img("drone") },
+      { id:"a6", title:"DJI Air 3 drone", cat:"cameras", price:"฿1,050", rating:"4.8", reviews:21, location:"Bangkok", badge:"", img:img("drone") },
+      { id:"a7", title:"GoPro Hero 12 + mounts", cat:"cameras", price:"฿530", rating:"4.9", reviews:44, location:"Phuket", badge:"", img:img("camC") },
+      { id:"a8", title:"DJI Osmo Pocket 3", cat:"cameras", price:"฿460", rating:"4.8", reviews:26, location:"Pattaya", badge:"New", img:img("camB") },
+      { id:"a9", title:"DJI RS 4 gimbal", cat:"cameras", price:"฿630", rating:"4.7", reviews:12, location:"Bangkok", badge:"", img:img("camB") },
+      { id:"a10", title:"Godox AD200 flash kit", cat:"cameras", price:"฿350", rating:"4.6", reviews:17, location:"Nonthaburi", badge:"", img:img("camC") },
+      // Electronics
+      { id:"b1", title:"MacBook Pro 16\" M3", cat:"electronics", price:"฿1,230", rating:"4.8", reviews:19, location:"Bangkok", badge:"Popular", img:img("mac") },
+      { id:"b2", title:"iPad Pro 12.9\" + Pencil", cat:"electronics", price:"฿560", rating:"4.9", reviews:29, location:"Bangkok", badge:"", img:img("ipad") },
+      { id:"b3", title:"Portable projector 4K", cat:"electronics", price:"฿490", rating:"4.8", reviews:31, location:"Chiang Mai", badge:"", img:img("monitor") },
+      { id:"b4", title:"PlayStation 5 + 2 controllers", cat:"electronics", price:"฿420", rating:"4.9", reviews:58, location:"Bangkok", badge:"Popular", img:img("console") },
+      { id:"b5", title:"Meta Quest 3 VR headset", cat:"electronics", price:"฿530", rating:"4.7", reviews:22, location:"Chiang Mai", badge:"", img:img("console") },
+      { id:"b6", title:"Nintendo Switch OLED", cat:"electronics", price:"฿320", rating:"4.8", reviews:40, location:"Pattaya", badge:"", img:img("console") },
+      { id:"b7", title:"Dell XPS 15 laptop", cat:"electronics", price:"฿980", rating:"4.6", reviews:14, location:"Khon Kaen", badge:"", img:img("mac") },
+      { id:"b8", title:"LG 27\" 4K monitor", cat:"electronics", price:"฿280", rating:"4.7", reviews:11, location:"Bangkok", badge:"", img:img("monitor") },
+      { id:"b9", title:"Anker portable power station", cat:"electronics", price:"฿390", rating:"4.8", reviews:20, location:"Hua Hin", badge:"New", img:img("monitor") },
+      { id:"b10", title:"Sonos portable speaker", cat:"electronics", price:"฿250", rating:"4.7", reviews:16, location:"Krabi", badge:"", img:img("headphones") },
+      // Fashion
+      { id:"c1", title:"Designer evening gown", cat:"fashion", price:"฿630", rating:"5.0", reviews:27, location:"Bangkok", badge:"", img:img("dress") },
+      { id:"c2", title:"Luxury tote handbag", cat:"fashion", price:"฿770", rating:"5.0", reviews:35, location:"Bangkok", badge:"New", img:img("handbag") },
+      { id:"c3", title:"Tailored tuxedo suit", cat:"fashion", price:"฿700", rating:"4.8", reviews:18, location:"Bangkok", badge:"", img:img("suit") },
+      { id:"c4", title:"Silk cocktail dress", cat:"fashion", price:"฿490", rating:"4.9", reviews:24, location:"Chiang Mai", badge:"", img:img("dress") },
+      { id:"c5", title:"Leather crossbody bag", cat:"fashion", price:"฿350", rating:"4.7", reviews:21, location:"Phuket", badge:"", img:img("handbag") },
+      { id:"c6", title:"Statement pearl necklace", cat:"fashion", price:"฿280", rating:"4.8", reviews:13, location:"Bangkok", badge:"", img:img("jewelry") },
+      { id:"c7", title:"Designer high heels", cat:"fashion", price:"฿320", rating:"4.6", reviews:15, location:"Bangkok", badge:"", img:img("shoes") },
+      { id:"c8", title:"Vintage denim jacket", cat:"fashion", price:"฿250", rating:"4.7", reviews:19, location:"Pattaya", badge:"", img:img("suit") },
+      // Outdoor & Camp
+      { id:"d1", title:"4-person dome tent", cat:"outdoor", price:"฿420", rating:"4.9", reviews:52, location:"Pai", badge:"New", img:img("tent") },
+      { id:"d2", title:"Osprey 65L trek backpack", cat:"outdoor", price:"฿280", rating:"4.8", reviews:22, location:"Chiang Rai", badge:"", img:img("backpack") },
+      { id:"d3", title:"Coleman camping stove", cat:"outdoor", price:"฿210", rating:"4.7", reviews:30, location:"Chiang Mai", badge:"", img:img("camp") },
+      { id:"d4", title:"Sleeping bag -10°C", cat:"outdoor", price:"฿180", rating:"4.8", reviews:27, location:"Pai", badge:"", img:img("camp") },
+      { id:"d5", title:"Inflatable 2-seat kayak", cat:"outdoor", price:"฿700", rating:"4.9", reviews:18, location:"Krabi", badge:"Popular", img:img("kayak") },
+      { id:"d6", title:"Trekking poles (pair)", cat:"outdoor", price:"฿140", rating:"4.6", reviews:14, location:"Chiang Rai", badge:"", img:img("backpack") },
+      { id:"d7", title:"Portable camp chairs set", cat:"outdoor", price:"฿180", rating:"4.7", reviews:23, location:"Hua Hin", badge:"", img:img("camp") },
+      { id:"d8", title:"Cooler box 50L", cat:"outdoor", price:"฿210", rating:"4.8", reviews:20, location:"Pattaya", badge:"", img:img("camp") },
+      // Tools & Home
+      { id:"e1", title:"Bosch cordless drill set", cat:"tools", price:"฿320", rating:"4.7", reviews:38, location:"Nonthaburi", badge:"", img:img("tools") },
+      { id:"e2", title:"Pressure washer 2000W", cat:"tools", price:"฿390", rating:"4.6", reviews:16, location:"Samut Prakan", badge:"", img:img("tools") },
+      { id:"e3", title:"Circular saw", cat:"tools", price:"฿280", rating:"4.7", reviews:12, location:"Bangkok", badge:"", img:img("tools") },
+      { id:"e4", title:"Aluminum ladder 3m", cat:"tools", price:"฿210", rating:"4.8", reviews:21, location:"Nonthaburi", badge:"", img:img("tools") },
+      { id:"e5", title:"Carpet cleaner machine", cat:"tools", price:"฿350", rating:"4.7", reviews:17, location:"Bangkok", badge:"New", img:img("tools") },
+      { id:"e6", title:"Orbital sander", cat:"tools", price:"฿180", rating:"4.6", reviews:10, location:"Ayutthaya", badge:"", img:img("tools") },
+      { id:"e7", title:"Tile cutter", cat:"tools", price:"฿250", rating:"4.5", reviews:9, location:"Samut Prakan", badge:"", img:img("tools") },
+      { id:"e8", title:"Portable generator 3kW", cat:"tools", price:"฿560", rating:"4.8", reviews:14, location:"Khon Kaen", badge:"", img:img("tools") }
+    ];
+    return P.map((p,i) => ({ ...p, bg: shades[i % shades.length] }));
+  }
+
+  renderVals() {
+    const t = this.dict()[this.state.lang];
+    const active = this.state.activeCat;
+    const q = this.state.query.trim().toLowerCase();
+
+    const catIds = ["all","electronics","cameras","fashion","outdoor","tools"];
+    const cats = catIds.map(id => {
+      const on = id === active;
+      return {
+        label: t.catLabels[id],
+        onClick: () => this.setState({ activeCat: id }),
+        bg: on ? "#0a0a0a" : "#fff",
+        color: on ? "#fff" : "rgba(10,10,10,.75)",
+        border: on ? "#0a0a0a" : "rgba(10,10,10,.14)"
+      };
+    });
+
+    let list = this.data();
+    if (active !== "all") list = list.filter(p => p.cat === active);
+    if (q) list = list.filter(p => p.title.toLowerCase().includes(q) || p.location.toLowerCase().includes(q));
+
+    if (this.state.tab === "home" && !q) list = list.slice(0, 8);
+    const allProducts = this.data();
+    const shopNamesList = ["Loop Rentals", "Bangkok Gear Co.", "Sunny Studio", "North Camp Supply", "Craft & Co."];
+    const shopColorsList = ["#0a0a0a", "#5b6b8c", "#8a5a3d", "#3d7a5c", "#7a3d6b"];
+    const hashIdFn = (id) => String(id).split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+    const products = list.map(p => ({
+      ...p,
+      shop: shopNamesList[hashIdFn(p.id) % shopNamesList.length],
+      shopColor: shopColorsList[hashIdFn(p.id) % shopColorsList.length],
+      shopInitial: shopNamesList[hashIdFn(p.id) % shopNamesList.length][0],
+      meta: `${p.location} · ${p.reviews} ${t.reviews}`,
+      perDay: t.perDay,
+      favFill: this.state.favs[p.id] ? "#0a0a0a" : "none",
+      onFav: (e) => { e.stopPropagation(); this.setState(s => ({ favs: { ...s.favs, [p.id]: !s.favs[p.id] } })); },
+      onOpen: () => this.openDetail(p.id),
+      onOpenStop: (e) => { e.stopPropagation(); this.openDetail(p.id); }
+    }));
+
+    const favCount = Object.values(this.state.favs).filter(Boolean).length;
+
+    const dp = this.state.detailId ? allProducts.find(x => x.id === this.state.detailId) : null;
+    const descByCat = {
+      cameras: "Includes body, kit lens, battery, charger, and a padded carry case. Meet the owner for a quick handover, or arrange delivery.",
+      electronics: "Comes fully set up and tested before pickup, with charger and original cables included.",
+      fashion: "Dry-cleaned before every rental. Comes on a garment hanger with a protective cover.",
+      outdoor: "Cleaned and inspected after every trip. Setup instructions included on pickup.",
+      tools: "Charged and test-run before handover. Safety gear available on request."
+    };
+    const gallery = dp ? (this.galleryPool()[dp.cat] || this.galleryPool().cameras) : [];
+    const gIdx = ((this.state.galleryIndex % gallery.length) + gallery.length) % (gallery.length || 1);
+    const parsePrice = (str) => parseInt(String(str).replace(/[^\d]/g, ""), 10) || 0;
+    const shopNames = ["Loop Rentals", "Bangkok Gear Co.", "Sunny Studio", "North Camp Supply", "Craft & Co."];
+    const shopColors = ["#0a0a0a", "#5b6b8c", "#8a5a3d", "#3d7a5c", "#7a3d6b"];
+    const hashId = (id) => String(id).split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+    const compareItems = dp ? allProducts
+      .filter(x => x.cat === dp.cat && x.id !== dp.id)
+      .sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
+      .slice(0, 4)
+      .map(x => ({
+        id: `cmp-${x.id}`, title: x.title, price: x.price, perDay: t.perDay,
+        hasImg: !!x.img,
+        imgNode: x.img ? React.createElement('img', { src: x.img, alt: x.title, style: { width:'100%', height:'100%', objectFit:'cover' } }) : null,
+        rating: x.rating, location: x.location, shop: shopNames[hashId(x.id) % shopNames.length],
+        shopColor: shopColors[hashId(x.id) % shopColors.length],
+        shopInitial: shopNames[hashId(x.id) % shopNames.length][0],
+        priceColor: parsePrice(x.price) < parsePrice(dp.price) ? "#178a5a" : "#0a0a0a",
+        onClick: () => this.openDetail(x.id)
+      })) : [];
+    const detail = dp ? {
+      shop: shopNames[hashId(dp.id) % shopNames.length],
+      shopColor: shopColors[hashId(dp.id) % shopColors.length],
+      shopInitial: shopNames[hashId(dp.id) % shopNames.length][0],
+      title: dp.title, price: dp.price, perDay: t.perDay, rating: dp.rating, badge: dp.badge,
+      meta: `${dp.location} · ${dp.reviews} ${t.reviews}`,
+      desc: descByCat[dp.cat] || "",
+      cta: t.requestBtn,
+      imgNode: React.createElement('img', { src: gallery[gIdx], alt: dp.title, style: { position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' } }),
+      onPrev: () => this.prevImg(dp.cat),
+      onNext: () => this.nextImg(dp.cat),
+      onClose: () => this.closeDetail(),
+      onRent: () => this.openCheckout(dp.id),
+      stop: (e) => e.stopPropagation(),
+      dots: gallery.map((_, i) => ({
+        size: i === gIdx ? "20px" : "7px",
+        bg: i === gIdx ? "#0a0a0a" : "rgba(10,10,10,.3)",
+        onClick: () => this.setState({ galleryIndex: i })
+      })),
+      compareLabel: t.compareLabel,
+      compareItems, hasCompare: compareItems.length > 0
+    } : null;
+
+    const cp = this.state.checkoutId ? allProducts.find(x => x.id === this.state.checkoutId) : null;
+    let checkout = null;
+    if (cp) {
+      const rate = parseInt(cp.price.replace(/[^\d]/g, ""), 10) || 0;
+      const s = new Date(this.state.checkoutStart), e = new Date(this.state.checkoutEnd);
+      let nights = Math.round((e - s) / 86400000);
+      if (!Number.isFinite(nights) || nights < 1) nights = 1;
+      const subtotal = rate * nights;
+      const service = Math.round(subtotal * 0.1);
+      const deposit = rate * 2;
+      const total = subtotal + service;
+      const fmt = (n) => `฿${n.toLocaleString("en-US")}`;
+      const cGallery = this.galleryPool()[cp.cat] || this.galleryPool().cameras;
+      checkout = {
+        active: !this.state.checkoutDone, done: this.state.checkoutDone,
+        title: t.checkoutTitle, backLabel: t.checkoutBack,
+        goRentalsLabel: t.myRentals,
+        onGoRentals: () => { this.setState({ checkoutId: null, checkoutDone: false, checkoutSubmittedAt: null, tab: "rentals", menuOpen: false }); window.scrollTo({ top: 0 }); },
+        canCancel: !!this.state.checkoutSubmittedAt && (Date.now() - this.state.checkoutSubmittedAt) < 10 * 60 * 1000,
+        cancelLabel: t.cancelRequest,
+        cancelCountdown: this.state.checkoutSubmittedAt ? t.cancelWindowLabel(this.formatCountdown(10 * 60 * 1000 - (Date.now() - this.state.checkoutSubmittedAt))) : "",
+        onCancel: () => this.askCancelRequest(),
+        cancelConfirmOpen: this.state.checkoutCancelConfirm,
+        cancelConfirmTitle: t.cancelConfirmTitle, cancelConfirmBody: t.cancelConfirmBody,
+        cancelConfirmKeep: t.cancelConfirmKeep, cancelConfirmYes: t.cancelConfirmYes,
+        onDismissCancelConfirm: () => this.dismissCancelRequest(),
+        onConfirmCancelRequest: () => this.cancelRequest(),
+        stopClick: (e) => e.stopPropagation(),
+        name: cp.title, rating: cp.rating, meta: `${cp.location} · ${cp.reviews} ${t.reviews}`,
+        imgNode: React.createElement('img', { src: cGallery[0], alt: cp.title, style: { position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' } }),
+        startLabel: t.startLabel, endLabel: t.endLabel,
+        start: this.state.checkoutStart, end: this.state.checkoutEnd,
+        onStart: (e) => this.setState({ checkoutStart: e.target.value }),
+        onEnd: (e) => this.setState({ checkoutEnd: e.target.value }),
+        rateLine: t.rateLine(nights, fmt(rate)),
+        subtotal: fmt(subtotal),
+        serviceLabel: t.serviceLabel, serviceFee: fmt(service),
+        depositLabel: t.depositLabel, deposit: fmt(deposit),
+        totalLabel: t.totalLabel, total: fmt(total),
+        depositNote: t.depositNote,
+        pickupLabel: t.checkoutPickupLabel,
+        pickupChoices: this.state.pickupOptions.filter(o => o.selected).map(o => ({ value: o.id, label: o.label })),
+        pickupVal: this.state.checkoutPickup,
+        onPickupChange: (e) => this.setState({ checkoutPickup: e.target.value }),
+        noteLabel: t.checkoutNoteLabel, notePlaceholder: t.checkoutNotePlaceholder,
+        noteVal: this.state.checkoutNote,
+        onNoteChange: (e) => this.setState({ checkoutNote: e.target.value }),
+        contactHeading: t.checkoutContactHeading,
+        phoneLabel: t.checkoutPhoneLabel, phonePlaceholder: t.checkoutPhonePlaceholder,
+        phoneVal: this.state.checkoutPhone,
+        onPhoneChange: (e) => this.setState({ checkoutPhone: e.target.value }),
+        lineLabel: t.checkoutLineLabel, linePlaceholder: t.checkoutLinePlaceholder,
+        lineVal: this.state.checkoutLine,
+        onLineChange: (e) => this.setState({ checkoutLine: e.target.value }),
+        confirmBtn: t.confirmBtn,
+        successTitle: t.successTitle, successBody: t.successBody,
+        onConfirm: () => this.confirmCheckout(),
+        onBack: () => this.closeCheckout()
+      };
+    }
+
+    const homeAll = this.state.tab === "home" ? t.trending : t.shopAll;
+    const gridTitle = q ? t.results(this.state.query.trim()) : (active === "all" ? homeAll : t.gridLabels[active]);
+
+    const tileImg = (id) => `https://images.unsplash.com/photo-${id}?w=500&h=680&fit=crop&crop=entropy&q=80&auto=format`;
+    const tileDefs = [
+      { id:"cameras", count:"1,840", img:tileImg("1516035069371-29a1b244cc32"), bg:"repeating-linear-gradient(135deg,#d9d7d2 0 14px,#cfcdc7 14px 28px)" },
+      { id:"electronics", count:"3,120", img:tileImg("1517336714731-489689fd1ca8"), bg:"repeating-linear-gradient(135deg,#dedcd7 0 14px,#d3d1cb 14px 28px)" },
+      { id:"fashion", count:"2,460", img:tileImg("1595777457583-95e059d581b8"), bg:"repeating-linear-gradient(135deg,#d7d5d0 0 14px,#cdcbc5 14px 28px)" },
+      { id:"outdoor", count:"1,970", img:tileImg("1504280390367-361c6d9f38f4"), bg:"repeating-linear-gradient(135deg,#dbd9d4 0 14px,#d1cfc9 14px 28px)" },
+      { id:"tools", count:"3,010", img:tileImg("1504148455328-c376907d081c"), bg:"repeating-linear-gradient(135deg,#d5d3ce 0 14px,#cbc9c3 14px 28px)" }
+    ];
+    const tiles = tileDefs.map(ti => ({
+      bg: ti.bg,
+      hasImg: !!ti.img,
+      imgNode: ti.img ? React.createElement('img', { src: ti.img, alt: t.tileLabels[ti.id], style: { position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' } }) : null,
+      label: t.tileLabels[ti.id],
+      countLabel: `${ti.count} ${t.items}`,
+      onClick: () => { this.setState({ activeCat: ti.id, query: "" }); window.scrollTo({ top: 0 }); }
+    }));
+
+    const steps = t.steps.map((s,i) => ({ no: `0${i+1}`, title: s.title, body: s.body }));
+
+    const rbg = [
+      "repeating-linear-gradient(135deg,#dcdad5 0 8px,#d2d0ca 8px 16px)",
+      "repeating-linear-gradient(135deg,#d8d6d1 0 8px,#ceccc6 8px 16px)",
+      "repeating-linear-gradient(135deg,#dad8d3 0 8px,#d0cec8 8px 16px)"
+    ];
+    const rnames = ["Napat T.","Ploy S.","James K."];
+    const ravatars = [
+      "https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=100&h=100&fit=crop&crop=faces&q=80&auto=format",
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=faces&q=80&auto=format",
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=faces&q=80&auto=format"
+    ];
+    const reviews = t.reviewsData.map((r,i) => ({
+      quote: r.quote, role: r.role, name: rnames[i], bg: rbg[i],
+      hasAvatar: !!ravatars[i],
+      avatarNode: ravatars[i] ? React.createElement('img', { src: ravatars[i], alt: rnames[i], style: { position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' } }) : null
+    }));
+
+    const exploreLinks = [t.tileLabels.electronics, t.tileLabels.cameras, t.tileLabels.fashion, t.tileLabels.outdoor].map(label => ({ label }));
+    const companyLinks = t.companyLinks.map(label => ({ label }));
+
+    const tabIds = ["home","shop"];
+    const tabs = tabIds.map(id => {
+      const on = id === this.state.tab;
+      return {
+        label: t.tabLabels[id],
+        weight: on ? 700 : 500,
+        color: on ? "#0a0a0a" : "rgba(10,10,10,.4)",
+        onClick: () => { this.setState({ tab: id }); window.scrollTo({ top: 0 }); }
+      };
+    });
+    const isHome = this.state.tab === "home";
+    const isShop = this.state.tab === "shop";
+
+    const langBtns = ["en","th"].map(code => {
+      const on = code === this.state.lang;
+      return {
+        label: code.toUpperCase(),
+        onClick: () => this.setState({ lang: code }),
+        bg: on ? "#0a0a0a" : "#fff",
+        color: on ? "#fff" : "rgba(10,10,10,.55)"
+      };
+    });
+
+    return {
+      t, cats, products, tiles, steps, reviews, tabs, isHome, isShop, langBtns, exploreLinks, companyLinks,
+      query: this.state.query,
+      onSearch: (e) => this.setState({ query: e.target.value }),
+      searchChips: [
+        { label: t.chipCameras, onClick: () => this.setState({ query: t.chipCameras }) },
+        { label: t.chipTents, onClick: () => this.setState({ query: t.chipTents }) },
+        { label: t.chipDresses, onClick: () => this.setState({ query: t.chipDresses }) },
+        { label: t.chipDrills, onClick: () => this.setState({ query: t.chipDrills }) }
+      ],
+      hasResults: products.length > 0,
+      noResults: products.length === 0,
+      gridTitle,
+      gridSub: t.gridSub(products.length),
+      favCount, hasFavs: favCount > 0,
+      hasDetail: !!detail, detail: detail || {},
+      hasCheckout: !!checkout, checkout: checkout || {},
+      hasAdminPage: this.state.tab === "admin",
+      hasRentalsPage: this.state.tab === "rentals",
+      hasListPage: this.state.tab === "list",
+      hasListingsPage: this.state.tab === "listings",
+      hasSignupPage: this.state.tab === "signup",
+      showMain: !checkout && this.state.tab !== "admin" && this.state.tab !== "rentals" && this.state.tab !== "list" && this.state.tab !== "listings" && this.state.tab !== "signup",
+      signupLabel: t.signupLabel,
+      onGoSignup: () => this.goSignup(),
+      signup: this.buildSignup(t),
+      showStorefront: this.state.tab !== "admin" && !checkout,
+      onGoListItem: () => this.goListItem(),
+      listForm: this.buildListForm(t),
+      listings: this.buildListings(t),
+      myListingsLabel: t.myListings,
+      onGoListings: () => { this.setState({ tab: "listings", menuOpen: false }); window.scrollTo({ top: 0 }); },
+      rentals: this.buildRentals(t),
+      onGoRentals: () => { this.setState({ tab: "rentals", menuOpen: false }); window.scrollTo({ top: 0 }); },
+      admin: this.buildAdmin(t),
+      adminNavLabel: t.adminNavLabel,
+      onGoAdmin: () => { this.setState({ tab: "admin" }); window.scrollTo({ top: 0 }); },
+      footHelp: t.footHelp,
+      myRentalsLabel: t.myRentals,
+      menuOpen: this.state.menuOpen,
+      onToggleMenu: () => this.setState(s => ({ menuOpen: !s.menuOpen })),
+      stopClick: (e) => e.stopPropagation(),
+      isAdmin: this.state.isAdmin,
+      avatarBg: this.state.isAdmin ? "#c96442" : "#0a0a0a",
+      avatarLetter: this.state.isAdmin ? "AD" : "A",
+      adminToggleLabel: this.state.isAdmin ? t.switchToUser : t.switchToAdmin,
+      onToggleAdmin: () => this.setState(s => {
+        const next = !s.isAdmin;
+        return { isAdmin: next, menuOpen: false, tab: next ? "admin" : "home" };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>
