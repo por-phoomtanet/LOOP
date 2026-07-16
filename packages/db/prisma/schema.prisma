@@ -54,12 +54,17 @@ model User {
   accountType        AccountType        @default(INDIVIDUAL)
   roleId             Int
   role               Role               @relation(fields: [roleId], references: [id])
-  verificationStatus VerificationStatus @default(PENDING) // ตาม Admin > Users (approve/reject)
+  verificationStatus VerificationStatus @default(PENDING) // PENDING = ระหว่างรอยืนยัน OTP เท่านั้น, APPROVED ตั้งอัตโนมัติทันทีที่ OTP ผ่าน (ดู Phase 3)
   idCardImageUrl     String? // อัปโหลดตอน signup KYC
   faceVerified       Boolean            @default(false)
   isActive           Boolean            @default(true)
   createdAt          DateTime           @default(now())
   deletedAt          DateTime?
+
+  otpCodeHash  String? // bcrypt hash ของรหัส OTP ปัจจุบัน (null = ไม่มี OTP ค้างอยู่)
+  otpExpiresAt DateTime?
+  otpMethod    String? // "email" | "phone"
+  otpVerifiedAt DateTime? // null = ยังไม่เคยยืนยันตัวตนผ่าน OTP
 
   products        Product[] @relation("ProductOwner")
   rentals         Rental[]  @relation("Renter")

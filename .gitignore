@@ -18,6 +18,9 @@ out/
 apps/api/prisma/generated/
 packages/db/generated/
 
+# Uploaded files (local dev storage)
+apps/api/uploads/
+
 # Logs
 npm-debug.log*
 yarn-debug.log*

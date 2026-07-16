@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { User } from "@/types";
+import { usePermissionStore } from "./permissionStore";
 
 type AuthState = {
   user: User | null;
@@ -15,7 +16,10 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       setAuth: (user, token) => set({ user, token }),
-      clearAuth: () => set({ user: null, token: null }),
+      clearAuth: () => {
+        usePermissionStore.getState().clearPermissions();
+        set({ user: null, token: null });
+      },
     }),
     { name: "loop-auth" },
   ),

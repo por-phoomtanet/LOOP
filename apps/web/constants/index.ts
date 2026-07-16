@@ -8,7 +8,8 @@ export const ROUTES = {
   listItem: "/list-item",
   myListings: "/my-listings",
   myRentals: "/my-rentals",
-  admin: "/admin/dashboard",
+  admin: "/dashboard",
+  adminUsers: "/users",
 } as const;
 
 export const CANCEL_WINDOW_MINUTES = 10;
