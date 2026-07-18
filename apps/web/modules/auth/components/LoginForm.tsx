@@ -7,7 +7,14 @@ import { useAuthStore } from "@/store/authStore";
 import { usePermissionStore } from "@/store/permissionStore";
 import { authApi } from "../services/authApi";
 
-export function LoginForm() {
+type Props = {
+  /** เมื่อกำหนดไว้ (เช่น เรียกจาก modal) — เรียกแทนการ redirect หน้าเดิม, admin ยังพาไป /users ต่อ */
+  onSuccess?: () => void;
+  /** ซ่อนหัวข้อ "เข้าสู่ระบบ LOOP" และปรับ padding ให้พอดีเมื่ออยู่ใน modal */
+  compact?: boolean;
+};
+
+export function LoginForm({ onSuccess, compact = false }: Props) {
   const router = useRouter();
   const setAuth = useAuthStore((s) => s.setAuth);
   const setPermissions = usePermissionStore((s) => s.setPermissions);
@@ -28,12 +35,18 @@ export function LoginForm() {
       const { user, token } = res.data.data;
       setAuth(user, token);
 
+      let isAdmin = false;
       if (user.role === "admin") {
+        isAdmin = true;
         const perms = await authApi.getRolePermissions(user.role);
         setPermissions(perms.data.data);
-        router.push("/users");
+      }
+
+      if (onSuccess) {
+        onSuccess();
+        if (isAdmin) router.push("/users");
       } else {
-        router.push("/");
+        router.push(isAdmin ? "/users" : "/");
       }
     } catch (err) {
       const msg = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
@@ -44,10 +57,15 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto w-full max-w-[420px] px-6 py-20">
-      <h1 className="font-arch mb-6 text-[26px] font-extrabold tracking-[-.02em]">
-        เข้าสู่ระบบ LOOP
-      </h1>
+    <form
+      onSubmit={handleSubmit}
+      className={compact ? "w-full" : "mx-auto w-full max-w-[420px] px-6 py-20"}
+    >
+      {!compact && (
+        <h1 className="font-arch mb-6 text-[26px] font-extrabold tracking-[-.02em]">
+          เข้าสู่ระบบ LOOP
+        </h1>
+      )}
 
       {error && (
         <div className="mb-5 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>

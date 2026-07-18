@@ -45,35 +45,6 @@ async function main() {
     },
   });
 
-  const categories = [
-    { name: "กล้อง", slug: "cameras" },
-    { name: "อิเล็กทรอนิกส์", slug: "electronics" },
-    { name: "แฟชั่น", slug: "fashion" },
-    { name: "กิจกรรมกลางแจ้ง", slug: "outdoor" },
-    { name: "เครื่องมือ & บ้าน", slug: "tools" },
-  ];
-  for (const category of categories) {
-    await prisma.category.upsert({
-      where: { slug: category.slug },
-      update: { name: category.name },
-      create: category,
-    });
-  }
-
-  await prisma.settings.upsert({
-    where: { id: 1 },
-    update: {},
-    create: {
-      id: 1,
-      platformName: "LOOP",
-      currency: "THB (฿)",
-      serviceFeePct: 10,
-      supportEmail: "support@loop.dev",
-      requireIdVerification: true,
-      maintenanceMode: false,
-    },
-  });
-
   console.log("Seed เสร็จสิ้น — roles:", [adminRole.name, userRole.name]);
 }
 

@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { LoginModal } from "@/modules/auth/components/LoginModal";
+import { useAuthStore } from "@/store/authStore";
 
 type Lang = "th" | "en";
 
@@ -18,8 +20,9 @@ const dict = {
     howItWorks: "วิธีใช้งาน",
     helpCenter: "ศูนย์ช่วยเหลือ",
     signup: "สมัครสมาชิก",
-    switchToAdmin: "สลับเป็นแอดมิน",
-    switchToUser: "สลับกลับเป็นผู้ใช้",
+    login: "เข้าสู่ระบบ",
+    logout: "ออกจากระบบ",
+    goAdmin: "ไปหน้าแอดมิน",
   },
   en: {
     announce: "Every rental is ID-verified and damage-protected — borrow with confidence.",
@@ -32,20 +35,40 @@ const dict = {
     howItWorks: "How it works",
     helpCenter: "Help center",
     signup: "Sign up",
-    switchToAdmin: "Switch to admin",
-    switchToUser: "Switch to user account",
+    login: "Log in",
+    logout: "Log out",
+    goAdmin: "Go to admin panel",
   },
 } as const;
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, clearAuth } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
   const [lang, setLang] = useState<Lang>("th");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const favCount = 0;
+
+  useEffect(() => setMounted(true), []);
 
   const t = dict[lang];
   const isHome = pathname === "/";
+  const isLoggedIn = mounted && !!user;
+  const isAdmin = mounted && user?.role === "admin";
+  const avatarLetter = user?.name?.trim()?.[0]?.toUpperCase() ?? "?";
+
+  function goToAdmin() {
+    setMenuOpen(false);
+    router.push("/users");
+  }
+
+  function handleLogout() {
+    clearAuth();
+    setMenuOpen(false);
+    router.push("/");
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -89,7 +112,10 @@ export function Header() {
 
           <nav className="flex flex-none items-center gap-3.5">
             {isAdmin && (
-              <button className="whitespace-nowrap border-0 bg-transparent p-0 text-[13.5px] font-semibold text-[#c96442]">
+              <button
+                onClick={goToAdmin}
+                className="whitespace-nowrap border-0 bg-transparent p-0 text-[13.5px] font-semibold text-[#c96442]"
+              >
                 {t.adminNavLabel}
               </button>
             )}
@@ -146,7 +172,7 @@ export function Header() {
                 className="relative flex h-[34px] w-[34px] rounded-full border-0 bg-none p-0"
               >
                 <div className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[#0a0a0a] text-[13px] font-bold text-white">
-                  A
+                  {avatarLetter}
                 </div>
                 {isAdmin && (
                   <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-[#c96442]" />
@@ -157,12 +183,16 @@ export function Header() {
                 <>
                   <div className="fixed inset-0 z-[45]" onClick={() => setMenuOpen(false)} />
                   <div className="absolute right-0 top-[44px] z-50 min-w-[180px] rounded-[14px] border border-black/10 bg-white p-2 shadow-[0_12px_32px_rgba(10,10,10,.14)]">
-                    <button className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5">
-                      {t.myRentals}
-                    </button>
-                    <button className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5">
-                      {t.myListings}
-                    </button>
+                    {isLoggedIn && (
+                      <>
+                        <button className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5">
+                          {t.myRentals}
+                        </button>
+                        <button className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5">
+                          {t.myListings}
+                        </button>
+                      </>
+                    )}
                     <a
                       href="#"
                       className="block rounded-lg px-3 py-2.5 text-sm font-medium text-[#0a0a0a] hover:bg-black/5"
@@ -176,15 +206,44 @@ export function Header() {
                       {t.helpCenter}
                     </a>
                     <div className="mx-1 my-1.5 h-px bg-black/[.08]" />
-                    <button className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5">
-                      {t.signup}
-                    </button>
-                    <button
-                      onClick={() => setIsAdmin((v) => !v)}
-                      className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5"
-                    >
-                      {isAdmin ? t.switchToUser : t.switchToAdmin}
-                    </button>
+
+                    {isLoggedIn ? (
+                      <>
+                        {isAdmin && (
+                          <button
+                            onClick={goToAdmin}
+                            className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5"
+                          >
+                            {t.goAdmin}
+                          </button>
+                        )}
+                        <button
+                          onClick={handleLogout}
+                          className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5"
+                        >
+                          {t.logout}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => {
+                            setMenuOpen(false);
+                            setLoginModalOpen(true);
+                          }}
+                          className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5"
+                        >
+                          {t.login}
+                        </button>
+                        <Link
+                          href="/signup"
+                          onClick={() => setMenuOpen(false)}
+                          className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5"
+                        >
+                          {t.signup}
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </>
               )}
@@ -192,6 +251,8 @@ export function Header() {
           </nav>
         </div>
       </header>
+
+      <LoginModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
     </div>
   );
 }
