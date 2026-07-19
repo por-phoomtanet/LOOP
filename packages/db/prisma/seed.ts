@@ -14,7 +14,14 @@ async function main() {
     create: { name: "user", label: "ผู้ใช้ทั่วไป" },
   });
 
-  const adminMenus = ["dashboard", "categories", "users", "products", "payments", "settings"];
+  // เฉพาะเมนูที่มีหน้า admin จริงตอนนี้ — dashboard/categories/products/payments/settings ยังไม่ได้สร้าง
+  const adminMenus = ["users"];
+
+  // ลบ permission ของเมนูที่เคย seed ไว้ก่อนหน้าแต่ตอนนี้ไม่มีหน้าจริงแล้ว
+  await prisma.rolePermission.deleteMany({
+    where: { roleId: adminRole.id, menuKey: { notIn: adminMenus } },
+  });
+
   for (const menuKey of adminMenus) {
     await prisma.rolePermission.upsert({
       where: { roleId_menuKey: { roleId: adminRole.id, menuKey } },
