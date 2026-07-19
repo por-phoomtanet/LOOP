@@ -41,7 +41,7 @@ const dict = {
   },
 } as const;
 
-export function Header() {
+export function Header({ children }: { children?: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, clearAuth } = useAuthStore();
@@ -143,9 +143,12 @@ export function Header() {
               </button>
             </div>
 
-            <button className="whitespace-nowrap rounded-full border-[1.5px] border-[#0a0a0a] bg-white px-[18px] py-[9px] text-[13.5px] font-semibold text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white">
+            <Link
+              href="/list-item"
+              className="whitespace-nowrap rounded-full border-[1.5px] border-[#0a0a0a] bg-white px-[18px] py-[9px] text-[13.5px] font-semibold text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white"
+            >
               {t.listItem}
-            </button>
+            </Link>
 
             <button aria-label="Saved" className="relative flex border-0 bg-transparent p-1">
               <svg
@@ -251,6 +254,8 @@ export function Header() {
           </nav>
         </div>
       </header>
+
+      {children && <main>{children}</main>}
 
       <LoginModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
     </div>

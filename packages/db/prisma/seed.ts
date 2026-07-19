@@ -45,6 +45,21 @@ async function main() {
     },
   });
 
+  const categories = [
+    { name: "อิเล็กทรอนิกส์", slug: "electronics" },
+    { name: "กล้อง", slug: "cameras" },
+    { name: "แฟชั่น", slug: "fashion" },
+    { name: "กลางแจ้ง & แคมป์", slug: "outdoor" },
+    { name: "เครื่องมือ & บ้าน", slug: "tools" },
+  ];
+  for (const category of categories) {
+    await prisma.category.upsert({
+      where: { slug: category.slug },
+      update: { name: category.name, isActive: true },
+      create: { ...category, isActive: true },
+    });
+  }
+
   console.log("Seed เสร็จสิ้น — roles:", [adminRole.name, userRole.name]);
 }
 
