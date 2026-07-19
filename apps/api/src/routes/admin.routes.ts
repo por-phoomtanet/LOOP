@@ -13,6 +13,7 @@ const updateStatusSchema = z.object({
   status: z.enum(["APPROVED", "REJECTED"]),
 });
 
+adminRouter.get("/dashboard", userController.adminDashboard);
 adminRouter.get("/users", userController.adminListUsers);
 adminRouter.patch(
   "/users/:id/status",

@@ -52,3 +52,20 @@ export async function updateVerificationStatus(id: number, status: "APPROVED" | 
   const updated = await userRepository.setVerificationStatus(id, status);
   return { id: updated.id, verificationStatus: updated.verificationStatus };
 }
+
+export async function getDashboardStats() {
+  const [totalUsers, pendingUsers] = await Promise.all([
+    userRepository.countAll(),
+    userRepository.countPending(),
+  ]);
+
+  return {
+    users: { total: totalUsers, pending: pendingUsers },
+    // ยังไม่มี Product/Rental/Category model (ดู Phase 4 note ใน CLAUDE.md) — null = ยังไม่เปิดใช้งาน ไม่ใช่ 0 จริง
+    products: null,
+    orders: null,
+    grossRentalValue: null,
+    categories: null,
+    activeListings: null,
+  };
+}

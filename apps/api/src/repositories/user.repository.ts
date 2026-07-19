@@ -74,4 +74,12 @@ export const userRepository = {
   setVerificationStatus(id: number, status: "APPROVED" | "REJECTED") {
     return prisma.user.update({ where: { id }, data: { verificationStatus: status } });
   },
+
+  countAll() {
+    return prisma.user.count({ where: { deletedAt: null } });
+  },
+
+  countPending() {
+    return prisma.user.count({ where: { deletedAt: null, verificationStatus: "PENDING" } });
+  },
 };

@@ -22,7 +22,7 @@ model Role {
 model RolePermission {
   id        Int      @id @default(autoincrement())
   roleId    Int
-  role      Role     @relation(fields: [roleId], references: [id])
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
   menuKey   String // "dashboard" | "categories" | "users" | "products" | "payments" | "settings"
   canView   Boolean  @default(true)
   canCreate Boolean  @default(false)

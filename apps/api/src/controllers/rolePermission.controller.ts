@@ -9,3 +9,16 @@ export async function getByRole(req: Request, res: Response, next: NextFunction)
     next(err);
   }
 }
+
+export async function update(req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await rolePermissionService.updatePermission(
+      req.params.role,
+      req.params.menuKey,
+      req.body,
+    );
+    res.json({ data: result, message: "ok" });
+  } catch (err) {
+    next(err);
+  }
+}
