@@ -5,9 +5,11 @@ import { LoginForm } from "./LoginForm";
 type Props = {
   open: boolean;
   onClose: () => void;
+  /** เรียกแทน onClose เมื่อ login สำเร็จ (เช่น ให้ไปต่อหน้าที่ตั้งใจไว้แทนแค่ปิด modal) */
+  onSuccess?: () => void;
 };
 
-export function LoginModal({ open, onClose }: Props) {
+export function LoginModal({ open, onClose, onSuccess }: Props) {
   if (!open) return null;
 
   return (
@@ -25,7 +27,7 @@ export function LoginModal({ open, onClose }: Props) {
         <h2 className="font-arch mb-6 text-[22px] font-extrabold tracking-[-.02em]">
           เข้าสู่ระบบ renty
         </h2>
-        <LoginForm compact onSuccess={onClose} />
+        <LoginForm compact onSuccess={onSuccess ?? onClose} />
       </div>
     </div>
   );

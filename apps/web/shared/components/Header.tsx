@@ -51,6 +51,7 @@ export function Header() {
   const [lang, setLang] = useState<Lang>("th");
   const [menuOpen, setMenuOpen] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [postLoginRedirect, setPostLoginRedirect] = useState<string | null>(null);
   const favCount = 0;
 
   useEffect(() => setMounted(true), []);
@@ -71,6 +72,7 @@ export function Header() {
     if (isLoggedIn) {
       router.push(ROUTES.listItem);
     } else {
+      setPostLoginRedirect(ROUTES.listItem);
       setLoginModalOpen(true);
     }
   }
@@ -84,6 +86,21 @@ export function Header() {
     clearAuth();
     setMenuOpen(false);
     router.push("/");
+  }
+
+  function closeLoginModal() {
+    setLoginModalOpen(false);
+    setPostLoginRedirect(null);
+  }
+
+  function handleLoginSuccess() {
+    setLoginModalOpen(false);
+    if (postLoginRedirect) {
+      router.push(postLoginRedirect);
+      setPostLoginRedirect(null);
+    }
+    // ไม่ redirect ไปแอดมินอัตโนมัติแม้ role จะเป็น admin — อยู่หน้าเดิม (home)
+    // สลับไปแอดมินทีหลังผ่านปุ่ม "แผงแอดมิน"/"ไปหน้าแอดมิน" เอง
   }
 
   return (
@@ -278,7 +295,7 @@ export function Header() {
         </div>
       </header>
 
-      <LoginModal open={loginModalOpen} onClose={() => setLoginModalOpen(false)} />
+      <LoginModal open={loginModalOpen} onClose={closeLoginModal} onSuccess={handleLoginSuccess} />
     </div>
   );
 }
