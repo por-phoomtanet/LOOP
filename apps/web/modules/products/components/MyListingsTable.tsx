@@ -1,22 +1,17 @@
 "use client";
 
 import axios from "axios";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { resolveUploadUrl } from "@/shared/lib/utils";
 import { productsApi } from "../services/productsApi";
 import type { MyListing } from "../types";
 import { ListItemForm } from "./ListItemForm";
 
-const STATUS_LABEL: Record<MyListing["status"], string> = {
-  UNDER_REVIEW: "รอตรวจสอบ",
-  ACTIVE: "ใช้งานได้",
-  PAUSED: "พักไว้",
-};
-
-const STATUS_COLOR: Record<MyListing["status"], string> = {
-  UNDER_REVIEW: "#9a9a9a",
-  ACTIVE: "#1a9c5c",
-  PAUSED: "#c96442",
+const STATUS_BADGE: Record<MyListing["status"], { bg: string; color: string; label: string }> = {
+  ACTIVE: { bg: "rgba(23,138,90,.1)", color: "#178a5a", label: "ใช้งาน" },
+  UNDER_REVIEW: { bg: "rgba(201,152,66,.12)", color: "#a8752f", label: "รอตรวจสอบ" },
+  PAUSED: { bg: "rgba(10,10,10,.07)", color: "rgba(10,10,10,.55)", label: "หยุดชั่วคราว" },
 };
 
 export function MyListingsTable() {
@@ -73,77 +68,122 @@ export function MyListingsTable() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[880px] px-6 py-12">
-      <h1 className="font-arch mb-8 text-[26px] font-extrabold tracking-[-.02em]">
-        รายการปล่อยเช่าของฉัน
-      </h1>
+    <div className="mx-auto w-full max-w-[1000px] px-8 py-12">
+      <div className="mb-2 flex items-end justify-between gap-5">
+        <div>
+          <div className="mb-2.5 font-mono text-[11px] uppercase tracking-[.12em] text-black/40">
+            รายการของคุณ
+          </div>
+          <h1 className="font-arch text-[30px] font-extrabold tracking-[-.025em] text-black">
+            รายการปล่อยเช่าของฉัน
+          </h1>
+          <p className="mt-2.5 max-w-[560px] text-[14.5px] text-black/55">
+            จัดการสินค้าที่คุณลงประกาศให้เช่า
+          </p>
+        </div>
+        <Link
+          href="/list-item"
+          className="bg-brand-600 flex-none whitespace-nowrap rounded-[10px] px-5 py-[11px] text-[14px] font-semibold text-white"
+        >
+          ลงประกาศให้เช่า
+        </Link>
+      </div>
+
+      <div className="mb-1 mt-6 inline-flex gap-1 rounded-full bg-black/5 p-1">
+        <button
+          type="button"
+          className="bg-brand-600 whitespace-nowrap rounded-full px-[18px] py-2.5 text-[13.5px] font-semibold text-white transition-all"
+        >
+          รายการสินค้า
+        </button>
+        <button
+          type="button"
+          disabled
+          className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-[18px] py-2.5 text-[13.5px] font-semibold text-black/35"
+        >
+          ออเดอร์
+          <span className="rounded-full bg-black/10 px-1.5 py-0.5 text-[10px]">เร็วๆ นี้</span>
+        </button>
+      </div>
 
       {error && (
-        <div className="mb-5 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+        <div className="mb-5 mt-5 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
       {loading ? (
-        <p className="text-black/50">กำลังโหลด…</p>
+        <p className="mt-6 text-black/50">กำลังโหลด…</p>
       ) : listings.length === 0 ? (
-        <p className="text-black/50">ยังไม่มีประกาศ</p>
+        <p className="py-10 text-center text-[14px] text-black/50">คุณยังไม่มีสินค้าที่ลงประกาศ</p>
       ) : (
-        <div className="flex flex-col gap-3">
-          {listings.map((listing) => (
-            <div
-              key={listing.id}
-              className="flex items-center gap-4 rounded-xl border border-black/10 p-4"
-            >
-              {listing.images[0] ? (
-                // eslint-disable-next-line
-                <img
-                  src={resolveUploadUrl(listing.images[0].url)}
-                  alt=""
-                  className="h-16 w-16 flex-none rounded-lg object-cover"
-                />
-              ) : (
-                <div className="h-16 w-16 flex-none rounded-lg bg-black/5" />
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[15px] font-semibold">{listing.title}</p>
-                <p className="text-[13px] text-black/50">
-                  {listing.categoryName} · ฿{listing.pricePerDay}/วัน
-                </p>
+        <div className="mt-5 overflow-hidden rounded-[14px] border border-black/10">
+          {listings.map((listing) => {
+            const badge = STATUS_BADGE[listing.status];
+            return (
+              <div
+                key={listing.id}
+                className="flex items-center gap-4 border-t border-black/[.08] px-5 py-4 first:border-t-0"
+              >
+                {listing.images[0] ? (
+                  // eslint-disable-next-line
+                  <img
+                    src={resolveUploadUrl(listing.images[0].url)}
+                    alt=""
+                    className="h-14 w-14 flex-none rounded-[10px] object-cover"
+                  />
+                ) : (
+                  <div className="h-14 w-14 flex-none rounded-[10px] bg-black/[.06]" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[14.5px] font-bold text-black">{listing.title}</p>
+                  <p className="mt-[3px] text-[13px] text-black/55">฿{listing.pricePerDay} / วัน</p>
+                </div>
                 <span
-                  className="mt-1 inline-block text-[12px] font-semibold"
-                  style={{ color: STATUS_COLOR[listing.status] }}
+                  className="flex-none whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-semibold"
+                  style={{ background: badge.bg, color: badge.color }}
                 >
-                  {STATUS_LABEL[listing.status]}
+                  {badge.label}
                 </span>
-              </div>
-              <div className="flex flex-none gap-2">
-                {listing.status !== "UNDER_REVIEW" && (
+                <div className="flex flex-none items-center gap-2">
+                  {listing.status !== "UNDER_REVIEW" && (
+                    <button
+                      type="button"
+                      disabled={busyId === listing.id}
+                      onClick={() => toggleStatus(listing)}
+                      className="whitespace-nowrap rounded-[8px] border-[1.5px] border-black/[.15] bg-white px-3 py-[7px] text-[12.5px] font-semibold text-black disabled:opacity-40"
+                    >
+                      {listing.status === "ACTIVE" ? "หยุดชั่วคราว" : "เปิดใช้งาน"}
+                    </button>
+                  )}
                   <button
                     type="button"
-                    disabled={busyId === listing.id}
-                    onClick={() => toggleStatus(listing)}
-                    className="rounded-full border border-black/[.16] px-4 py-2 text-[12.5px] font-semibold text-black/70 hover:border-black/35 disabled:opacity-40"
+                    onClick={() => setEditing(listing)}
+                    className="whitespace-nowrap rounded-[8px] border-[1.5px] border-black/[.15] bg-white px-3 py-[7px] text-[12.5px] font-semibold text-black"
                   >
-                    {listing.status === "ACTIVE" ? "พัก" : "เริ่มใหม่"}
+                    แก้ไข
                   </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setEditing(listing)}
-                  className="rounded-full border border-black/[.16] px-4 py-2 text-[12.5px] font-semibold text-black/70 hover:border-black/35"
-                >
-                  แก้ไข
-                </button>
-                <button
-                  type="button"
-                  disabled={busyId === listing.id}
-                  onClick={() => handleDelete(listing)}
-                  className="rounded-full border border-red-200 px-4 py-2 text-[12.5px] font-semibold text-red-600 hover:border-red-400 disabled:opacity-40"
-                >
-                  ลบ
-                </button>
+                  <button
+                    type="button"
+                    aria-label="ลบ"
+                    disabled={busyId === listing.id}
+                    onClick={() => handleDelete(listing)}
+                    className="rounded-[8px] border-0 bg-transparent p-1.5 hover:bg-[rgba(201,100,66,.1)] disabled:opacity-40"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#c96442"
+                      strokeWidth="2"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
