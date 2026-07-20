@@ -32,6 +32,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     productsApi
@@ -39,6 +40,16 @@ export function ListItemForm({ listing, onSaved }: Props) {
       .then((res) => setCategories(res.data.data))
       .catch(() => setCategories([]));
   }, []);
+
+  useEffect(() => {
+    if (!imageFile) {
+      setImagePreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(imageFile);
+    setImagePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [imageFile]);
 
   const canSubmit =
     title.trim() &&
@@ -193,26 +204,64 @@ export function ListItemForm({ listing, onSaved }: Props) {
             ))}
           </div>
         )}
-        <label className="flex h-[220px] cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-black/20 bg-black/[.03] text-black/40 transition-colors hover:border-black/35">
+        <label className="relative flex h-[220px] cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border border-dashed border-black/20 bg-black/[.03] text-black/40 transition-colors hover:border-black/35">
           <input
             type="file"
             accept="image/png,image/jpeg,image/webp"
             className="hidden"
             onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
           />
-          <svg
-            width="30"
-            height="30"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <rect x="3" y="5" width="18" height="14" rx="2" />
-            <circle cx="9" cy="11" r="2" />
-            <path d="M21 16l-4.5-4.5a2 2 0 0 0-2.8 0L7 18" />
-          </svg>
-          <span className="text-[13.5px]">{imageFile ? imageFile.name : "Add a photo"}</span>
+          {imagePreview ? (
+            <>
+              {/* eslint-disable-next-line */}
+              <img
+                src={imagePreview}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setImageFile(null);
+                }}
+                aria-label="ลบรูปภาพ"
+                className="absolute right-2.5 top-2.5 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/75"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <path d="M18 6L6 18" />
+                  <path d="M6 6l12 12" />
+                </svg>
+              </button>
+              <div className="absolute inset-x-0 bottom-0 truncate bg-black/55 px-3 py-1.5 text-[12px] text-white">
+                {imageFile?.name}
+              </div>
+            </>
+          ) : (
+            <>
+              <svg
+                width="30"
+                height="30"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <circle cx="9" cy="11" r="2" />
+                <path d="M21 16l-4.5-4.5a2 2 0 0 0-2.8 0L7 18" />
+              </svg>
+              <span className="text-[13.5px]">Add a photo</span>
+            </>
+          )}
         </label>
       </div>
 
