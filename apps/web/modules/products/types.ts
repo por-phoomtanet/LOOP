@@ -1,0 +1,42 @@
+export type ProductStatus = "UNDER_REVIEW" | "ACTIVE" | "PAUSED";
+
+export type Category = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
+export type ProductImage = {
+  id: number;
+  url: string;
+  sortOrder: number;
+};
+
+export type PickupOption = {
+  id: number;
+  label: string;
+};
+
+export type MyListing = {
+  id: number;
+  title: string;
+  description: string;
+  categoryId: number;
+  categoryName: string;
+  pricePerDay: string;
+  location: string;
+  status: ProductStatus;
+  ratingAvg: number;
+  reviewCount: number;
+  images: ProductImage[];
+  pickupOptions: PickupOption[];
+  createdAt: string;
+};
+
+export type ProductInput = {
+  title: string;
+  description: string;
+  categoryId: number;
+  pricePerDay: number;
+  location: string;
+};

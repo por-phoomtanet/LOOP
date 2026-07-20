@@ -1,0 +1,47 @@
+import { api } from "@/shared/services/api";
+import type { ApiResponse } from "@/types";
+import type { Category, MyListing, PickupOption, ProductImage, ProductInput } from "../types";
+
+export const productsApi = {
+  getCategories() {
+    return api.get<ApiResponse<Category[]>>("/categories");
+  },
+
+  createProduct(input: ProductInput) {
+    return api.post<ApiResponse<{ id: number }>>("/products", input);
+  },
+
+  updateProduct(id: number, input: Partial<ProductInput>) {
+    return api.put<ApiResponse<{ id: number }>>(`/products/${id}`, input);
+  },
+
+  setStatus(id: number, status: "ACTIVE" | "PAUSED") {
+    return api.patch<ApiResponse<{ id: number; status: string }>>(`/products/${id}/status`, {
+      status,
+    });
+  },
+
+  deleteProduct(id: number) {
+    return api.delete<ApiResponse<null>>(`/products/${id}`);
+  },
+
+  uploadImages(id: number, files: File[]) {
+    const form = new FormData();
+    files.forEach((file) => form.append("files", file));
+    return api.post<ApiResponse<ProductImage[]>>(`/products/${id}/images`, form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+
+  addPickupOption(id: number, label: string) {
+    return api.post<ApiResponse<PickupOption>>(`/products/${id}/pickup-options`, { label });
+  },
+
+  removePickupOption(id: number, optionId: number) {
+    return api.delete<ApiResponse<null>>(`/products/${id}/pickup-options/${optionId}`);
+  },
+
+  getMyListings() {
+    return api.get<ApiResponse<MyListing[]>>("/me/listings");
+  },
+};

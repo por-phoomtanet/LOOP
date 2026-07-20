@@ -4,6 +4,7 @@ import { App, Table } from "antd";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/shared/components/PageHeader";
+import { resolveUploadUrl } from "@/shared/lib/utils";
 import { adminApi } from "../services/adminApi";
 import type { AdminProduct } from "../types";
 
@@ -78,7 +79,7 @@ export function ProductTable() {
               p.thumbnailUrl ? (
                 // eslint-disable-next-line
                 <img
-                  src={p.thumbnailUrl}
+                  src={resolveUploadUrl(p.thumbnailUrl)}
                   alt={p.title}
                   className="h-10 w-10 rounded object-cover"
                 />

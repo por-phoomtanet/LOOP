@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LoginModal } from "@/modules/auth/components/LoginModal";
+import { ROUTES } from "@/constants";
 import { useAuthStore } from "@/store/authStore";
 
 type Lang = "th" | "en";
@@ -62,6 +63,20 @@ export function Header() {
   function goToAdmin() {
     setMenuOpen(false);
     router.push("/users");
+  }
+
+  function goToListItem() {
+    setMenuOpen(false);
+    if (isLoggedIn) {
+      router.push(ROUTES.listItem);
+    } else {
+      setLoginModalOpen(true);
+    }
+  }
+
+  function goToMyListings() {
+    setMenuOpen(false);
+    router.push(ROUTES.myListings);
   }
 
   function handleLogout() {
@@ -143,7 +158,10 @@ export function Header() {
               </button>
             </div>
 
-            <button className="whitespace-nowrap rounded-full border-[1.5px] border-[#0a0a0a] bg-white px-[18px] py-[9px] text-[13.5px] font-semibold text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white">
+            <button
+              onClick={goToListItem}
+              className="whitespace-nowrap rounded-full border-[1.5px] border-[#0a0a0a] bg-white px-[18px] py-[9px] text-[13.5px] font-semibold text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white"
+            >
               {t.listItem}
             </button>
 
@@ -188,7 +206,10 @@ export function Header() {
                         <button className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5">
                           {t.myRentals}
                         </button>
-                        <button className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5">
+                        <button
+                          onClick={goToMyListings}
+                          className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5"
+                        >
                           {t.myListings}
                         </button>
                       </>
