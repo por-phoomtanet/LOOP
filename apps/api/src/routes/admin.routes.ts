@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import * as productController from "../controllers/product.controller";
 import * as userController from "../controllers/user.controller";
 import { authenticate } from "../middleware/authenticate";
 import { requireRole } from "../middleware/requireRole";
@@ -20,3 +21,4 @@ adminRouter.patch(
   validate({ body: updateStatusSchema }),
   userController.adminUpdateStatus,
 );
+adminRouter.get("/products", productController.adminList);

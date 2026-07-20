@@ -33,3 +33,27 @@ export type RolePermission = {
   canUpdate: boolean;
   canDelete: boolean;
 };
+
+export type Category = {
+  id: number;
+  name: string;
+  slug: string;
+  isActive: boolean;
+  productCount: number;
+  createdAt: string;
+  createdBy: { name: string } | null;
+  updatedBy: { name: string } | null;
+};
+
+export type AdminProduct = {
+  id: number;
+  title: string;
+  categoryName: string;
+  ownerName: string;
+  pricePerDay: string;
+  status: "UNDER_REVIEW" | "ACTIVE" | "PAUSED";
+  ratingAvg: number;
+  location: string;
+  thumbnailUrl: string | null;
+  createdAt: string;
+};

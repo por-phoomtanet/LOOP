@@ -42,7 +42,7 @@ const MASTER_DATA_ITEMS: NavItem[] = [
     label: "ประเภทสินค้า",
     href: "/categories",
     icon: <AppstoreOutlined />,
-    ready: false,
+    ready: true,
   },
   { menuKey: "users", label: "ผู้ใช้", href: "/users", icon: <TeamOutlined />, ready: true },
   {
@@ -52,7 +52,7 @@ const MASTER_DATA_ITEMS: NavItem[] = [
     icon: <SafetyOutlined />,
     ready: true,
   },
-  { menuKey: "products", label: "สินค้า", href: "/products", icon: <ShopOutlined />, ready: false },
+  { menuKey: "products", label: "สินค้า", href: "/products", icon: <ShopOutlined />, ready: true },
   {
     menuKey: "payments",
     label: "การชำระเงิน",

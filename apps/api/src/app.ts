@@ -4,6 +4,7 @@ import express from "express";
 import { errorHandler } from "./middleware/errorHandler";
 import { adminRouter } from "./routes/admin.routes";
 import { authRouter } from "./routes/auth.routes";
+import { categoryRouter } from "./routes/category.routes";
 import { healthRouter } from "./routes/health.routes";
 import { roleRouter } from "./routes/role.routes";
 import { rolePermissionRouter } from "./routes/rolePermission.routes";
@@ -17,6 +18,7 @@ app.use("/uploads", express.static(path.resolve(__dirname, "../uploads")));
 
 app.use("/api/health", healthRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/categories", categoryRouter);
 app.use("/api/users", userRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/roles", roleRouter);
