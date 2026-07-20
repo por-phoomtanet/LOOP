@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -87,18 +88,22 @@ export function Header() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="bg-[#0a0a0a] px-4 py-[9px] text-center text-[12px] font-medium tracking-[.04em] text-white">
+      <div className="bg-brand-600 px-4 py-[9px] text-center text-[12px] font-medium tracking-[.04em] text-white">
         {t.announce}
       </div>
 
       <header className="sticky top-0 z-40 border-b border-black/10 bg-white/[.92] backdrop-blur-md">
         <div className="flex h-[72px] w-full items-center justify-between gap-5 px-8">
           <div className="flex min-w-0 items-center gap-[26px]">
-            <Link
-              href="/"
-              className="font-arch flex-none text-[26px] font-black tracking-[-.03em] text-[#0a0a0a]"
-            >
-              LOOP<span className="text-black/35">.</span>
+            <Link href="/" className="flex flex-none items-center">
+              <Image
+                src="/brand/renty-logo.png"
+                alt="renty"
+                width={220}
+                height={150}
+                priority
+                className="h-[46px] w-auto object-contain"
+              />
             </Link>
 
             <nav className="flex flex-none items-center gap-[26px]">
@@ -107,7 +112,7 @@ export function Header() {
                 className="py-1 text-[17px] tracking-[-.01em]"
                 style={{
                   fontWeight: isHome ? 700 : 500,
-                  color: isHome ? "#0a0a0a" : "rgba(10,10,10,.45)",
+                  color: isHome ? "#2D5DA8" : "rgba(45,93,168,.5)",
                 }}
               >
                 {t.navHome}
@@ -117,7 +122,7 @@ export function Header() {
                 className="py-1 text-[17px] tracking-[-.01em]"
                 style={{
                   fontWeight: !isHome ? 700 : 500,
-                  color: !isHome ? "#0a0a0a" : "rgba(10,10,10,.45)",
+                  color: !isHome ? "#2D5DA8" : "rgba(45,93,168,.5)",
                 }}
               >
                 {t.navShop}
@@ -135,13 +140,13 @@ export function Header() {
               </button>
             )}
 
-            <div className="flex flex-none overflow-hidden rounded-full border-[1.5px] border-black/[.14]">
+            <div className="border-brand-600/25 flex flex-none overflow-hidden rounded-full border-[1.5px]">
               <button
                 onClick={() => setLang("en")}
                 className="px-3 py-[7px] text-[12px] font-bold tracking-[.03em] transition-colors"
                 style={{
-                  background: lang === "en" ? "#0a0a0a" : "transparent",
-                  color: lang === "en" ? "#fff" : "rgba(10,10,10,.55)",
+                  background: lang === "en" ? "#2D5DA8" : "transparent",
+                  color: lang === "en" ? "#fff" : "rgba(45,93,168,.6)",
                 }}
               >
                 EN
@@ -150,8 +155,8 @@ export function Header() {
                 onClick={() => setLang("th")}
                 className="px-3 py-[7px] text-[12px] font-bold tracking-[.03em] transition-colors"
                 style={{
-                  background: lang === "th" ? "#0a0a0a" : "transparent",
-                  color: lang === "th" ? "#fff" : "rgba(10,10,10,.55)",
+                  background: lang === "th" ? "#2D5DA8" : "transparent",
+                  color: lang === "th" ? "#fff" : "rgba(45,93,168,.6)",
                 }}
               >
                 TH
@@ -160,7 +165,7 @@ export function Header() {
 
             <button
               onClick={goToListItem}
-              className="whitespace-nowrap rounded-full border-[1.5px] border-[#0a0a0a] bg-white px-[18px] py-[9px] text-[13.5px] font-semibold text-[#0a0a0a] transition-colors hover:bg-[#0a0a0a] hover:text-white"
+              className="border-brand-600 text-brand-600 hover:bg-brand-600 whitespace-nowrap rounded-full border-[1.5px] bg-white px-[18px] py-[9px] text-[13.5px] font-semibold transition-colors hover:text-white"
             >
               {t.listItem}
             </button>
@@ -171,13 +176,13 @@ export function Header() {
                 height="22"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#0a0a0a"
+                stroke="#2D5DA8"
                 strokeWidth="1.8"
               >
                 <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.7-7.5 1.1-1.1a5.5 5.5 0 0 0 0-7.8z" />
               </svg>
               {favCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#0a0a0a] px-1 text-[10px] font-bold text-white">
+                <span className="bg-brand-600 absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">
                   {favCount}
                 </span>
               )}
@@ -189,7 +194,7 @@ export function Header() {
                 aria-label="Account menu"
                 className="relative flex h-[34px] w-[34px] rounded-full border-0 bg-none p-0"
               >
-                <div className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full bg-[#0a0a0a] text-[13px] font-bold text-white">
+                <div className="bg-brand-600 flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full text-[13px] font-bold text-white">
                   {avatarLetter}
                 </div>
                 {isAdmin && (

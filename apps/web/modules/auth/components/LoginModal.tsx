@@ -23,7 +23,7 @@ export function LoginModal({ open, onClose }: Props) {
           ✕
         </button>
         <h2 className="font-arch mb-6 text-[22px] font-extrabold tracking-[-.02em]">
-          เข้าสู่ระบบ LOOP
+          เข้าสู่ระบบ renty
         </h2>
         <LoginForm compact onSuccess={onClose} />
       </div>

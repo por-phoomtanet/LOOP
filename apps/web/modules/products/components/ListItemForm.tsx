@@ -122,7 +122,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
   if (submitted) {
     return (
       <div className="mx-auto flex w-full max-w-[460px] flex-col items-center px-6 py-20 text-center">
-        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-[28px]">
+        <div className="bg-brand-100 text-brand-600 mb-5 flex h-16 w-16 items-center justify-center rounded-full text-[28px]">
           ✓
         </div>
         <h2 className="font-arch mb-2 text-[22px] font-extrabold tracking-[-.02em]">
@@ -134,7 +134,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
         <button
           type="button"
           onClick={resetForm}
-          className="rounded-full bg-[#0a0a0a] px-6 py-3 text-[14px] font-semibold text-white"
+          className="bg-brand-600 rounded-full px-6 py-3 text-[14px] font-semibold text-white"
         >
           ลงประกาศเพิ่ม
         </button>
@@ -200,7 +200,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
         <select
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : "")}
-          className="w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none transition-colors focus:border-black/40"
+          className="w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none transition-colors focus:border-brand-400"
         >
           <option value="">เลือกหมวดหมู่</option>
           {categories.map((c) => (
@@ -224,7 +224,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={4}
-          className="w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none transition-colors focus:border-black/40"
+          className="w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none transition-colors focus:border-brand-400"
         />
       </div>
 
@@ -261,7 +261,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
               }
             }}
             placeholder="เช่น BTS อโศก"
-            className="flex-1 rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none transition-colors focus:border-black/40"
+            className="flex-1 rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none transition-colors focus:border-brand-400"
           />
           <button
             type="button"
@@ -276,7 +276,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
       <button
         type="submit"
         disabled={!canSubmit || submitting}
-        className="w-full rounded-full bg-[#0a0a0a] py-3.5 text-[14.5px] font-semibold text-white transition-opacity disabled:opacity-40"
+        className="bg-brand-600 w-full rounded-full py-3.5 text-[14.5px] font-semibold text-white transition-opacity disabled:opacity-40"
       >
         {submitting ? "กำลังบันทึก…" : isEdit ? "บันทึกการแก้ไข" : "ส่งประกาศ"}
       </button>
@@ -302,7 +302,7 @@ function Field({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none transition-colors focus:border-black/40"
+        className="w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none transition-colors focus:border-brand-400"
       />
     </div>
   );

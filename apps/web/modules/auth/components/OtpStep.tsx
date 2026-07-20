@@ -96,8 +96,8 @@ export function OtpStep({ onVerified }: Props) {
             onClick={() => handleSwitchMethod(opt.value)}
             className="px-5 py-2 text-[13.5px] font-semibold transition-colors"
             style={{
-              background: method === opt.value ? "#0a0a0a" : "transparent",
-              color: method === opt.value ? "#fff" : "rgba(10,10,10,.55)",
+              background: method === opt.value ? "#2D5DA8" : "transparent",
+              color: method === opt.value ? "#fff" : "rgba(45,93,168,.6)",
             }}
           >
             {opt.label}
@@ -111,7 +111,7 @@ export function OtpStep({ onVerified }: Props) {
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
           inputMode="numeric"
-          className="w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-center text-[20px] tracking-[.3em] outline-none transition-colors focus:border-black/40"
+          className="w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-center text-[20px] tracking-[.3em] outline-none transition-colors focus:border-brand-400"
           placeholder="------"
         />
       </div>
@@ -119,7 +119,7 @@ export function OtpStep({ onVerified }: Props) {
       <button
         type="submit"
         disabled={code.length !== 6 || verifying}
-        className="w-full rounded-full bg-[#0a0a0a] py-3.5 text-[14.5px] font-semibold text-white transition-opacity disabled:opacity-40"
+        className="bg-brand-600 w-full rounded-full py-3.5 text-[14.5px] font-semibold text-white transition-opacity disabled:opacity-40"
       >
         {verifying ? "กำลังยืนยัน…" : "ยืนยันและสร้างบัญชี"}
       </button>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Archivo, Noto_Sans_Thai } from "next/font/google";
+import { Archivo, Prompt } from "next/font/google";
 import "./globals.css";
 
 const archivo = Archivo({
@@ -8,20 +8,20 @@ const archivo = Archivo({
   variable: "--font-archivo",
 });
 
-const notoSansThai = Noto_Sans_Thai({
-  subsets: ["thai"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-noto-thai",
+const prompt = Prompt({
+  subsets: ["thai", "latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-prompt",
 });
 
 export const metadata: Metadata = {
-  title: "LOOP — Peer-to-Peer Rental Marketplace",
+  title: "renty — Peer-to-Peer Rental Marketplace",
   description: "เช่าอะไรก็ได้จากคนใกล้ตัวคุณ",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="th" className={`${archivo.variable} ${notoSansThai.variable}`}>
+    <html lang="th" className={`${archivo.variable} ${prompt.variable}`}>
       <body>{children}</body>
     </html>
   );
