@@ -15,6 +15,8 @@ const createSchema = z.object({
   categoryId: z.number().int().positive(),
   pricePerDay: z.number().positive(),
   location: z.string().min(1),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
 });
 
 const updateSchema = createSchema.partial();

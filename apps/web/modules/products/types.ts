@@ -25,6 +25,8 @@ export type MyListing = {
   categoryName: string;
   pricePerDay: string;
   location: string;
+  lat: number | null;
+  lng: number | null;
   status: ProductStatus;
   ratingAvg: number;
   reviewCount: number;
@@ -39,4 +41,15 @@ export type ProductInput = {
   categoryId: number;
   pricePerDay: number;
   location: string;
+  lat?: number;
+  lng?: number;
+};
+
+export type SavedLocation = {
+  id: number;
+  label: string;
+  address: string;
+  lat: number;
+  lng: number;
+  createdAt: string;
 };

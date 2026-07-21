@@ -66,11 +66,24 @@ model User {
   otpMethod     String? // "email" | "phone"
   otpVerifiedAt DateTime? // null = ยังไม่เคยยืนยันตัวตนผ่าน OTP
 
-  products          Product[]  @relation("ProductOwner")
-  createdCategories Category[] @relation("CategoryCreatedBy")
-  updatedCategories Category[] @relation("CategoryUpdatedBy")
-  createdProducts   Product[]  @relation("ProductCreatedBy")
-  updatedProducts   Product[]  @relation("ProductUpdatedBy")
+  products          Product[]      @relation("ProductOwner")
+  locations         UserLocation[]
+  createdCategories Category[]     @relation("CategoryCreatedBy")
+  updatedCategories Category[]     @relation("CategoryUpdatedBy")
+  createdProducts   Product[]      @relation("ProductCreatedBy")
+  updatedProducts   Product[]      @relation("ProductUpdatedBy")
+}
+
+// สถานที่นัดรับที่ผู้ใช้บันทึกไว้ (ปักหมุดบนแผนที่ครั้งเดียว เลือกซ้ำได้ตอนลงประกาศใหม่)
+model UserLocation {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label     String // ชื่อเรียกสั้นๆ เช่น "บ้าน", "ที่ทำงาน"
+  address   String // ข้อความที่อยู่ (จาก reverse-geocode หรือกรอกเอง)
+  lat       Float
+  lng       Float
+  createdAt DateTime @default(now())
 }
 
 model Category {
@@ -104,6 +117,8 @@ model Product {
   owner       User          @relation("ProductOwner", fields: [ownerId], references: [id])
   pricePerDay Decimal
   location    String
+  lat         Float? // พิกัดจากแผนที่ (optional — ประกาศเดิมก่อนมี map ยังไม่มีค่า)
+  lng         Float?
   status      ProductStatus @default(UNDER_REVIEW)
   ratingAvg   Float         @default(0) // cache — คำนวณจาก Review ตอน create/update review (ยังไม่มี Review model)
   reviewCount Int           @default(0)

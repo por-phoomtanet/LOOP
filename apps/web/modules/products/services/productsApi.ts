@@ -1,6 +1,13 @@
 import { api } from "@/shared/services/api";
 import type { ApiResponse } from "@/types";
-import type { Category, MyListing, PickupOption, ProductImage, ProductInput } from "../types";
+import type {
+  Category,
+  MyListing,
+  PickupOption,
+  ProductImage,
+  ProductInput,
+  SavedLocation,
+} from "../types";
 
 export const productsApi = {
   getCategories() {
@@ -43,5 +50,17 @@ export const productsApi = {
 
   getMyListings() {
     return api.get<ApiResponse<MyListing[]>>("/me/listings");
+  },
+
+  getSavedLocations() {
+    return api.get<ApiResponse<SavedLocation[]>>("/me/locations");
+  },
+
+  createSavedLocation(input: { label: string; address: string; lat: number; lng: number }) {
+    return api.post<ApiResponse<SavedLocation>>("/me/locations", input);
+  },
+
+  deleteSavedLocation(id: number) {
+    return api.delete<ApiResponse<null>>(`/me/locations/${id}`);
   },
 };

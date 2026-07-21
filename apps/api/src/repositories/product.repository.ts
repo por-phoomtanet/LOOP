@@ -26,6 +26,8 @@ export const productRepository = {
     categoryId: number;
     pricePerDay: number;
     location: string;
+    lat: number | null;
+    lng: number | null;
     ownerId: number;
     createdById: number;
   }) {
@@ -44,6 +46,8 @@ export const productRepository = {
       categoryId: number;
       pricePerDay: number;
       location: string;
+      lat: number | null;
+      lng: number | null;
     }> & { updatedById: number },
   ) {
     return prisma.product.update({ where: { id }, data });
