@@ -4,6 +4,7 @@ import type {
   Category,
   MyListing,
   PickupOption,
+  ProductCardData,
   ProductImage,
   ProductInput,
   SavedLocation,
@@ -12,6 +13,10 @@ import type {
 export const productsApi = {
   getCategories() {
     return api.get<ApiResponse<Category[]>>("/categories");
+  },
+
+  getProducts(params?: { q?: string; category?: string }) {
+    return api.get<ApiResponse<ProductCardData[]>>("/products", { params });
   },
 
   createProduct(input: ProductInput) {

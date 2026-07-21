@@ -29,6 +29,7 @@ const pickupOptionSchema = z.object({
   label: z.string().min(1),
 });
 
+productRouter.get("/", productController.publicList);
 productRouter.post("/", authenticate, validate({ body: createSchema }), productController.create);
 productRouter.put("/:id", authenticate, validate({ body: updateSchema }), productController.update);
 productRouter.patch(

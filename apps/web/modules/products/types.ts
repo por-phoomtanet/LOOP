@@ -45,6 +45,19 @@ export type ProductInput = {
   lng?: number;
 };
 
+export type ProductCardData = {
+  id: number;
+  title: string;
+  categoryName: string;
+  categorySlug: string;
+  ownerName: string;
+  pricePerDay: string;
+  location: string;
+  ratingAvg: number;
+  reviewCount: number;
+  thumbnailUrl: string | null;
+};
+
 export type SavedLocation = {
   id: number;
   label: string;

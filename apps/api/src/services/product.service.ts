@@ -42,6 +42,22 @@ export async function listProductsForAdmin() {
   }));
 }
 
+export async function listPublicProducts(filters: { q?: string; category?: string }) {
+  const products = await productRepository.findActivePublic(filters);
+  return products.map((p) => ({
+    id: p.id,
+    title: p.title,
+    categoryName: p.category.name,
+    categorySlug: p.category.slug,
+    ownerName: p.owner.name,
+    pricePerDay: p.pricePerDay,
+    location: p.location,
+    ratingAvg: p.ratingAvg,
+    reviewCount: p.reviewCount,
+    thumbnailUrl: p.images[0]?.url ?? null,
+  }));
+}
+
 export async function createProduct(input: ProductInput, userId: number) {
   await assertActiveCategory(input.categoryId);
   return productRepository.create({
