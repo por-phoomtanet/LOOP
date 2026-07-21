@@ -43,7 +43,7 @@ const dict = {
   },
 } as const;
 
-export function Header({ children }: { children?: React.ReactNode }) {
+export function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, clearAuth } = useAuthStore();
@@ -104,7 +104,7 @@ export function Header({ children }: { children?: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="bg-white">
       <div className="bg-brand-600 px-4 py-[9px] text-center text-[12px] font-medium tracking-[.04em] text-white">
         {t.announce}
       </div>
@@ -185,7 +185,7 @@ export function Header({ children }: { children?: React.ReactNode }) {
               className="border-brand-600 text-brand-600 hover:bg-brand-600 whitespace-nowrap rounded-full border-[1.5px] bg-white px-[18px] py-[9px] text-[13.5px] font-semibold transition-colors hover:text-white"
             >
               {t.listItem}
-            </Link>
+            </button>
 
             <button aria-label="Saved" className="relative flex border-0 bg-transparent p-1">
               <svg
