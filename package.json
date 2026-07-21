@@ -9,6 +9,13 @@
     "dev:api": "npm run dev --workspace=apps/api",
     "dev:web": "npm run dev --workspace=apps/web",
     "build": "npm run build --workspace=packages/db && npm run build --workspace=apps/api && npm run build --workspace=apps/web",
+    "db": "npm run build --workspace=packages/db",
+    "seed": "npm run seed --workspace=packages/db",
+    "prisma": "cd packages/db && prisma",
+    "generate": "cd packages/db && prisma generate",
+    "migrate": "cd packages/db && prisma migrate dev",
+    "db:push": "cd packages/db && prisma db push",
+    "db:pull": "cd packages/db && prisma db pull",
     "test": "npm run test --workspace=apps/api",
     "lint": "npm run lint --workspaces --if-present",
     "prepare": "husky"
