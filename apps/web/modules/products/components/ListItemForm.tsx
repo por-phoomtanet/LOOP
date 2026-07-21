@@ -2,8 +2,11 @@
 
 import axios from "axios";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { resolveUploadUrl } from "@/shared/lib/utils";
+import { ImageSlot, type ImageSlotHandle } from "./ImageSlot";
+import { LocationField } from "./LocationField";
 import { productsApi } from "../services/productsApi";
 import type { Category, MyListing } from "../types";
 
@@ -15,6 +18,7 @@ type Props = {
 type PendingPickupOption = { id?: number; label: string };
 
 export function ListItemForm({ listing, onSaved }: Props) {
+  const router = useRouter();
   const isEdit = !!listing;
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -23,7 +27,10 @@ export function ListItemForm({ listing, onSaved }: Props) {
   const [categoryId, setCategoryId] = useState<number | "">(listing?.categoryId ?? "");
   const [pricePerDay, setPricePerDay] = useState(listing?.pricePerDay ?? "");
   const [location, setLocation] = useState(listing?.location ?? "");
+  const [lat, setLat] = useState<number | null>(listing?.lat ?? null);
+  const [lng, setLng] = useState<number | null>(listing?.lng ?? null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const imageSlotRef = useRef<ImageSlotHandle>(null);
   const [pickupOptions, setPickupOptions] = useState<PendingPickupOption[]>(
     listing?.pickupOptions ?? [],
   );
@@ -66,6 +73,8 @@ export function ListItemForm({ listing, onSaved }: Props) {
     setCategoryId("");
     setPricePerDay("");
     setLocation("");
+    setLat(null);
+    setLng(null);
     setImageFile(null);
     setPickupOptions([]);
     setRemovedOptionIds([]);
@@ -86,6 +95,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
         categoryId: Number(categoryId),
         pricePerDay: Number(pricePerDay),
         location,
+        ...(lat != null && lng != null ? { lat, lng } : {}),
       };
 
       let productId: number;
@@ -98,7 +108,8 @@ export function ListItemForm({ listing, onSaved }: Props) {
       }
 
       if (imageFile) {
-        await productsApi.uploadImages(productId, [imageFile]);
+        const cropped = (await imageSlotRef.current?.getCroppedFile()) ?? imageFile;
+        await productsApi.uploadImages(productId, [cropped]);
       }
       for (const optionId of removedOptionIds) {
         await productsApi.removePickupOption(productId, optionId);
@@ -162,6 +173,26 @@ export function ListItemForm({ listing, onSaved }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="mx-auto w-full max-w-[640px] px-8 py-12">
+      {!isEdit && (
+        <button
+          type="button"
+          onClick={() => router.back()}
+          aria-label="ย้อนกลับ"
+          className="mb-5 flex h-9 w-9 items-center justify-center rounded-full border border-black/[.15] bg-white text-black/60 transition-colors hover:border-black/30 hover:text-black"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M19 12H5" />
+            <path d="M12 19l-7-7 7-7" />
+          </svg>
+        </button>
+      )}
       <div className="mb-2.5 font-mono text-[11px] uppercase tracking-[.12em] text-black/40">
         {isEdit ? "แก้ไขประกาศ" : "ลงประกาศใหม่"}
       </div>
@@ -193,27 +224,9 @@ export function ListItemForm({ listing, onSaved }: Props) {
             ))}
           </div>
         )}
-        <label className="flex h-[220px] cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-black/20 bg-black/[.03] text-black/40 transition-colors hover:border-black/35">
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            className="hidden"
-            onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
-          />
-          <svg
-            width="30"
-            height="30"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <rect x="3" y="5" width="18" height="14" rx="2" />
-            <circle cx="9" cy="11" r="2" />
-            <path d="M21 16l-4.5-4.5a2 2 0 0 0-2.8 0L7 18" />
-          </svg>
-          <span className="text-[13.5px]">{imageFile ? imageFile.name : "Add a photo"}</span>
-        </label>
+        <div className="flex justify-center">
+          <ImageSlot ref={imageSlotRef} file={imageFile} onChange={setImageFile} />
+        </div>
       </div>
 
       <div className="flex flex-col gap-[18px]">
@@ -224,7 +237,13 @@ export function ListItemForm({ listing, onSaved }: Props) {
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : "")}
-            className="focus:border-brand-400 w-full rounded-[10px] border border-black/[.15] bg-white px-3.5 py-3 text-[14.5px] text-black outline-none transition-colors"
+            className="focus:border-brand-400 w-full appearance-none rounded-[10px] border border-black/[.15] bg-white py-3 pl-3.5 pr-10 text-[14.5px] text-black outline-none transition-colors"
+            style={{
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "right 14px center",
+            }}
           >
             <option value="">—</option>
             {categories.map((c) => (
@@ -329,34 +348,13 @@ export function ListItemForm({ listing, onSaved }: Props) {
           <label className="mb-2 block text-[13px] font-semibold text-black/60">
             ที่ตั้งสินค้า
           </label>
-          <div
-            className="relative h-40 w-full overflow-hidden rounded-2xl border border-black/[.15]"
-            style={{
-              background:
-                "linear-gradient(#e3e1db 1px,transparent 1px) 0 0/28px 28px, linear-gradient(90deg,#e3e1db 1px,transparent 1px) 0 0/28px 28px, #efeeeb",
+          <LocationField
+            value={{ address: location, lat, lng }}
+            onChange={(v) => {
+              setLocation(v.address);
+              setLat(v.lat);
+              setLng(v.lng);
             }}
-          >
-            <div
-              className="absolute inset-0"
-              style={{
-                background: "radial-gradient(circle at 50% 45%,rgba(10,10,10,.05),transparent 60%)",
-              }}
-            />
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full">
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="#2D5DA8">
-                <path d="M12 2C7.6 2 4 5.6 4 10c0 6 8 12 8 12s8-6 8-12c0-4.4-3.6-8-8-8z" />
-                <circle cx="12" cy="10" r="3" fill="#fff" />
-              </svg>
-            </div>
-            <div className="absolute bottom-2.5 right-2.5 rounded-lg bg-white px-2.5 py-[5px] text-[11.5px] font-semibold text-black/55 shadow-[0_2px_8px_rgba(10,10,10,.1)]">
-              ตัวอย่างแผนที่
-            </div>
-          </div>
-          <input
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="เช่น สุขุมวิท ซอย 24 กรุงเทพฯ"
-            className="focus:border-brand-400 mt-2 w-full rounded-[10px] border border-black/[.15] px-3 py-2.5 text-[14px] text-black outline-none transition-colors"
           />
         </div>
       </div>
