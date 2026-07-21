@@ -58,7 +58,7 @@ export function SignupForm({ onRegistered }: Props) {
         สร้างบัญชี
       </div>
       <h1 className="font-arch mb-2 text-[28px] font-extrabold tracking-[-.02em]">
-        สมัครใช้งาน LOOP
+        สมัครใช้งาน renty
       </h1>
       <p className="mb-8 text-[14px] text-black/60">
         สมัครสมาชิกเพื่อเริ่มเช่าและปล่อยเช่าสินค้าใกล้คุณ
@@ -83,8 +83,8 @@ export function SignupForm({ onRegistered }: Props) {
               onClick={() => setAccountType(opt.value)}
               className="px-5 py-2 text-[13.5px] font-semibold transition-colors"
               style={{
-                background: accountType === opt.value ? "#0a0a0a" : "transparent",
-                color: accountType === opt.value ? "#fff" : "rgba(10,10,10,.55)",
+                background: accountType === opt.value ? "#2D5DA8" : "transparent",
+                color: accountType === opt.value ? "#fff" : "rgba(45,93,168,.6)",
               }}
             >
               {opt.label}
@@ -182,7 +182,7 @@ export function SignupForm({ onRegistered }: Props) {
       <button
         type="submit"
         disabled={!canSubmit || submitting}
-        className="w-full rounded-full bg-[#0a0a0a] py-3.5 text-[14.5px] font-semibold text-white transition-opacity disabled:opacity-40"
+        className="bg-brand-600 w-full rounded-full py-3.5 text-[14.5px] font-semibold text-white transition-opacity disabled:opacity-40"
       >
         {submitting ? "กำลังสร้างบัญชี…" : "สร้างบัญชี"}
       </button>
@@ -209,7 +209,7 @@ function Field({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none transition-colors focus:border-black/40"
+        className="w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none transition-colors focus:border-brand-400"
       />
     </div>
   );

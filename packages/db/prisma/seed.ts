@@ -14,7 +14,14 @@ async function main() {
     create: { name: "user", label: "ผู้ใช้ทั่วไป" },
   });
 
-  const adminMenus = ["dashboard", "categories", "users", "products", "payments", "settings"];
+  // เฉพาะเมนูที่มีหน้า admin จริงตอนนี้ (Phase 4) — payments/settings ยังไม่ได้สร้าง (รอ Rental/Settings model)
+  const adminMenus = ["dashboard", "users", "roles", "categories", "products"];
+
+  // ลบ permission ของเมนูที่เคย seed ไว้ก่อนหน้าแต่ตอนนี้ไม่มีหน้าจริงแล้ว
+  await prisma.rolePermission.deleteMany({
+    where: { roleId: adminRole.id, menuKey: { notIn: adminMenus } },
+  });
+
   for (const menuKey of adminMenus) {
     await prisma.rolePermission.upsert({
       where: { roleId_menuKey: { roleId: adminRole.id, menuKey } },
@@ -46,17 +53,17 @@ async function main() {
   });
 
   const categories = [
-    { name: "อิเล็กทรอนิกส์", slug: "electronics" },
     { name: "กล้อง", slug: "cameras" },
+    { name: "อิเล็กทรอนิกส์", slug: "electronics" },
     { name: "แฟชั่น", slug: "fashion" },
-    { name: "กลางแจ้ง & แคมป์", slug: "outdoor" },
+    { name: "กิจกรรมกลางแจ้ง", slug: "outdoor" },
     { name: "เครื่องมือ & บ้าน", slug: "tools" },
   ];
   for (const category of categories) {
     await prisma.category.upsert({
       where: { slug: category.slug },
-      update: { name: category.name, isActive: true },
-      create: { ...category, isActive: true },
+      update: { name: category.name },
+      create: category,
     });
   }
 

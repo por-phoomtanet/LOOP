@@ -1,15 +1,9 @@
+export type ProductStatus = "UNDER_REVIEW" | "ACTIVE" | "PAUSED";
+
 export type Category = {
   id: number;
   name: string;
   slug: string;
-};
-
-export type CreateListingInput = {
-  title: string;
-  description: string;
-  categoryId: number;
-  pricePerDay: number;
-  pickupOptions: string[];
 };
 
 export type ProductImage = {
@@ -18,14 +12,31 @@ export type ProductImage = {
   sortOrder: number;
 };
 
-export type Product = {
+export type PickupOption = {
+  id: number;
+  label: string;
+};
+
+export type MyListing = {
   id: number;
   title: string;
   description: string;
-  location: string;
+  categoryId: number;
+  categoryName: string;
   pricePerDay: string;
-  status: "UNDER_REVIEW" | "ACTIVE" | "PAUSED";
-  category: Category;
+  location: string;
+  status: ProductStatus;
+  ratingAvg: number;
+  reviewCount: number;
   images: ProductImage[];
-  pickupOptions: { id: number; label: string }[];
+  pickupOptions: PickupOption[];
+  createdAt: string;
+};
+
+export type ProductInput = {
+  title: string;
+  description: string;
+  categoryId: number;
+  pricePerDay: number;
+  location: string;
 };

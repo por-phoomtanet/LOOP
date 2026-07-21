@@ -1,16 +1,22 @@
+import type { ProductStatus } from "@loop/db";
 import { prisma } from "@loop/db";
 
-const productInclude = {
-  category: { select: { id: true, name: true, slug: true } },
-  images: { orderBy: { sortOrder: "asc" } },
+const ownerListInclude = {
+  category: { select: { name: true } },
+  images: { orderBy: { sortOrder: "asc" as const } },
   pickupOptions: true,
-} as const;
+};
 
 export const productRepository = {
-  findById(id: number) {
-    return prisma.product.findFirst({
-      where: { id, deletedAt: null },
-      include: productInclude,
+  findAllForAdmin() {
+    return prisma.product.findMany({
+      where: { deletedAt: null },
+      include: {
+        category: { select: { name: true } },
+        owner: { select: { name: true } },
+        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+      },
+      orderBy: { id: "desc" },
     });
   },
 
@@ -18,35 +24,64 @@ export const productRepository = {
     title: string;
     description: string;
     categoryId: number;
-    ownerId: number;
     pricePerDay: number;
     location: string;
-    pickupOptions: string[];
+    ownerId: number;
+    createdById: number;
   }) {
-    const { pickupOptions, ownerId, ...rest } = data;
-    return prisma.product.create({
-      data: {
-        ...rest,
-        ownerId,
-        createdById: ownerId,
-        updatedById: ownerId,
-        pickupOptions: { create: pickupOptions.map((label) => ({ label })) },
-      },
-      include: productInclude,
-    });
+    return prisma.product.create({ data });
   },
 
-  async addImages(productId: number, urls: string[], startOrder: number) {
-    await prisma.productImage.createMany({
-      data: urls.map((url, i) => ({ productId, url, sortOrder: startOrder + i })),
-    });
-    return prisma.productImage.findMany({
-      where: { productId },
-      orderBy: { sortOrder: "asc" },
+  findById(id: number) {
+    return prisma.product.findFirst({ where: { id, deletedAt: null } });
+  },
+
+  update(
+    id: number,
+    data: Partial<{
+      title: string;
+      description: string;
+      categoryId: number;
+      pricePerDay: number;
+      location: string;
+    }> & { updatedById: number },
+  ) {
+    return prisma.product.update({ where: { id }, data });
+  },
+
+  setStatus(id: number, status: ProductStatus, updatedById: number) {
+    return prisma.product.update({ where: { id }, data: { status, updatedById } });
+  },
+
+  softDelete(id: number) {
+    return prisma.product.update({ where: { id }, data: { deletedAt: new Date() } });
+  },
+
+  findByOwner(ownerId: number) {
+    return prisma.product.findMany({
+      where: { ownerId, deletedAt: null },
+      include: ownerListInclude,
+      orderBy: { id: "desc" },
     });
   },
 
   countImages(productId: number) {
     return prisma.productImage.count({ where: { productId } });
+  },
+
+  addImage(productId: number, url: string, sortOrder: number) {
+    return prisma.productImage.create({ data: { productId, url, sortOrder } });
+  },
+
+  addPickupOption(productId: number, label: string) {
+    return prisma.pickupOption.create({ data: { productId, label } });
+  },
+
+  findPickupOptionById(id: number) {
+    return prisma.pickupOption.findUnique({ where: { id } });
+  },
+
+  removePickupOption(id: number) {
+    return prisma.pickupOption.delete({ where: { id } });
   },
 };

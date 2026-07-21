@@ -8,9 +8,9 @@ import { usePermissionStore } from "@/store/permissionStore";
 import { authApi } from "../services/authApi";
 
 type Props = {
-  /** เมื่อกำหนดไว้ (เช่น เรียกจาก modal) — เรียกแทนการ redirect หน้าเดิม, admin ยังพาไป /users ต่อ */
+  /** เมื่อกำหนดไว้ (เช่น เรียกจาก modal) — เรียกแทนการ redirect ไปหน้าแรก (ไม่พาไปแอดมินอัตโนมัติ ไม่ว่า role ใดก็ตาม — สลับไปแอดมินทีหลังผ่านปุ่มใน header เอง) */
   onSuccess?: () => void;
-  /** ซ่อนหัวข้อ "เข้าสู่ระบบ LOOP" และปรับ padding ให้พอดีเมื่ออยู่ใน modal */
+  /** ซ่อนหัวข้อ "เข้าสู่ระบบ renty" และปรับ padding ให้พอดีเมื่ออยู่ใน modal */
   compact?: boolean;
 };
 
@@ -35,18 +35,15 @@ export function LoginForm({ onSuccess, compact = false }: Props) {
       const { user, token } = res.data.data;
       setAuth(user, token);
 
-      let isAdmin = false;
       if (user.role === "admin") {
-        isAdmin = true;
         const perms = await authApi.getRolePermissions(user.role);
         setPermissions(perms.data.data);
       }
 
       if (onSuccess) {
         onSuccess();
-        if (isAdmin) router.push("/users");
       } else {
-        router.push(isAdmin ? "/users" : "/");
+        router.push("/");
       }
     } catch (err) {
       const msg = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
@@ -63,7 +60,7 @@ export function LoginForm({ onSuccess, compact = false }: Props) {
     >
       {!compact && (
         <h1 className="font-arch mb-6 text-[26px] font-extrabold tracking-[-.02em]">
-          เข้าสู่ระบบ LOOP
+          เข้าสู่ระบบ renty
         </h1>
       )}
 
@@ -77,7 +74,7 @@ export function LoginForm({ onSuccess, compact = false }: Props) {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none focus:border-black/40"
+          className="focus:border-brand-400 w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none"
         />
       </div>
       <div className="mb-6">
@@ -86,14 +83,14 @@ export function LoginForm({ onSuccess, compact = false }: Props) {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none focus:border-black/40"
+          className="focus:border-brand-400 w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none"
         />
       </div>
 
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-full bg-[#0a0a0a] py-3.5 text-[14.5px] font-semibold text-white disabled:opacity-40"
+        className="bg-brand-600 w-full rounded-full py-3.5 text-[14.5px] font-semibold text-white disabled:opacity-40"
       >
         {submitting ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
       </button>

@@ -1,13 +1,14 @@
-import { ListItemPage } from "@/modules/products/components/ListItemPage";
+import { ListItemForm } from "@/modules/products/components/ListItemForm";
 import { Header } from "@/shared/components/Header";
 import { AuthGuard } from "@/shared/guards/AuthGuard";
 
 export default function Page() {
   return (
-    <Header>
+    <>
+      <Header />
       <AuthGuard>
-        <ListItemPage />
+        <ListItemForm />
       </AuthGuard>
-    </Header>
+    </>
   );
 }

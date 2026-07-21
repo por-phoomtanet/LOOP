@@ -56,3 +56,12 @@ export async function adminUpdateStatus(req: Request, res: Response, next: NextF
     next(err);
   }
 }
+
+export async function adminDashboard(_req: Request, res: Response, next: NextFunction) {
+  try {
+    const result = await userService.getDashboardStats();
+    res.json({ data: result, message: "ok" });
+  } catch (err) {
+    next(err);
+  }
+}

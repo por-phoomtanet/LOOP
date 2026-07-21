@@ -6,11 +6,11 @@ body {
   font-family:
     "Helvetica Neue",
     Helvetica,
-    var(--font-noto-thai),
+    var(--font-prompt),
     Arial,
     sans-serif;
 }
 
 .font-arch {
-  font-family: var(--font-archivo), var(--font-noto-thai), "Helvetica Neue", sans-serif;
+  font-family: var(--font-archivo), var(--font-prompt), "Helvetica Neue", sans-serif;
 }
