@@ -1,6 +1,7 @@
+import { describe, it, expect } from "bun:test";
 import { prisma } from "@loop/db";
 import request from "supertest";
-import { app } from "../src/app";
+import { baseUrl } from "./testApp";
 import { registerUser } from "./helpers";
 
 const TINY_PNG = Buffer.from(
@@ -9,12 +10,12 @@ const TINY_PNG = Buffer.from(
 );
 
 async function activeCategoryId() {
-  const res = await request(app).get("/api/categories");
+  const res = await request(baseUrl).get("/api/categories");
   return res.body.data[0].id as number;
 }
 
 async function createProduct(token: string, categoryId: number, overrides: object = {}) {
-  const res = await request(app)
+  const res = await request(baseUrl)
     .post("/api/products")
     .set("Authorization", `Bearer ${token}`)
     .send({
@@ -42,7 +43,7 @@ describe("POST /api/products", () => {
 
   it("requires authentication", async () => {
     const categoryId = await activeCategoryId();
-    const res = await request(app).post("/api/products").send({
+    const res = await request(baseUrl).post("/api/products").send({
       title: "x",
       description: "x",
       categoryId,
@@ -65,7 +66,7 @@ describe("PUT /api/products/:id", () => {
     const categoryId = await activeCategoryId();
     const created = await createProduct(token, categoryId);
 
-    const res = await request(app)
+    const res = await request(baseUrl)
       .put(`/api/products/${created.body.data.id}`)
       .set("Authorization", `Bearer ${token}`)
       .send({ title: "ชื่อใหม่" });
@@ -80,7 +81,7 @@ describe("PUT /api/products/:id", () => {
     const categoryId = await activeCategoryId();
     const created = await createProduct(token, categoryId);
 
-    const res = await request(app)
+    const res = await request(baseUrl)
       .put(`/api/products/${created.body.data.id}`)
       .set("Authorization", `Bearer ${attackerToken}`)
       .send({ title: "แฮ็ก" });
@@ -95,7 +96,7 @@ describe("PATCH /api/products/:id/status", () => {
     const categoryId = await activeCategoryId();
     const created = await createProduct(token, categoryId);
 
-    const res = await request(app)
+    const res = await request(baseUrl)
       .patch(`/api/products/${created.body.data.id}/status`)
       .set("Authorization", `Bearer ${token}`)
       .send({ status: "PAUSED" });
@@ -113,14 +114,14 @@ describe("PATCH /api/products/:id/status", () => {
     // simulate the post-approval state directly so pause/resume can be exercised
     await prisma.product.update({ where: { id }, data: { status: "ACTIVE" } });
 
-    const paused = await request(app)
+    const paused = await request(baseUrl)
       .patch(`/api/products/${id}/status`)
       .set("Authorization", `Bearer ${token}`)
       .send({ status: "PAUSED" });
     expect(paused.status).toBe(200);
     expect(paused.body.data.status).toBe("PAUSED");
 
-    const resumed = await request(app)
+    const resumed = await request(baseUrl)
       .patch(`/api/products/${id}/status`)
       .set("Authorization", `Bearer ${token}`)
       .send({ status: "ACTIVE" });
@@ -138,7 +139,7 @@ describe("PATCH /api/products/:id/status", () => {
       data: { status: "ACTIVE" },
     });
 
-    const res = await request(app)
+    const res = await request(baseUrl)
       .patch(`/api/products/${created.body.data.id}/status`)
       .set("Authorization", `Bearer ${attackerToken}`)
       .send({ status: "PAUSED" });
@@ -153,12 +154,12 @@ describe("DELETE /api/products/:id", () => {
     const categoryId = await activeCategoryId();
     const created = await createProduct(token, categoryId);
 
-    const res = await request(app)
+    const res = await request(baseUrl)
       .delete(`/api/products/${created.body.data.id}`)
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(200);
 
-    const listings = await request(app)
+    const listings = await request(baseUrl)
       .get("/api/me/listings")
       .set("Authorization", `Bearer ${token}`);
     expect(
@@ -172,7 +173,7 @@ describe("DELETE /api/products/:id", () => {
     const categoryId = await activeCategoryId();
     const created = await createProduct(token, categoryId);
 
-    const res = await request(app)
+    const res = await request(baseUrl)
       .delete(`/api/products/${created.body.data.id}`)
       .set("Authorization", `Bearer ${attackerToken}`);
     expect(res.status).toBe(403);
@@ -185,7 +186,7 @@ describe("POST /api/products/:id/images", () => {
     const categoryId = await activeCategoryId();
     const created = await createProduct(token, categoryId);
 
-    const res = await request(app)
+    const res = await request(baseUrl)
       .post(`/api/products/${created.body.data.id}/images`)
       .set("Authorization", `Bearer ${token}`)
       .attach("files", TINY_PNG, { filename: "a.png", contentType: "image/png" })
@@ -203,7 +204,7 @@ describe("POST /api/products/:id/images", () => {
     const categoryId = await activeCategoryId();
     const created = await createProduct(token, categoryId);
 
-    const res = await request(app)
+    const res = await request(baseUrl)
       .post(`/api/products/${created.body.data.id}/images`)
       .set("Authorization", `Bearer ${token}`)
       .attach("files", Buffer.from("not an image"), {
@@ -220,7 +221,7 @@ describe("POST /api/products/:id/images", () => {
     const categoryId = await activeCategoryId();
     const created = await createProduct(token, categoryId);
 
-    const res = await request(app)
+    const res = await request(baseUrl)
       .post(`/api/products/${created.body.data.id}/images`)
       .set("Authorization", `Bearer ${attackerToken}`)
       .attach("files", TINY_PNG, { filename: "a.png", contentType: "image/png" });
@@ -236,14 +237,14 @@ describe("pickup options", () => {
     const created = await createProduct(token, categoryId);
     const id = created.body.data.id;
 
-    const added = await request(app)
+    const added = await request(baseUrl)
       .post(`/api/products/${id}/pickup-options`)
       .set("Authorization", `Bearer ${token}`)
       .send({ label: "BTS อโศก" });
     expect(added.status).toBe(201);
     expect(added.body.data.label).toBe("BTS อโศก");
 
-    const removed = await request(app)
+    const removed = await request(baseUrl)
       .delete(`/api/products/${id}/pickup-options/${added.body.data.id}`)
       .set("Authorization", `Bearer ${token}`);
     expect(removed.status).toBe(200);
@@ -255,7 +256,7 @@ describe("pickup options", () => {
     const categoryId = await activeCategoryId();
     const created = await createProduct(token, categoryId);
 
-    const res = await request(app)
+    const res = await request(baseUrl)
       .post(`/api/products/${created.body.data.id}/pickup-options`)
       .set("Authorization", `Bearer ${attackerToken}`)
       .send({ label: "แฮ็ก" });
@@ -272,7 +273,9 @@ describe("GET /api/me/listings", () => {
     const mine = await createProduct(token, categoryId, { title: "ของฉัน" });
     await createProduct(otherToken, categoryId, { title: "ของคนอื่น" });
 
-    const res = await request(app).get("/api/me/listings").set("Authorization", `Bearer ${token}`);
+    const res = await request(baseUrl)
+      .get("/api/me/listings")
+      .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
     expect(res.body.data.every((p: { id: number }) => p.id !== undefined)).toBe(true);
@@ -283,7 +286,7 @@ describe("GET /api/me/listings", () => {
   });
 
   it("requires authentication", async () => {
-    const res = await request(app).get("/api/me/listings");
+    const res = await request(baseUrl).get("/api/me/listings");
     expect(res.status).toBe(401);
   });
 });

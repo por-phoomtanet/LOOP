@@ -1,5 +1,5 @@
 import request from "supertest";
-import { app } from "../src/app";
+import { baseUrl } from "./testApp";
 
 export function uniqueEmail(prefix: string) {
   return `${prefix}${Date.now()}${Math.floor(Math.random() * 10000)}@example.com`;
@@ -7,7 +7,7 @@ export function uniqueEmail(prefix: string) {
 
 export async function registerUser(prefix: string) {
   const email = uniqueEmail(prefix);
-  const res = await request(app).post("/api/auth/register").send({
+  const res = await request(baseUrl).post("/api/auth/register").send({
     accountType: "INDIVIDUAL",
     name: "Test User",
     email,

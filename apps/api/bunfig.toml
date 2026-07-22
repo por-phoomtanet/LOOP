@@ -1,0 +1,3 @@
+[test]
+# ตั้ง env (DATABASE_URL/JWT_SECRET) ก่อน framework โหลด — แทน Jest setupFiles เดิม
+preload = ["./tests/setup-env.ts"]

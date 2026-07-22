@@ -53,7 +53,7 @@ export const productRoutes = new Elysia({ prefix: "/api/products" })
   .post(
     "/:id/images",
     ({ params, body, user, set }) => {
-      const files = toFileArray((body as { files?: unknown }).files);
+      const files = toFileArray((body as { files?: unknown } | undefined)?.files);
       set.status = 201;
       return productController.uploadImages(Number(params.id), user.userId, files);
     },

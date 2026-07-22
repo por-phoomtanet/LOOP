@@ -7,7 +7,7 @@ export const userRoutes = new Elysia({ prefix: "/api/users" })
   .post(
     "/:id/id-card",
     ({ params, body, user }) => {
-      const file = (body as { file?: unknown }).file;
+      const file = (body as { file?: unknown } | undefined)?.file;
       return userController.uploadIdCard(
         user.userId,
         Number(params.id),
