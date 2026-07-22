@@ -104,7 +104,7 @@ export function Header() {
   }
 
   return (
-    <>
+    <div className="bg-white">
       <div className="bg-brand-600 px-4 py-[9px] text-center text-[12px] font-medium tracking-[.04em] text-white">
         {t.announce}
       </div>
@@ -296,6 +296,6 @@ export function Header() {
       </header>
 
       <LoginModal open={loginModalOpen} onClose={closeLoginModal} onSuccess={handleLoginSuccess} />
-    </>
+    </div>
   );
 }

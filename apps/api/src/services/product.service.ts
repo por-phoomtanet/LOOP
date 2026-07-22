@@ -8,6 +8,8 @@ type ProductInput = {
   categoryId: number;
   pricePerDay: number;
   location: string;
+  lat?: number;
+  lng?: number;
 };
 
 async function assertActiveCategory(categoryId: number) {
@@ -40,6 +42,22 @@ export async function listProductsForAdmin() {
   }));
 }
 
+export async function listPublicProducts(filters: { q?: string; category?: string }) {
+  const products = await productRepository.findActivePublic(filters);
+  return products.map((p) => ({
+    id: p.id,
+    title: p.title,
+    categoryName: p.category.name,
+    categorySlug: p.category.slug,
+    ownerName: p.owner.name,
+    pricePerDay: p.pricePerDay,
+    location: p.location,
+    ratingAvg: p.ratingAvg,
+    reviewCount: p.reviewCount,
+    thumbnailUrl: p.images[0]?.url ?? null,
+  }));
+}
+
 export async function createProduct(input: ProductInput, userId: number) {
   await assertActiveCategory(input.categoryId);
   return productRepository.create({
@@ -48,6 +66,8 @@ export async function createProduct(input: ProductInput, userId: number) {
     categoryId: input.categoryId,
     pricePerDay: input.pricePerDay,
     location: input.location,
+    lat: input.lat ?? null,
+    lng: input.lng ?? null,
     ownerId: userId,
     createdById: userId,
   });
@@ -104,6 +124,8 @@ export async function listMyListings(userId: number) {
     categoryName: p.category.name,
     pricePerDay: p.pricePerDay,
     location: p.location,
+    lat: p.lat,
+    lng: p.lng,
     status: p.status,
     ratingAvg: p.ratingAvg,
     reviewCount: p.reviewCount,

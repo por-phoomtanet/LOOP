@@ -15,6 +15,8 @@ const createSchema = z.object({
   categoryId: z.number().int().positive(),
   pricePerDay: z.number().positive(),
   location: z.string().min(1),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
 });
 
 const updateSchema = createSchema.partial();
@@ -27,6 +29,7 @@ const pickupOptionSchema = z.object({
   label: z.string().min(1),
 });
 
+productRouter.get("/", productController.publicList);
 productRouter.post("/", authenticate, validate({ body: createSchema }), productController.create);
 productRouter.put("/:id", authenticate, validate({ body: updateSchema }), productController.update);
 productRouter.patch(

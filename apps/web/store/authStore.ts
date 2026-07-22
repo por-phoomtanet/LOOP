@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { User } from "@/types";
+import { useMasterStore } from "./masterStore";
 import { usePermissionStore } from "./permissionStore";
 
 type AuthState = {
@@ -18,6 +19,7 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (user, token) => set({ user, token }),
       clearAuth: () => {
         usePermissionStore.getState().clearPermissions();
+        useMasterStore.getState().clearMaster();
         set({ user: null, token: null });
       },
     }),

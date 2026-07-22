@@ -20,12 +20,31 @@ export const productRepository = {
     });
   },
 
+  findActivePublic(filters: { q?: string; category?: string }) {
+    return prisma.product.findMany({
+      where: {
+        status: "ACTIVE",
+        deletedAt: null,
+        ...(filters.q ? { title: { contains: filters.q, mode: "insensitive" } } : {}),
+        ...(filters.category ? { category: { slug: filters.category } } : {}),
+      },
+      include: {
+        category: { select: { name: true, slug: true } },
+        owner: { select: { name: true } },
+        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+      },
+      orderBy: { id: "desc" },
+    });
+  },
+
   create(data: {
     title: string;
     description: string;
     categoryId: number;
     pricePerDay: number;
     location: string;
+    lat: number | null;
+    lng: number | null;
     ownerId: number;
     createdById: number;
   }) {
@@ -44,6 +63,8 @@ export const productRepository = {
       categoryId: number;
       pricePerDay: number;
       location: string;
+      lat: number | null;
+      lng: number | null;
     }> & { updatedById: number },
   ) {
     return prisma.product.update({ where: { id }, data });

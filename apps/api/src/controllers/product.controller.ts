@@ -11,6 +11,17 @@ export async function adminList(_req: Request, res: Response, next: NextFunction
   }
 }
 
+export async function publicList(req: Request, res: Response, next: NextFunction) {
+  try {
+    const q = typeof req.query.q === "string" ? req.query.q : undefined;
+    const category = typeof req.query.category === "string" ? req.query.category : undefined;
+    const result = await productService.listPublicProducts({ q, category });
+    res.json({ data: result, message: "ok" });
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function create(req: Request, res: Response, next: NextFunction) {
   try {
     const result = await productService.createProduct(req.body, req.user!.userId);
