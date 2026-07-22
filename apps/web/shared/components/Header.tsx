@@ -50,6 +50,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const [lang, setLang] = useState<Lang>("th");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [postLoginRedirect, setPostLoginRedirect] = useState<string | null>(null);
   const favCount = 0;
@@ -110,8 +111,25 @@ export function Header() {
       </div>
 
       <header className="sticky top-0 z-40 border-b border-black/10 bg-white/[.92] backdrop-blur-md">
-        <div className="flex h-[72px] w-full items-center justify-between gap-5 px-8">
+        <div className="flex h-[60px] w-full items-center justify-between gap-2 px-4 md:h-[72px] md:gap-5 md:px-8">
           <div className="flex min-w-0 items-center gap-[26px]">
+            <button
+              onClick={() => setMobileNavOpen((open) => !open)}
+              aria-label="Menu"
+              className="flex flex-none border-0 bg-transparent p-1 text-[#2D5DA8] md:hidden"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <path d="M3 6h18M3 12h18M3 18h18" />
+              </svg>
+            </button>
+
             <Link href="/" className="flex flex-none items-center">
               <Image
                 src="/brand/renty-logo.png"
@@ -119,11 +137,11 @@ export function Header() {
                 width={220}
                 height={150}
                 priority
-                className="h-[46px] w-auto object-contain"
+                className="h-9 w-auto object-contain md:h-[46px]"
               />
             </Link>
 
-            <nav className="flex flex-none items-center gap-[26px]">
+            <nav className="hidden flex-none items-center gap-[26px] md:flex">
               <Link
                 href="/"
                 className="py-1 text-[17px] tracking-[-.01em]"
@@ -147,17 +165,17 @@ export function Header() {
             </nav>
           </div>
 
-          <nav className="flex flex-none items-center gap-3.5">
+          <nav className="flex flex-none items-center gap-2 md:gap-3.5">
             {isAdmin && (
               <button
                 onClick={goToAdmin}
-                className="whitespace-nowrap border-0 bg-transparent p-0 text-[13.5px] font-semibold text-[#c96442]"
+                className="hidden whitespace-nowrap border-0 bg-transparent p-0 text-[13.5px] font-semibold text-[#c96442] md:inline-flex"
               >
                 {t.adminNavLabel}
               </button>
             )}
 
-            <div className="border-brand-600/25 flex flex-none overflow-hidden rounded-full border-[1.5px]">
+            <div className="border-brand-600/25 hidden flex-none overflow-hidden rounded-full border-[1.5px] sm:flex">
               <button
                 onClick={() => setLang("en")}
                 className="px-3 py-[7px] text-[12px] font-bold tracking-[.03em] transition-colors"
@@ -182,12 +200,27 @@ export function Header() {
 
             <button
               onClick={goToListItem}
-              className="border-brand-600 text-brand-600 hover:bg-brand-600 whitespace-nowrap rounded-full border-[1.5px] bg-white px-[18px] py-[9px] text-[13.5px] font-semibold transition-colors hover:text-white"
+              aria-label={t.listItem}
+              className="border-brand-600 text-brand-600 hover:bg-brand-600 flex flex-none items-center justify-center whitespace-nowrap rounded-full border-[1.5px] bg-white font-semibold transition-colors hover:text-white sm:px-[18px] sm:py-[9px] sm:text-[13.5px]"
             >
-              {t.listItem}
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="m-1.5 sm:hidden"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              <span className="hidden sm:inline">{t.listItem}</span>
             </button>
 
-            <button aria-label="Saved" className="relative flex border-0 bg-transparent p-1">
+            <button
+              aria-label="Saved"
+              className="relative hidden border-0 bg-transparent p-1 sm:flex"
+            >
               <svg
                 width="22"
                 height="22"
@@ -293,6 +326,81 @@ export function Header() {
             </div>
           </nav>
         </div>
+
+        {mobileNavOpen && (
+          <div className="border-t border-black/10 bg-white px-4 py-3 md:hidden">
+            <nav className="flex flex-col gap-1">
+              <Link
+                href="/"
+                onClick={() => setMobileNavOpen(false)}
+                className="rounded-lg px-2 py-2.5 text-[15px] font-medium"
+                style={{ color: isHome ? "#2D5DA8" : "#0a0a0a" }}
+              >
+                {t.navHome}
+              </Link>
+              <Link
+                href="/shop"
+                onClick={() => setMobileNavOpen(false)}
+                className="rounded-lg px-2 py-2.5 text-[15px] font-medium"
+                style={{ color: !isHome ? "#2D5DA8" : "#0a0a0a" }}
+              >
+                {t.navShop}
+              </Link>
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    setMobileNavOpen(false);
+                    goToAdmin();
+                  }}
+                  className="rounded-lg px-2 py-2.5 text-left text-[15px] font-medium text-[#c96442]"
+                >
+                  {t.adminNavLabel}
+                </button>
+              )}
+            </nav>
+
+            <div className="mt-2 flex items-center gap-3 border-t border-black/[.06] px-2 pt-3">
+              <div className="border-brand-600/25 flex flex-none overflow-hidden rounded-full border-[1.5px]">
+                <button
+                  onClick={() => setLang("en")}
+                  className="px-3 py-[7px] text-[12px] font-bold tracking-[.03em] transition-colors"
+                  style={{
+                    background: lang === "en" ? "#2D5DA8" : "transparent",
+                    color: lang === "en" ? "#fff" : "rgba(45,93,168,.6)",
+                  }}
+                >
+                  EN
+                </button>
+                <button
+                  onClick={() => setLang("th")}
+                  className="px-3 py-[7px] text-[12px] font-bold tracking-[.03em] transition-colors"
+                  style={{
+                    background: lang === "th" ? "#2D5DA8" : "transparent",
+                    color: lang === "th" ? "#fff" : "rgba(45,93,168,.6)",
+                  }}
+                >
+                  TH
+                </button>
+              </div>
+
+              <button
+                aria-label="Saved"
+                className="relative flex flex-none border-0 bg-transparent p-1"
+              >
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#2D5DA8"
+                  strokeWidth="1.8"
+                >
+                  <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.7-7.5 1.1-1.1a5.5 5.5 0 0 0 0-7.8z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
       <LoginModal open={loginModalOpen} onClose={closeLoginModal} onSuccess={handleLoginSuccess} />
