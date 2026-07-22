@@ -1,6 +1,4 @@
-import { Router } from "express";
+import { Elysia } from "elysia";
 import { health } from "../controllers/health.controller";
 
-export const healthRouter = Router();
-
-healthRouter.get("/", health);
+export const healthRoutes = new Elysia({ prefix: "/api/health" }).get("/", () => health());

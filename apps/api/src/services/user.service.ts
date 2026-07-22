@@ -1,6 +1,6 @@
 import { userRepository } from "../repositories/user.repository";
 import { ForbiddenError, NotFoundError } from "../utils/errors";
-import { publicUrlFor } from "../middleware/upload";
+import { publicUrlFor } from "../plugins/upload";
 
 const MOCK_OCR_RESULT = {
   name: "SOMCHAI JAIDEE",
@@ -33,9 +33,9 @@ export async function verifyFace(actingUserId: number, targetUserId: number) {
   return { faceVerified: true };
 }
 
-export async function listUsers() {
-  const users = await userRepository.findAll();
-  return users.map((u) => ({
+export async function listUsers(pagination: { page: number; pageSize: number }) {
+  const { rows, total } = await userRepository.findAll(pagination);
+  const data = rows.map((u) => ({
     id: u.id,
     name: u.name,
     email: u.email,
@@ -43,6 +43,7 @@ export async function listUsers() {
     verificationStatus: u.verificationStatus,
     createdAt: u.createdAt,
   }));
+  return { data, total };
 }
 
 export async function updateVerificationStatus(id: number, status: "APPROVED" | "REJECTED") {

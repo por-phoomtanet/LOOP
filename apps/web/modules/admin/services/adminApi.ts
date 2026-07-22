@@ -1,5 +1,5 @@
 import { api } from "@/shared/services/api";
-import type { ApiResponse } from "@/types";
+import type { ApiResponse, PaginatedResponse } from "@/types";
 import type {
   AdminProduct,
   AdminUser,
@@ -11,8 +11,8 @@ import type {
 } from "../types";
 
 export const adminApi = {
-  getUsers() {
-    return api.get<ApiResponse<AdminUser[]>>("/admin/users");
+  getUsers(params?: { page?: number; pageSize?: number }) {
+    return api.get<PaginatedResponse<AdminUser>>("/admin/users", { params });
   },
 
   updateUserStatus(id: number, status: VerificationStatus) {

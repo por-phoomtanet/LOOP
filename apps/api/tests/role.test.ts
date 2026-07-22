@@ -1,9 +1,10 @@
+import { describe, it, expect } from "bun:test";
 import request from "supertest";
-import { app } from "../src/app";
+import { baseUrl } from "./testApp";
 import { registerUser } from "./helpers";
 
 async function loginAdmin() {
-  const res = await request(app)
+  const res = await request(baseUrl)
     .post("/api/auth/login")
     .send({ email: "admin@loop.dev", password: "Admin123!" });
   return res.body.data.token as string;
@@ -16,13 +17,15 @@ function uniqueRoleName(prefix: string) {
 describe("GET /api/roles", () => {
   it("rejects non-admin with 403", async () => {
     const { token } = await registerUser("rolelist");
-    const res = await request(app).get("/api/roles").set("Authorization", `Bearer ${token}`);
+    const res = await request(baseUrl).get("/api/roles").set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(403);
   });
 
   it("returns roles with user counts for admin", async () => {
     const adminToken = await loginAdmin();
-    const res = await request(app).get("/api/roles").set("Authorization", `Bearer ${adminToken}`);
+    const res = await request(baseUrl)
+      .get("/api/roles")
+      .set("Authorization", `Bearer ${adminToken}`);
 
     expect(res.status).toBe(200);
     const adminRole = res.body.data.find((r: { name: string }) => r.name === "admin");
@@ -35,7 +38,7 @@ describe("POST /api/roles", () => {
   it("creates a new role", async () => {
     const adminToken = await loginAdmin();
     const name = uniqueRoleName("role");
-    const res = await request(app)
+    const res = await request(baseUrl)
       .post("/api/roles")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ name, label: "ทดสอบ" });
@@ -47,12 +50,12 @@ describe("POST /api/roles", () => {
   it("rejects duplicate role name with 409", async () => {
     const adminToken = await loginAdmin();
     const name = uniqueRoleName("dup");
-    await request(app)
+    await request(baseUrl)
       .post("/api/roles")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ name, label: "A" });
 
-    const res = await request(app)
+    const res = await request(baseUrl)
       .post("/api/roles")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ name, label: "B" });
@@ -65,13 +68,13 @@ describe("PUT and DELETE /api/roles/:id", () => {
   it("updates a role and deletes it when unused", async () => {
     const adminToken = await loginAdmin();
     const name = uniqueRoleName("temp");
-    const created = await request(app)
+    const created = await request(baseUrl)
       .post("/api/roles")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ name, label: "เดิม" });
     const roleId = created.body.data.id;
 
-    const updated = await request(app)
+    const updated = await request(baseUrl)
       .put(`/api/roles/${roleId}`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ label: "ใหม่" });
@@ -79,12 +82,12 @@ describe("PUT and DELETE /api/roles/:id", () => {
     expect(updated.body.data.label).toBe("ใหม่");
 
     // ผูก permission ให้ role นี้ก่อน เพื่อพิสูจน์ cascade delete ทำงาน
-    await request(app)
+    await request(baseUrl)
       .put(`/api/role-permissions/${name}/users`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ canView: true, canCreate: false, canUpdate: false, canDelete: false });
 
-    const deleted = await request(app)
+    const deleted = await request(baseUrl)
       .delete(`/api/roles/${roleId}`)
       .set("Authorization", `Bearer ${adminToken}`);
     expect(deleted.status).toBe(200);
@@ -93,7 +96,7 @@ describe("PUT and DELETE /api/roles/:id", () => {
   it("refuses to delete a role that still has users attached", async () => {
     const adminToken = await loginAdmin();
     // role "user" always has attached users (seeded + registered in other tests)
-    const res = await request(app)
+    const res = await request(baseUrl)
       .delete("/api/roles/2")
       .set("Authorization", `Bearer ${adminToken}`);
     expect(res.status).toBe(409);
@@ -103,7 +106,7 @@ describe("PUT and DELETE /api/roles/:id", () => {
 describe("PUT /api/role-permissions/:role/:menuKey", () => {
   it("updates permission flags for a role+menu", async () => {
     const adminToken = await loginAdmin();
-    const res = await request(app)
+    const res = await request(baseUrl)
       .put("/api/role-permissions/admin/users")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ canView: true, canCreate: true, canUpdate: true, canDelete: true });
@@ -120,7 +123,7 @@ describe("PUT /api/role-permissions/:role/:menuKey", () => {
 
   it("rejects non-admin with 403", async () => {
     const { token } = await registerUser("permedit");
-    const res = await request(app)
+    const res = await request(baseUrl)
       .put("/api/role-permissions/admin/users")
       .set("Authorization", `Bearer ${token}`)
       .send({ canView: true, canCreate: true, canUpdate: true, canDelete: true });
@@ -129,7 +132,7 @@ describe("PUT /api/role-permissions/:role/:menuKey", () => {
 
   it("rejects an invalid body with 400", async () => {
     const adminToken = await loginAdmin();
-    const res = await request(app)
+    const res = await request(baseUrl)
       .put("/api/role-permissions/admin/users")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ canView: "yes" });
@@ -140,7 +143,7 @@ describe("PUT /api/role-permissions/:role/:menuKey", () => {
 describe("GET /api/admin/dashboard", () => {
   it("returns real user stats and explicit nulls for unbuilt features", async () => {
     const adminToken = await loginAdmin();
-    const res = await request(app)
+    const res = await request(baseUrl)
       .get("/api/admin/dashboard")
       .set("Authorization", `Bearer ${adminToken}`);
 
@@ -153,7 +156,7 @@ describe("GET /api/admin/dashboard", () => {
 
   it("rejects non-admin with 403", async () => {
     const { token } = await registerUser("dashboard");
-    const res = await request(app)
+    const res = await request(baseUrl)
       .get("/api/admin/dashboard")
       .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(403);

@@ -1,9 +1,10 @@
+import { describe, it, expect } from "bun:test";
 import request from "supertest";
-import { app } from "../src/app";
+import { baseUrl } from "./testApp";
 import { registerUser } from "./helpers";
 
 async function loginAdmin() {
-  const res = await request(app)
+  const res = await request(baseUrl)
     .post("/api/auth/login")
     .send({ email: "admin@loop.dev", password: "Admin123!" });
   return res.body.data.token as string;
@@ -12,18 +13,20 @@ async function loginAdmin() {
 describe("GET /api/admin/users", () => {
   it("rejects non-admin users with 403", async () => {
     const { token } = await registerUser("nonadmin");
-    const res = await request(app).get("/api/admin/users").set("Authorization", `Bearer ${token}`);
+    const res = await request(baseUrl)
+      .get("/api/admin/users")
+      .set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(403);
   });
 
   it("rejects unauthenticated requests with 401", async () => {
-    const res = await request(app).get("/api/admin/users");
+    const res = await request(baseUrl).get("/api/admin/users");
     expect(res.status).toBe(401);
   });
 
   it("returns the user list for admin", async () => {
     const adminToken = await loginAdmin();
-    const res = await request(app)
+    const res = await request(baseUrl)
       .get("/api/admin/users")
       .set("Authorization", `Bearer ${adminToken}`);
 
@@ -38,14 +41,14 @@ describe("PATCH /api/admin/users/:id/status", () => {
     const adminToken = await loginAdmin();
     const { userId } = await registerUser("moderation");
 
-    const suspend = await request(app)
+    const suspend = await request(baseUrl)
       .patch(`/api/admin/users/${userId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "REJECTED" });
     expect(suspend.status).toBe(200);
     expect(suspend.body.data.verificationStatus).toBe("REJECTED");
 
-    const unsuspend = await request(app)
+    const unsuspend = await request(baseUrl)
       .patch(`/api/admin/users/${userId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "APPROVED" });
@@ -57,7 +60,7 @@ describe("PATCH /api/admin/users/:id/status", () => {
     const adminToken = await loginAdmin();
     const { userId } = await registerUser("badstatus");
 
-    const res = await request(app)
+    const res = await request(baseUrl)
       .patch(`/api/admin/users/${userId}/status`)
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ status: "BOGUS" });
@@ -66,7 +69,7 @@ describe("PATCH /api/admin/users/:id/status", () => {
 
   it("rejects non-admin callers with 403", async () => {
     const { token, userId } = await registerUser("selfmod");
-    const res = await request(app)
+    const res = await request(baseUrl)
       .patch(`/api/admin/users/${userId}/status`)
       .set("Authorization", `Bearer ${token}`)
       .send({ status: "REJECTED" });
@@ -77,7 +80,7 @@ describe("PATCH /api/admin/users/:id/status", () => {
 describe("GET /api/role-permissions/:role", () => {
   it("returns full permissions for admin role", async () => {
     const adminToken = await loginAdmin();
-    const res = await request(app)
+    const res = await request(baseUrl)
       .get("/api/role-permissions/admin")
       .set("Authorization", `Bearer ${adminToken}`);
 

@@ -62,13 +62,19 @@ export const userRepository = {
     return prisma.user.update({ where: { id }, data: { faceVerified: true } });
   },
 
-  async findAll() {
-    const users = await prisma.user.findMany({
-      where: { deletedAt: null },
-      include: { role: true },
-      orderBy: { createdAt: "desc" },
-    });
-    return users.map(flatten);
+  async findAll(pagination: { page: number; pageSize: number }) {
+    const where = { deletedAt: null };
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        include: { role: true },
+        orderBy: { createdAt: "desc" },
+        skip: (pagination.page - 1) * pagination.pageSize,
+        take: pagination.pageSize,
+      }),
+      prisma.user.count({ where }),
+    ]);
+    return { rows: users.map(flatten), total };
   },
 
   setVerificationStatus(id: number, status: "APPROVED" | "REJECTED") {

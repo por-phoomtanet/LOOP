@@ -1,17 +1,28 @@
-import { Router } from "express";
+import { Elysia } from "elysia";
 import * as userController from "../controllers/user.controller";
-import { authenticate } from "../middleware/authenticate";
-import { createImageUpload } from "../middleware/upload";
+import { authMacro } from "../plugins/auth";
 
-export const userRouter = Router();
-
-const idCardUpload = createImageUpload("id-cards");
-
-userRouter.post(
-  "/:id/id-card",
-  authenticate,
-  idCardUpload.single("file"),
-  userController.uploadIdCard,
-);
-userRouter.post("/:id/id-card/ocr-mock", authenticate, userController.ocrMock);
-userRouter.post("/:id/face-verify", authenticate, userController.faceVerify);
+export const userRoutes = new Elysia({ prefix: "/api/users" })
+  .use(authMacro)
+  .post(
+    "/:id/id-card",
+    ({ params, body, user }) => {
+      const file = (body as { file?: unknown } | undefined)?.file;
+      return userController.uploadIdCard(
+        user.userId,
+        Number(params.id),
+        file instanceof File ? file : undefined,
+      );
+    },
+    { auth: true },
+  )
+  .post(
+    "/:id/id-card/ocr-mock",
+    ({ params, user }) => userController.ocrMock(user.userId, Number(params.id)),
+    { auth: true },
+  )
+  .post(
+    "/:id/face-verify",
+    ({ params, user }) => userController.faceVerify(user.userId, Number(params.id)),
+    { auth: true },
+  );

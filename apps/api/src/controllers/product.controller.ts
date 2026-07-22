@@ -1,118 +1,73 @@
-import type { NextFunction, Request, Response } from "express";
 import * as productService from "../services/product.service";
+import { saveImage } from "../plugins/upload";
+import { paginationSchema } from "../schemas/pagination.schema";
 import { BadRequestError } from "../utils/errors";
 
-export async function adminList(_req: Request, res: Response, next: NextFunction) {
-  try {
-    const result = await productService.listProductsForAdmin();
-    res.json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+type CreateInput = Parameters<typeof productService.createProduct>[0];
+type UpdateInput = Parameters<typeof productService.updateProduct>[1];
+
+export async function adminList() {
+  const result = await productService.listProductsForAdmin();
+  return { data: result, message: "ok" };
 }
 
-export async function publicList(req: Request, res: Response, next: NextFunction) {
-  try {
-    const q = typeof req.query.q === "string" ? req.query.q : undefined;
-    const category = typeof req.query.category === "string" ? req.query.category : undefined;
-    const result = await productService.listPublicProducts({ q, category });
-    res.json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function publicList(query: unknown) {
+  const q = query as { q?: string; category?: string };
+  const { page, pageSize } = paginationSchema.parse(query);
+  const { data, total } = await productService.listPublicProducts(
+    {
+      q: typeof q.q === "string" ? q.q : undefined,
+      category: typeof q.category === "string" ? q.category : undefined,
+    },
+    { page, pageSize },
+  );
+  return { data, message: "ok", total, page, pageSize };
 }
 
-export async function create(req: Request, res: Response, next: NextFunction) {
-  try {
-    const result = await productService.createProduct(req.body, req.user!.userId);
-    res.status(201).json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function create(body: unknown, userId: number) {
+  const result = await productService.createProduct(body as CreateInput, userId);
+  return { data: result, message: "ok" };
 }
 
-export async function update(req: Request, res: Response, next: NextFunction) {
-  try {
-    const result = await productService.updateProduct(
-      Number(req.params.id),
-      req.body,
-      req.user!.userId,
-    );
-    res.json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function update(id: number, body: unknown, userId: number) {
+  const result = await productService.updateProduct(id, body as UpdateInput, userId);
+  return { data: result, message: "ok" };
 }
 
-export async function updateStatus(req: Request, res: Response, next: NextFunction) {
-  try {
-    const result = await productService.setProductStatus(
-      Number(req.params.id),
-      req.body.status,
-      req.user!.userId,
-    );
-    res.json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function updateStatus(id: number, body: unknown, userId: number) {
+  const { status } = body as { status: "ACTIVE" | "PAUSED" };
+  const result = await productService.setProductStatus(id, status, userId);
+  return { data: result, message: "ok" };
 }
 
-export async function remove(req: Request, res: Response, next: NextFunction) {
-  try {
-    await productService.deleteProduct(Number(req.params.id), req.user!.userId);
-    res.json({ data: null, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function remove(id: number, userId: number) {
+  await productService.deleteProduct(id, userId);
+  return { data: null, message: "ok" };
 }
 
-export async function uploadImages(req: Request, res: Response, next: NextFunction) {
-  try {
-    const files = (req.files as Express.Multer.File[] | undefined) ?? [];
-    if (files.length === 0) throw new BadRequestError("กรุณาอัปโหลดรูปอย่างน้อย 1 รูป");
-
-    const result = await productService.addProductImages(
-      Number(req.params.id),
-      req.user!.userId,
-      files,
-    );
-    res.status(201).json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function uploadImages(id: number, userId: number, files: File[]) {
+  if (files.length === 0) throw new BadRequestError("กรุณาอัปโหลดรูปอย่างน้อย 1 รูป");
+  const filenames = await Promise.all(files.map((f) => saveImage("products", f)));
+  const result = await productService.addProductImages(
+    id,
+    userId,
+    filenames.map((filename) => ({ filename })),
+  );
+  return { data: result, message: "ok" };
 }
 
-export async function addPickupOption(req: Request, res: Response, next: NextFunction) {
-  try {
-    const result = await productService.addPickupOption(
-      Number(req.params.id),
-      req.user!.userId,
-      req.body.label,
-    );
-    res.status(201).json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function addPickupOption(id: number, userId: number, body: unknown) {
+  const { label } = body as { label: string };
+  const result = await productService.addPickupOption(id, userId, label);
+  return { data: result, message: "ok" };
 }
 
-export async function removePickupOption(req: Request, res: Response, next: NextFunction) {
-  try {
-    await productService.removePickupOption(
-      Number(req.params.id),
-      Number(req.params.optionId),
-      req.user!.userId,
-    );
-    res.json({ data: null, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function removePickupOption(id: number, optionId: number, userId: number) {
+  await productService.removePickupOption(id, optionId, userId);
+  return { data: null, message: "ok" };
 }
 
-export async function myListings(req: Request, res: Response, next: NextFunction) {
-  try {
-    const result = await productService.listMyListings(req.user!.userId);
-    res.json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function myListings(userId: number) {
+  const result = await productService.listMyListings(userId);
+  return { data: result, message: "ok" };
 }

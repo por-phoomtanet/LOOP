@@ -1,11 +1,12 @@
+import { describe, it, expect, spyOn } from "bun:test";
 import request from "supertest";
-import { app } from "../src/app";
+import { baseUrl } from "./testApp";
 import { registerUser, uniqueEmail } from "./helpers";
 
 describe("POST /api/auth/register", () => {
   it("creates a new user and returns a token", async () => {
     const email = uniqueEmail("reg");
-    const res = await request(app).post("/api/auth/register").send({
+    const res = await request(baseUrl).post("/api/auth/register").send({
       accountType: "INDIVIDUAL",
       name: "Test User",
       email,
@@ -21,7 +22,7 @@ describe("POST /api/auth/register", () => {
 
   it("rejects duplicate email with 409", async () => {
     const email = uniqueEmail("dup");
-    await request(app).post("/api/auth/register").send({
+    await request(baseUrl).post("/api/auth/register").send({
       accountType: "INDIVIDUAL",
       name: "A",
       email,
@@ -29,7 +30,7 @@ describe("POST /api/auth/register", () => {
       password: "password123",
     });
 
-    const res = await request(app).post("/api/auth/register").send({
+    const res = await request(baseUrl).post("/api/auth/register").send({
       accountType: "INDIVIDUAL",
       name: "B",
       email,
@@ -42,7 +43,7 @@ describe("POST /api/auth/register", () => {
   });
 
   it("rejects invalid body with 400", async () => {
-    const res = await request(app).post("/api/auth/register").send({
+    const res = await request(baseUrl).post("/api/auth/register").send({
       accountType: "INDIVIDUAL",
       name: "",
       email: "not-an-email",
@@ -56,15 +57,17 @@ describe("POST /api/auth/register", () => {
 
 describe("OTP request/verify", () => {
   it("requires authentication", async () => {
-    const res = await request(app).post("/api/auth/register/otp/request").send({ method: "email" });
+    const res = await request(baseUrl)
+      .post("/api/auth/register/otp/request")
+      .send({ method: "email" });
     expect(res.status).toBe(401);
   });
 
   it("auto-activates the account once the correct code is verified", async () => {
     const { token } = await registerUser("otp");
 
-    const logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
-    const otpRes = await request(app)
+    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const otpRes = await request(baseUrl)
       .post("/api/auth/register/otp/request")
       .set("Authorization", `Bearer ${token}`)
       .send({ method: "email" });
@@ -75,13 +78,13 @@ describe("OTP request/verify", () => {
     const code = logged?.match(/รหัส (\d{6})/)?.[1];
     expect(code).toBeDefined();
 
-    const wrongRes = await request(app)
+    const wrongRes = await request(baseUrl)
       .post("/api/auth/register/otp/verify")
       .set("Authorization", `Bearer ${token}`)
       .send({ code: "000000" });
     expect(wrongRes.status).toBe(400);
 
-    const verifyRes = await request(app)
+    const verifyRes = await request(baseUrl)
       .post("/api/auth/register/otp/verify")
       .set("Authorization", `Bearer ${token}`)
       .send({ code });
@@ -92,7 +95,7 @@ describe("OTP request/verify", () => {
 
 describe("POST /api/auth/login", () => {
   it("logs in the seeded admin user", async () => {
-    const res = await request(app)
+    const res = await request(baseUrl)
       .post("/api/auth/login")
       .send({ email: "admin@loop.dev", password: "Admin123!" });
 
@@ -101,7 +104,7 @@ describe("POST /api/auth/login", () => {
   });
 
   it("rejects wrong password with 401", async () => {
-    const res = await request(app)
+    const res = await request(baseUrl)
       .post("/api/auth/login")
       .send({ email: "admin@loop.dev", password: "wrong-password" });
 

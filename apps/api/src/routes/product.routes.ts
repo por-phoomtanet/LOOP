@@ -1,13 +1,9 @@
-import { Router } from "express";
+import { Elysia } from "elysia";
 import { z } from "zod";
 import * as productController from "../controllers/product.controller";
-import { authenticate } from "../middleware/authenticate";
-import { createImageUpload } from "../middleware/upload";
-import { validate } from "../middleware/validate";
-
-export const productRouter = Router();
-
-const productImageUpload = createImageUpload("products");
+import { authMacro } from "../plugins/auth";
+import { toFileArray } from "../plugins/upload";
+import { validate } from "../plugins/validate";
 
 const createSchema = z.object({
   title: z.string().min(1),
@@ -29,30 +25,51 @@ const pickupOptionSchema = z.object({
   label: z.string().min(1),
 });
 
-productRouter.get("/", productController.publicList);
-productRouter.post("/", authenticate, validate({ body: createSchema }), productController.create);
-productRouter.put("/:id", authenticate, validate({ body: updateSchema }), productController.update);
-productRouter.patch(
-  "/:id/status",
-  authenticate,
-  validate({ body: statusSchema }),
-  productController.updateStatus,
-);
-productRouter.delete("/:id", authenticate, productController.remove);
-productRouter.post(
-  "/:id/images",
-  authenticate,
-  productImageUpload.array("files", 10),
-  productController.uploadImages,
-);
-productRouter.post(
-  "/:id/pickup-options",
-  authenticate,
-  validate({ body: pickupOptionSchema }),
-  productController.addPickupOption,
-);
-productRouter.delete(
-  "/:id/pickup-options/:optionId",
-  authenticate,
-  productController.removePickupOption,
-);
+export const productRoutes = new Elysia({ prefix: "/api/products" })
+  .use(authMacro)
+  .get("/", ({ query }) => productController.publicList(query))
+  .post(
+    "/",
+    ({ body, user, set }) => {
+      set.status = 201;
+      return productController.create(body, user.userId);
+    },
+    { ...validate({ body: createSchema }), auth: true },
+  )
+  .put(
+    "/:id",
+    ({ params, body, user }) => productController.update(Number(params.id), body, user.userId),
+    { ...validate({ body: updateSchema }), auth: true },
+  )
+  .patch(
+    "/:id/status",
+    ({ params, body, user }) =>
+      productController.updateStatus(Number(params.id), body, user.userId),
+    { ...validate({ body: statusSchema }), auth: true },
+  )
+  .delete("/:id", ({ params, user }) => productController.remove(Number(params.id), user.userId), {
+    auth: true,
+  })
+  .post(
+    "/:id/images",
+    ({ params, body, user, set }) => {
+      const files = toFileArray((body as { files?: unknown } | undefined)?.files);
+      set.status = 201;
+      return productController.uploadImages(Number(params.id), user.userId, files);
+    },
+    { auth: true },
+  )
+  .post(
+    "/:id/pickup-options",
+    ({ params, body, user, set }) => {
+      set.status = 201;
+      return productController.addPickupOption(Number(params.id), user.userId, body);
+    },
+    { ...validate({ body: pickupOptionSchema }), auth: true },
+  )
+  .delete(
+    "/:id/pickup-options/:optionId",
+    ({ params, user }) =>
+      productController.removePickupOption(Number(params.id), Number(params.optionId), user.userId),
+    { auth: true },
+  );

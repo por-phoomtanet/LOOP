@@ -42,9 +42,12 @@ export async function listProductsForAdmin() {
   }));
 }
 
-export async function listPublicProducts(filters: { q?: string; category?: string }) {
-  const products = await productRepository.findActivePublic(filters);
-  return products.map((p) => ({
+export async function listPublicProducts(
+  filters: { q?: string; category?: string },
+  pagination: { page: number; pageSize: number },
+) {
+  const { rows, total } = await productRepository.findActivePublic(filters, pagination);
+  const data = rows.map((p) => ({
     id: p.id,
     title: p.title,
     categoryName: p.category.name,
@@ -56,6 +59,7 @@ export async function listPublicProducts(filters: { q?: string; category?: strin
     reviewCount: p.reviewCount,
     thumbnailUrl: p.images[0]?.url ?? null,
   }));
+  return { data, total };
 }
 
 export async function createProduct(input: ProductInput, userId: number) {
