@@ -5,6 +5,7 @@ export type ApiResponse<T> = {
 
 export type PaginatedResponse<T> = {
   data: T[];
+  message: string;
   total: number;
   page: number;
   pageSize: number;

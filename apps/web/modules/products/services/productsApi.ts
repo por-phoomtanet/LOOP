@@ -1,5 +1,5 @@
 import { api } from "@/shared/services/api";
-import type { ApiResponse } from "@/types";
+import type { ApiResponse, PaginatedResponse } from "@/types";
 import type {
   Category,
   MyListing,
@@ -15,8 +15,8 @@ export const productsApi = {
     return api.get<ApiResponse<Category[]>>("/categories");
   },
 
-  getProducts(params?: { q?: string; category?: string }) {
-    return api.get<ApiResponse<ProductCardData[]>>("/products", { params });
+  getProducts(params?: { q?: string; category?: string; page?: number; pageSize?: number }) {
+    return api.get<PaginatedResponse<ProductCardData>>("/products", { params });
   },
 
   createProduct(input: ProductInput) {

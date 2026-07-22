@@ -27,28 +27,35 @@ const ACCOUNT_TYPE_LABEL: Record<AdminUser["accountType"], string> = {
 export function UserTable() {
   const { message } = App.useApp();
   const [users, setUsers] = useState<AdminUser[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
-  async function load() {
-    setLoading(true);
-    try {
-      const res = await adminApi.getUsers();
-      setUsers(res.data.data);
-    } catch (err) {
-      const msg = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
-      message.error(msg ?? "โหลดรายชื่อผู้ใช้ไม่สำเร็จ");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await adminApi.getUsers({ page, pageSize });
+        if (cancelled) return;
+        setUsers(res.data.data);
+        setTotal(res.data.total);
+      } catch (err) {
+        if (cancelled) return;
+        const msg = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
+        message.error(msg ?? "โหลดรายชื่อผู้ใช้ไม่สำเร็จ");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
     load();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line
-  }, []);
+  }, [page, pageSize]);
 
   async function toggleStatus(user: AdminUser) {
     const nextStatus: VerificationStatus =
@@ -80,9 +87,10 @@ export function UserTable() {
         pagination={{
           current: page,
           pageSize,
+          total,
           showSizeChanger: true,
           pageSizeOptions: [10, 20, 50],
-          showTotal: (total) => `ทั้งหมด ${total} รายการ`,
+          showTotal: (t) => `ทั้งหมด ${t} รายการ`,
           onChange: (p) => setPage(p),
           onShowSizeChange: (_, size) => {
             setPageSize(size);
