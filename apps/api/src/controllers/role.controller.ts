@@ -1,38 +1,24 @@
-import type { NextFunction, Request, Response } from "express";
 import * as roleService from "../services/role.service";
 
-export async function list(_req: Request, res: Response, next: NextFunction) {
-  try {
-    const result = await roleService.listRoles();
-    res.json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+type CreateInput = Parameters<typeof roleService.createRole>[0];
+type UpdateInput = Parameters<typeof roleService.updateRole>[1];
+
+export async function list() {
+  const result = await roleService.listRoles();
+  return { data: result, message: "ok" };
 }
 
-export async function create(req: Request, res: Response, next: NextFunction) {
-  try {
-    const result = await roleService.createRole(req.body);
-    res.status(201).json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function create(body: unknown) {
+  const result = await roleService.createRole(body as CreateInput);
+  return { data: result, message: "ok" };
 }
 
-export async function update(req: Request, res: Response, next: NextFunction) {
-  try {
-    const result = await roleService.updateRole(Number(req.params.id), req.body);
-    res.json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function update(id: number, body: unknown) {
+  const result = await roleService.updateRole(id, body as UpdateInput);
+  return { data: result, message: "ok" };
 }
 
-export async function remove(req: Request, res: Response, next: NextFunction) {
-  try {
-    await roleService.deleteRole(Number(req.params.id));
-    res.json({ data: null, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function remove(id: number) {
+  await roleService.deleteRole(id);
+  return { data: null, message: "ok" };
 }

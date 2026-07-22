@@ -1,41 +1,30 @@
-import type { NextFunction, Request, Response } from "express";
 import * as authService from "../services/auth.service";
 
-export async function login(req: Request, res: Response, next: NextFunction) {
-  try {
-    const { email, password } = req.body;
-    const result = await authService.login(email, password);
-    res.json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+// controllers = pure functions: รับ input ที่ผ่าน validate แล้ว → เรียก service → คืน envelope
+// try/catch หายไป (Elysia onError จัดการ error กลาง), status 201 ตั้งใน route
+
+type LoginInput = { email: string; password: string };
+type RegisterInput = Parameters<typeof authService.register>[0];
+
+export async function login(body: unknown) {
+  const { email, password } = body as LoginInput;
+  const result = await authService.login(email, password);
+  return { data: result, message: "ok" };
 }
 
-export async function register(req: Request, res: Response, next: NextFunction) {
-  try {
-    const result = await authService.register(req.body);
-    res.status(201).json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function register(body: unknown) {
+  const result = await authService.register(body as RegisterInput);
+  return { data: result, message: "ok" };
 }
 
-export async function requestOtp(req: Request, res: Response, next: NextFunction) {
-  try {
-    const { method } = req.body;
-    const result = await authService.requestOtp(req.user!.userId, method);
-    res.json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function requestOtp(userId: number, body: unknown) {
+  const { method } = body as { method: "email" | "phone" };
+  const result = await authService.requestOtp(userId, method);
+  return { data: result, message: "ok" };
 }
 
-export async function verifyOtp(req: Request, res: Response, next: NextFunction) {
-  try {
-    const { code } = req.body;
-    const result = await authService.verifyOtp(req.user!.userId, code);
-    res.json({ data: result, message: "ok" });
-  } catch (err) {
-    next(err);
-  }
+export async function verifyOtp(userId: number, body: unknown) {
+  const { code } = body as { code: string };
+  const result = await authService.verifyOtp(userId, code);
+  return { data: result, message: "ok" };
 }

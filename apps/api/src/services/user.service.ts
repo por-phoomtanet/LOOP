@@ -1,6 +1,6 @@
 import { userRepository } from "../repositories/user.repository";
 import { ForbiddenError, NotFoundError } from "../utils/errors";
-import { publicUrlFor } from "../middleware/upload";
+import { publicUrlFor } from "../plugins/upload";
 
 const MOCK_OCR_RESULT = {
   name: "SOMCHAI JAIDEE",

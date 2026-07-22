@@ -1,11 +1,8 @@
-import { Router } from "express";
+import { Elysia } from "elysia";
 import { z } from "zod";
 import * as categoryController from "../controllers/category.controller";
-import { authenticate } from "../middleware/authenticate";
-import { requireRole } from "../middleware/requireRole";
-import { validate } from "../middleware/validate";
-
-export const categoryRouter = Router();
+import { authMacro } from "../plugins/auth";
+import { validate } from "../plugins/validate";
 
 const createSchema = z.object({
   name: z.string().min(1),
@@ -22,26 +19,28 @@ const statusSchema = z.object({
   isActive: z.boolean(),
 });
 
-categoryRouter.get("/", categoryController.list);
-categoryRouter.post(
-  "/",
-  authenticate,
-  requireRole("admin"),
-  validate({ body: createSchema }),
-  categoryController.create,
-);
-categoryRouter.put(
-  "/:id",
-  authenticate,
-  requireRole("admin"),
-  validate({ body: updateSchema }),
-  categoryController.update,
-);
-categoryRouter.patch(
-  "/:id/status",
-  authenticate,
-  requireRole("admin"),
-  validate({ body: statusSchema }),
-  categoryController.updateStatus,
-);
-categoryRouter.delete("/:id", authenticate, requireRole("admin"), categoryController.remove);
+export const categoryRoutes = new Elysia({ prefix: "/api/categories" })
+  .use(authMacro)
+  .get("/", ({ query }) => categoryController.list(query))
+  .post(
+    "/",
+    ({ body, user, set }) => {
+      set.status = 201;
+      return categoryController.create(body, user.userId);
+    },
+    { ...validate({ body: createSchema }), auth: ["admin"] },
+  )
+  .put(
+    "/:id",
+    ({ params, body, user }) => categoryController.update(Number(params.id), body, user.userId),
+    { ...validate({ body: updateSchema }), auth: ["admin"] },
+  )
+  .patch(
+    "/:id/status",
+    ({ params, body, user }) =>
+      categoryController.updateStatus(Number(params.id), body, user.userId),
+    { ...validate({ body: statusSchema }), auth: ["admin"] },
+  )
+  .delete("/:id", ({ params }) => categoryController.remove(Number(params.id)), {
+    auth: ["admin"],
+  });

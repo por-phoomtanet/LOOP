@@ -1,11 +1,8 @@
-import { Router } from "express";
+import { Elysia } from "elysia";
 import { z } from "zod";
 import * as rolePermissionController from "../controllers/rolePermission.controller";
-import { authenticate } from "../middleware/authenticate";
-import { requireRole } from "../middleware/requireRole";
-import { validate } from "../middleware/validate";
-
-export const rolePermissionRouter = Router();
+import { authMacro } from "../plugins/auth";
+import { validate } from "../plugins/validate";
 
 const updateSchema = z.object({
   canView: z.boolean(),
@@ -14,11 +11,11 @@ const updateSchema = z.object({
   canDelete: z.boolean(),
 });
 
-rolePermissionRouter.get("/:role", authenticate, rolePermissionController.getByRole);
-rolePermissionRouter.put(
-  "/:role/:menuKey",
-  authenticate,
-  requireRole("admin"),
-  validate({ body: updateSchema }),
-  rolePermissionController.update,
-);
+export const rolePermissionRoutes = new Elysia({ prefix: "/api/role-permissions" })
+  .use(authMacro)
+  .get("/:role", ({ params }) => rolePermissionController.getByRole(params.role), { auth: true })
+  .put(
+    "/:role/:menuKey",
+    ({ params, body }) => rolePermissionController.update(params.role, params.menuKey, body),
+    { ...validate({ body: updateSchema }), auth: ["admin"] },
+  );

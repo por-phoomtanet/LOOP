@@ -1,31 +1,28 @@
-import path from "node:path";
-import cors from "cors";
-import express from "express";
-import { errorHandler } from "./middleware/errorHandler";
-import { adminRouter } from "./routes/admin.routes";
-import { authRouter } from "./routes/auth.routes";
-import { categoryRouter } from "./routes/category.routes";
-import { healthRouter } from "./routes/health.routes";
-import { meRouter } from "./routes/me.routes";
-import { productRouter } from "./routes/product.routes";
-import { roleRouter } from "./routes/role.routes";
-import { rolePermissionRouter } from "./routes/rolePermission.routes";
-import { userRouter } from "./routes/user.routes";
+import { cors } from "@elysiajs/cors";
+import { staticPlugin } from "@elysiajs/static";
+import { Elysia } from "elysia";
+import { handleError } from "./plugins/errorHandling";
+import { UPLOAD_ROOT } from "./plugins/upload";
+import { adminRoutes } from "./routes/admin.routes";
+import { authRoutes } from "./routes/auth.routes";
+import { categoryRoutes } from "./routes/category.routes";
+import { healthRoutes } from "./routes/health.routes";
+import { meRoutes } from "./routes/me.routes";
+import { productRoutes } from "./routes/product.routes";
+import { roleRoutes } from "./routes/role.routes";
+import { rolePermissionRoutes } from "./routes/rolePermission.routes";
+import { userRoutes } from "./routes/user.routes";
 
-export const app = express();
-
-app.use(cors());
-app.use(express.json());
-app.use("/uploads", express.static(path.resolve(__dirname, "../uploads")));
-
-app.use("/api/health", healthRouter);
-app.use("/api/auth", authRouter);
-app.use("/api/categories", categoryRouter);
-app.use("/api/users", userRouter);
-app.use("/api/admin", adminRouter);
-app.use("/api/roles", roleRouter);
-app.use("/api/role-permissions", rolePermissionRouter);
-app.use("/api/products", productRouter);
-app.use("/api/me", meRouter);
-
-app.use(errorHandler);
+export const app = new Elysia()
+  .onError(({ code, error, set }) => handleError(code, error, set))
+  .use(cors())
+  .use(staticPlugin({ assets: UPLOAD_ROOT, prefix: "/uploads" }))
+  .use(healthRoutes)
+  .use(authRoutes)
+  .use(categoryRoutes)
+  .use(userRoutes)
+  .use(adminRoutes)
+  .use(roleRoutes)
+  .use(rolePermissionRoutes)
+  .use(productRoutes)
+  .use(meRoutes);

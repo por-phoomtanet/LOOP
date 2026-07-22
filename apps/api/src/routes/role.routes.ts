@@ -1,13 +1,8 @@
-import { Router } from "express";
+import { Elysia } from "elysia";
 import { z } from "zod";
 import * as roleController from "../controllers/role.controller";
-import { authenticate } from "../middleware/authenticate";
-import { requireRole } from "../middleware/requireRole";
-import { validate } from "../middleware/validate";
-
-export const roleRouter = Router();
-
-roleRouter.use(authenticate, requireRole("admin"));
+import { authMacro } from "../plugins/auth";
+import { validate } from "../plugins/validate";
 
 const createSchema = z.object({
   name: z.string().min(1),
@@ -19,7 +14,21 @@ const updateSchema = z.object({
   label: z.string().min(1).optional(),
 });
 
-roleRouter.get("/", roleController.list);
-roleRouter.post("/", validate({ body: createSchema }), roleController.create);
-roleRouter.put("/:id", validate({ body: updateSchema }), roleController.update);
-roleRouter.delete("/:id", roleController.remove);
+export const roleRoutes = new Elysia({ prefix: "/api/roles" })
+  .use(authMacro)
+  .guard({ auth: ["admin"] }, (app) =>
+    app
+      .get("/", () => roleController.list())
+      .post(
+        "/",
+        ({ body, set }) => {
+          set.status = 201;
+          return roleController.create(body);
+        },
+        validate({ body: createSchema }),
+      )
+      .put("/:id", ({ params, body }) => roleController.update(Number(params.id), body), {
+        ...validate({ body: updateSchema }),
+      })
+      .delete("/:id", ({ params }) => roleController.remove(Number(params.id))),
+  );
