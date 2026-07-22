@@ -1,5 +1,9 @@
-import bcrypt from "bcrypt";
 import { prisma } from "../src/index";
+
+// ใช้ Bun.password (bcrypt-compatible $2b$) แทน npm bcrypt — รันผ่าน bun (ดู package.json seed script)
+function hashPassword(plain: string): Promise<string> {
+  return Bun.password.hash(plain, { algorithm: "bcrypt", cost: 10 });
+}
 
 async function main() {
   const adminRole = await prisma.role.upsert({
@@ -37,7 +41,7 @@ async function main() {
     });
   }
 
-  const adminPasswordHash = await bcrypt.hash("Admin123!", 10);
+  const adminPasswordHash = await hashPassword("Admin123!");
   await prisma.user.upsert({
     where: { email: "admin@loop.dev" },
     update: { passwordHash: adminPasswordHash, roleId: adminRole.id },
@@ -68,7 +72,7 @@ async function main() {
   }
 
   // ---- สินค้าตัวอย่าง (ACTIVE) สำหรับแสดงหน้าแรก ----
-  const sellerPasswordHash = await bcrypt.hash("Seller123!", 10);
+  const sellerPasswordHash = await hashPassword("Seller123!");
   const seller = await prisma.user.upsert({
     where: { email: "seller@renty.dev" },
     update: { passwordHash: sellerPasswordHash, roleId: userRole.id },
