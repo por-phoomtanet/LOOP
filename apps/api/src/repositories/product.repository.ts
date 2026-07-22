@@ -20,21 +20,34 @@ export const productRepository = {
     });
   },
 
-  findActivePublic(filters: { q?: string; category?: string }) {
-    return prisma.product.findMany({
-      where: {
-        status: "ACTIVE",
-        deletedAt: null,
-        ...(filters.q ? { title: { contains: filters.q, mode: "insensitive" } } : {}),
-        ...(filters.category ? { category: { slug: filters.category } } : {}),
-      },
-      include: {
-        category: { select: { name: true, slug: true } },
-        owner: { select: { name: true } },
-        images: { orderBy: { sortOrder: "asc" }, take: 1 },
-      },
-      orderBy: { id: "desc" },
-    });
+  async findActivePublic(
+    filters: { q?: string; category?: string },
+    pagination: { page: number; pageSize: number },
+  ) {
+    // แยก where เป็น const เดียว ใช้ทั้ง findMany + count (กัน filter หลุดไม่ตรงกัน)
+    const where = {
+      status: "ACTIVE" as const,
+      deletedAt: null,
+      ...(filters.q ? { title: { contains: filters.q, mode: "insensitive" as const } } : {}),
+      ...(filters.category ? { category: { slug: filters.category } } : {}),
+    };
+
+    const [rows, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        include: {
+          category: { select: { name: true, slug: true } },
+          owner: { select: { name: true } },
+          images: { orderBy: { sortOrder: "asc" }, take: 1 },
+        },
+        orderBy: { id: "desc" },
+        skip: (pagination.page - 1) * pagination.pageSize,
+        take: pagination.pageSize,
+      }),
+      prisma.product.count({ where }),
+    ]);
+
+    return { rows, total };
   },
 
   create(data: {

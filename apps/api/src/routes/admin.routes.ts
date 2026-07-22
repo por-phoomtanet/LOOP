@@ -14,7 +14,7 @@ export const adminRoutes = new Elysia({ prefix: "/api/admin" })
   .guard({ auth: ["admin"] }, (app) =>
     app
       .get("/dashboard", () => userController.adminDashboard())
-      .get("/users", () => userController.adminListUsers())
+      .get("/users", ({ query }) => userController.adminListUsers(query))
       .patch(
         "/users/:id/status",
         ({ params, body }) => userController.adminUpdateStatus(Number(params.id), body),

@@ -1,5 +1,6 @@
 import * as productService from "../services/product.service";
 import { saveImage } from "../plugins/upload";
+import { paginationSchema } from "../schemas/pagination.schema";
 import { BadRequestError } from "../utils/errors";
 
 type CreateInput = Parameters<typeof productService.createProduct>[0];
@@ -12,11 +13,15 @@ export async function adminList() {
 
 export async function publicList(query: unknown) {
   const q = query as { q?: string; category?: string };
-  const result = await productService.listPublicProducts({
-    q: typeof q.q === "string" ? q.q : undefined,
-    category: typeof q.category === "string" ? q.category : undefined,
-  });
-  return { data: result, message: "ok" };
+  const { page, pageSize } = paginationSchema.parse(query);
+  const { data, total } = await productService.listPublicProducts(
+    {
+      q: typeof q.q === "string" ? q.q : undefined,
+      category: typeof q.category === "string" ? q.category : undefined,
+    },
+    { page, pageSize },
+  );
+  return { data, message: "ok", total, page, pageSize };
 }
 
 export async function create(body: unknown, userId: number) {

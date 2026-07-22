@@ -290,3 +290,28 @@ describe("GET /api/me/listings", () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe("GET /api/products (pagination)", () => {
+  it("returns a paginated envelope with total/page/pageSize and respects pageSize", async () => {
+    const res = await request(baseUrl).get("/api/products?page=1&pageSize=5");
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
+    expect(res.body.page).toBe(1);
+    expect(res.body.pageSize).toBe(5);
+    expect(typeof res.body.total).toBe("number");
+    expect(res.body.data.length).toBeLessThanOrEqual(5);
+  });
+
+  it("defaults page/pageSize when not provided", async () => {
+    const res = await request(baseUrl).get("/api/products");
+    expect(res.status).toBe(200);
+    expect(res.body.page).toBe(1);
+    expect(res.body.pageSize).toBe(24);
+    expect(res.body.data.length).toBeLessThanOrEqual(24);
+  });
+
+  it("rejects an invalid pageSize with 400", async () => {
+    const res = await request(baseUrl).get("/api/products?pageSize=abc");
+    expect(res.status).toBe(400);
+  });
+});

@@ -1,5 +1,6 @@
 import * as userService from "../services/user.service";
 import { saveImage } from "../plugins/upload";
+import { paginationSchema } from "../schemas/pagination.schema";
 import { BadRequestError } from "../utils/errors";
 
 export async function uploadIdCard(
@@ -23,9 +24,10 @@ export async function faceVerify(actingUserId: number, targetUserId: number) {
   return { data: result, message: "ok" };
 }
 
-export async function adminListUsers() {
-  const result = await userService.listUsers();
-  return { data: result, message: "ok" };
+export async function adminListUsers(query: unknown) {
+  const { page, pageSize } = paginationSchema.parse(query);
+  const { data, total } = await userService.listUsers({ page, pageSize });
+  return { data, message: "ok", total, page, pageSize };
 }
 
 export async function adminUpdateStatus(targetUserId: number, body: unknown) {
