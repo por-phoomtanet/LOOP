@@ -24,9 +24,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <ConfigProvider theme={{ token: { colorPrimary: "#3b5bfd", borderRadius: 8 } }}>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: "#3b5bfd",
+          borderRadius: 8,
+          fontFamily: '"Helvetica Neue", Helvetica, var(--font-prompt), Arial, sans-serif',
+        },
+      }}
+    >
       <AntdApp>
-        <div className="flex h-screen overflow-hidden bg-[#f7f7f7]">
+        <div className="admin-fonts flex h-screen overflow-hidden bg-[#f7f7f7]">
           <AdminSidebar />
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
             <header className="flex h-14 flex-none items-center justify-end gap-4 border-b border-black/10 bg-white px-6">
