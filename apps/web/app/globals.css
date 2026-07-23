@@ -2,10 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ฝั่ง user (marketplace) — BM Khaijeaw เป็นหลัก */
 body {
   font-family:
-    var(--font-khaijeaw),
     "Helvetica Neue",
     Helvetica,
     var(--font-prompt),
@@ -14,15 +12,5 @@ body {
 }
 
 .font-arch {
-  font-family: var(--font-archivo), var(--font-khaijeaw), "Helvetica Neue", sans-serif;
-}
-
-/* ฝั่ง Admin — คงฟอนต์เดิม (Prompt) ไม่ให้ Khaijeaw รั่วเข้าไป */
-.admin-fonts {
-  font-family:
-    "Helvetica Neue",
-    Helvetica,
-    var(--font-prompt),
-    Arial,
-    sans-serif;
+  font-family: var(--font-archivo), var(--font-prompt), "Helvetica Neue", sans-serif;
 }
