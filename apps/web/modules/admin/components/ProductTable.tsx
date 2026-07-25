@@ -1,6 +1,6 @@
 "use client";
 
-import { App, Descriptions, Modal, Spin, Table, Tag } from "antd";
+import { App, Form, Input, Modal, Spin, Table, Tag } from "antd";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/shared/components/PageHeader";
@@ -165,24 +165,46 @@ export function ProductTable() {
               </div>
             )}
 
-            <Descriptions bordered size="small" column={1}>
-              <Descriptions.Item label="หมวดหมู่">{detail.categoryName}</Descriptions.Item>
-              <Descriptions.Item label="ผู้ขาย">
-                {detail.ownerName} ({detail.ownerEmail}, {detail.ownerPhone})
-              </Descriptions.Item>
-              <Descriptions.Item label="ราคา/วัน">฿{detail.pricePerDay}</Descriptions.Item>
-              <Descriptions.Item label="ที่ตั้ง">{detail.location}</Descriptions.Item>
-              <Descriptions.Item label="สถานะ">
-                <span style={{ color: STATUS_COLOR[detail.status], fontWeight: 600 }}>
-                  {STATUS_LABEL[detail.status]}
-                </span>
-              </Descriptions.Item>
-              <Descriptions.Item label="คะแนน">
-                {detail.reviewCount > 0
-                  ? `★ ${detail.ratingAvg.toFixed(1)} (${detail.reviewCount} รีวิว)`
-                  : "ยังไม่มีรีวิว"}
-              </Descriptions.Item>
-              <Descriptions.Item label="การรับสินค้า">
+            <Form layout="vertical">
+              <div className="grid grid-cols-2 gap-x-4">
+                <Form.Item label="หมวดหมู่">
+                  <Input readOnly value={detail.categoryName} />
+                </Form.Item>
+                <Form.Item label="ราคา/วัน">
+                  <Input readOnly value={`฿${detail.pricePerDay}`} />
+                </Form.Item>
+                <Form.Item label="ที่ตั้ง">
+                  <Input readOnly value={detail.location} />
+                </Form.Item>
+                <Form.Item label="สถานะ">
+                  <Input
+                    readOnly
+                    value={STATUS_LABEL[detail.status]}
+                    style={{ color: STATUS_COLOR[detail.status], fontWeight: 600 }}
+                  />
+                </Form.Item>
+                <Form.Item label="คะแนน">
+                  <Input
+                    readOnly
+                    value={
+                      detail.reviewCount > 0
+                        ? `★ ${detail.ratingAvg.toFixed(1)} (${detail.reviewCount} รีวิว)`
+                        : "ยังไม่มีรีวิว"
+                    }
+                  />
+                </Form.Item>
+                <Form.Item label="ลงประกาศเมื่อ">
+                  <Input readOnly value={new Date(detail.createdAt).toLocaleDateString("th-TH")} />
+                </Form.Item>
+              </div>
+
+              <Form.Item label="ผู้ขาย">
+                <Input
+                  readOnly
+                  value={`${detail.ownerName} (${detail.ownerEmail}, ${detail.ownerPhone})`}
+                />
+              </Form.Item>
+              <Form.Item label="การรับสินค้า">
                 {detail.pickupOptions.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
                     {detail.pickupOptions.map((o, i) => (
@@ -193,14 +215,13 @@ export function ProductTable() {
                     ))}
                   </div>
                 ) : (
-                  "—"
+                  <Input readOnly value="—" />
                 )}
-              </Descriptions.Item>
-              <Descriptions.Item label="รายละเอียด">{detail.description}</Descriptions.Item>
-              <Descriptions.Item label="ลงประกาศเมื่อ">
-                {new Date(detail.createdAt).toLocaleDateString("th-TH")}
-              </Descriptions.Item>
-            </Descriptions>
+              </Form.Item>
+              <Form.Item label="รายละเอียด" className="mb-0">
+                <Input.TextArea readOnly value={detail.description} rows={3} />
+              </Form.Item>
+            </Form>
           </div>
         )}
       </Modal>
