@@ -237,7 +237,7 @@ export function CategoryTable() {
                 fileList={imageList}
                 onChange={({ fileList }) => setImageList(fileList)}
                 beforeUpload={() => false}
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg,image/jpg"
                 maxCount={1}
               >
                 {imageList.length >= 1 ? null : (

@@ -214,7 +214,7 @@ export const ImageSlot = forwardRef<ImageSlotHandle, Props>(function ImageSlot(
       <label className="relative flex aspect-square w-full max-w-[300px] cursor-pointer items-center justify-center overflow-hidden rounded-2xl border border-dashed border-black/20 bg-black/[.03] transition-colors hover:border-black/35">
         <input
           type="file"
-          accept="image/png,image/jpeg,image/webp"
+          accept="image/png,image/jpeg,image/jpg"
           className="hidden"
           onChange={(e) => onChange(e.target.files?.[0] ?? null)}
         />

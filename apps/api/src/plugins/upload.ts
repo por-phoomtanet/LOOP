@@ -5,13 +5,14 @@ import { BadRequestError } from "../utils/errors";
 // แทน middleware/upload.ts (multer disk-storage) → Bun.write() บน Web File object ของ Elysia
 // รักษา convention เดิม: uploads/<subdir>/, ชื่อไฟล์ ${Date.now()}-${rand}${ext}, 5MB, mime allowlist
 const UPLOAD_ROOT = path.resolve(import.meta.dir, "../../uploads");
-const ALLOWED_MIME = new Set(["image/png", "image/jpeg", "image/webp"]);
+// "image/jpg" ไม่ใช่ mime มาตรฐาน (ของจริงคือ image/jpeg) แต่บาง browser/OS ส่งมาแบบนี้กับไฟล์ .jpg — รับไว้ทั้งคู่
+const ALLOWED_MIME = new Set(["image/png", "image/jpeg", "image/jpg"]);
 const MAX_SIZE = 5 * 1024 * 1024;
 
 // เขียนไฟล์ลง disk แล้วคืนชื่อไฟล์ที่ generate — validate mime/size เอง (แทน multer fileFilter/limits)
 export async function saveImage(subdir: string, file: File): Promise<string> {
   if (!ALLOWED_MIME.has(file.type)) {
-    throw new BadRequestError("รองรับเฉพาะไฟล์รูปภาพ PNG, JPEG, WEBP เท่านั้น");
+    throw new BadRequestError("รองรับเฉพาะไฟล์รูปภาพ JPG, JPEG หรือ PNG เท่านั้น");
   }
   if (file.size > MAX_SIZE) {
     throw new BadRequestError("ไฟล์มีขนาดใหญ่เกิน 5MB");

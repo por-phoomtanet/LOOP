@@ -284,7 +284,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
             fileList={fileList}
             onChange={({ fileList: fl }) => setFileList(fl)}
             beforeUpload={() => false}
-            accept="image/png,image/jpeg,image/webp"
+            accept="image/png,image/jpeg,image/jpg"
             maxCount={MAX_IMAGES}
             onPreview={async (file) => {
               const src = file.url ?? URL.createObjectURL(file.originFileObj as File);

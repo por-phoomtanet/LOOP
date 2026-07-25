@@ -125,7 +125,7 @@ export function SignupForm({ onRegistered }: Props) {
         <label className="flex h-[140px] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-black/20 bg-black/[.02] text-black/40 transition-colors hover:border-black/35">
           <input
             type="file"
-            accept="image/png,image/jpeg,image/webp"
+            accept="image/png,image/jpeg,image/jpg"
             className="hidden"
             onChange={(e) => setIdCardFile(e.target.files?.[0] ?? null)}
           />
