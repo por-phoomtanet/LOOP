@@ -1,3 +1,4 @@
+/// <reference types="bun" />
 import { prisma } from "../src/index";
 
 // ใช้ Bun.password (bcrypt-compatible $2b$) แทน npm bcrypt — รันผ่าน bun (ดู package.json seed script)
