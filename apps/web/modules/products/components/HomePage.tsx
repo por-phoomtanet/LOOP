@@ -10,6 +10,7 @@ import {
   SkateboardDoodle,
   StarDoodle,
 } from "@/shared/components/BrandDoodles";
+import { resolveUploadUrl } from "@/shared/lib/utils";
 import { useMasterStore } from "@/store/masterStore";
 import { productsApi } from "../services/productsApi";
 import type { ProductCardData } from "../types";
@@ -290,8 +291,20 @@ export function HomePage() {
                 document.getElementById("browse")?.scrollIntoView({ behavior: "smooth" });
               }}
               className="relative aspect-[3/4] overflow-hidden rounded-2xl text-left transition-transform hover:-translate-y-1"
-              style={{ background: CATEGORY_GRADIENTS[i % CATEGORY_GRADIENTS.length] }}
+              style={
+                cat.imageUrl
+                  ? undefined
+                  : { background: CATEGORY_GRADIENTS[i % CATEGORY_GRADIENTS.length] }
+              }
             >
+              {cat.imageUrl && (
+                // eslint-disable-next-line
+                <img
+                  src={resolveUploadUrl(cat.imageUrl)}
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute inset-x-4 bottom-4">
                 <div className="font-arch text-[19px] font-bold tracking-[-.01em] text-white">

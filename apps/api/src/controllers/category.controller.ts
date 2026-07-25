@@ -1,4 +1,6 @@
 import * as categoryService from "../services/category.service";
+import { publicUrlFor, saveImage } from "../plugins/upload";
+import { BadRequestError } from "../utils/errors";
 
 type CreateInput = Parameters<typeof categoryService.createCategory>[0];
 type UpdateInput = Parameters<typeof categoryService.updateCategory>[1];
@@ -28,4 +30,15 @@ export async function updateStatus(id: number, body: unknown, userId: number) {
 export async function remove(id: number) {
   await categoryService.deleteCategory(id);
   return { data: null, message: "ok" };
+}
+
+export async function uploadImage(id: number, userId: number, file: File | undefined) {
+  if (!file) throw new BadRequestError("กรุณาอัปโหลดรูปภาพ");
+  const filename = await saveImage("categories", file);
+  const result = await categoryService.setCategoryImage(
+    id,
+    publicUrlFor("categories", filename),
+    userId,
+  );
+  return { data: result, message: "ok" };
 }

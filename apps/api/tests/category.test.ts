@@ -112,6 +112,70 @@ describe("PATCH /api/categories/:id/status and DELETE", () => {
   });
 });
 
+const TINY_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+  "base64",
+);
+
+describe("POST /api/categories/:id/image", () => {
+  it("uploads an image and sets imageUrl for admin", async () => {
+    const adminToken = await loginAdmin();
+    const created = await request(baseUrl)
+      .post("/api/categories")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: uniqueName("catimg") });
+    const id = created.body.data.id;
+
+    const res = await request(baseUrl)
+      .post(`/api/categories/${id}/image`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .attach("file", TINY_PNG, { filename: "a.png", contentType: "image/png" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.imageUrl).toMatch(/^\/uploads\/categories\//);
+  });
+
+  it("rejects a non-image file with 400", async () => {
+    const adminToken = await loginAdmin();
+    const created = await request(baseUrl)
+      .post("/api/categories")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: uniqueName("catimgbad") });
+    const id = created.body.data.id;
+
+    const res = await request(baseUrl)
+      .post(`/api/categories/${id}/image`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .attach("file", Buffer.from("not an image"), {
+        filename: "a.txt",
+        contentType: "text/plain",
+      });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects non-admin with 403 and unauthenticated with 401", async () => {
+    const adminToken = await loginAdmin();
+    const created = await request(baseUrl)
+      .post("/api/categories")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: uniqueName("catimgauth") });
+    const id = created.body.data.id;
+
+    const { token } = await registerUser("catimgnonadmin");
+    const nonAdmin = await request(baseUrl)
+      .post(`/api/categories/${id}/image`)
+      .set("Authorization", `Bearer ${token}`)
+      .attach("file", TINY_PNG, { filename: "a.png", contentType: "image/png" });
+    expect(nonAdmin.status).toBe(403);
+
+    const noAuth = await request(baseUrl)
+      .post(`/api/categories/${id}/image`)
+      .attach("file", TINY_PNG, { filename: "a.png", contentType: "image/png" });
+    expect(noAuth.status).toBe(401);
+  });
+});
+
 describe("GET /api/admin/products", () => {
   it("rejects non-admin with 403", async () => {
     const { token } = await registerUser("prodlist");

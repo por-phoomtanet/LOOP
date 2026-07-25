@@ -70,6 +70,14 @@ export const adminApi = {
     return api.delete<ApiResponse<null>>(`/categories/${id}`);
   },
 
+  uploadCategoryImage(id: number, file: File) {
+    const form = new FormData();
+    form.append("file", file);
+    return api.post<ApiResponse<Category>>(`/categories/${id}/image`, form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+
   getAdminProducts() {
     return api.get<ApiResponse<AdminProduct[]>>("/admin/products");
   },

@@ -37,6 +37,10 @@ export const categoryRepository = {
     return prisma.category.update({ where: { id }, data: { isActive, updatedById } });
   },
 
+  setImage(id: number, imageUrl: string, updatedById: number) {
+    return prisma.category.update({ where: { id }, data: { imageUrl, updatedById } });
+  },
+
   softDelete(id: number) {
     return prisma.category.update({ where: { id }, data: { deletedAt: new Date() } });
   },

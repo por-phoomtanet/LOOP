@@ -41,6 +41,18 @@ export const categoryRoutes = new Elysia({ prefix: "/api/categories" })
       categoryController.updateStatus(Number(params.id), body, user.userId),
     { ...validate({ body: statusSchema }), auth: ["admin"] },
   )
+  .post(
+    "/:id/image",
+    ({ params, body, user }) => {
+      const file = (body as { file?: unknown } | undefined)?.file;
+      return categoryController.uploadImage(
+        Number(params.id),
+        user.userId,
+        file instanceof File ? file : undefined,
+      );
+    },
+    { auth: ["admin"] },
+  )
   .delete("/:id", ({ params }) => categoryController.remove(Number(params.id)), {
     auth: ["admin"],
   });

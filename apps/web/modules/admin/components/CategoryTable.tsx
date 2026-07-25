@@ -1,10 +1,13 @@
 "use client";
 
-import { PlusOutlined } from "@ant-design/icons";
-import { App, Button, Form, Input, Modal, Switch, Table } from "antd";
+import { PictureOutlined, PlusOutlined } from "@ant-design/icons";
+import { App, Button, Form, Input, Modal, Switch, Table, Upload } from "antd";
+import type { UploadFile } from "antd";
+import ImgCrop from "antd-img-crop";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/shared/components/PageHeader";
+import { resolveUploadUrl } from "@/shared/lib/utils";
 import { adminApi } from "../services/adminApi";
 import type { Category } from "../types";
 
@@ -18,6 +21,7 @@ export function CategoryTable() {
   const [saving, setSaving] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [modal, setModal] = useState<ModalState>({ open: false, editing: null });
+  const [imageList, setImageList] = useState<UploadFile[]>([]);
 
   async function load() {
     setLoading(true);
@@ -41,13 +45,21 @@ export function CategoryTable() {
     const values = await form.validateFields();
     setSaving(true);
     try {
+      let id = modal.editing?.id;
       if (modal.editing) {
         await adminApi.updateCategory(modal.editing.id, values);
-        message.success("แก้ไขหมวดหมู่สำเร็จ");
       } else {
-        await adminApi.createCategory(values);
-        message.success("เพิ่มหมวดหมู่สำเร็จ");
+        const created = await adminApi.createCategory(values);
+        id = created.data.data.id;
       }
+
+      // อัปโหลดรูปเฉพาะตอนเลือกไฟล์ใหม่ (มี originFileObj จาก antd-img-crop หลังครอปแล้ว)
+      const newImage = imageList[0]?.originFileObj;
+      if (id && newImage) {
+        await adminApi.uploadCategoryImage(id, newImage);
+      }
+
+      message.success(modal.editing ? "แก้ไขหมวดหมู่สำเร็จ" : "เพิ่มหมวดหมู่สำเร็จ");
       setModal({ open: false, editing: null });
       await load();
     } catch (err) {
@@ -117,6 +129,25 @@ export function CategoryTable() {
             align: "center",
             render: (_, __, index) => index + 1,
           },
+          {
+            title: "รูป",
+            key: "imageUrl",
+            width: 64,
+            align: "center",
+            render: (_, category) =>
+              category.imageUrl ? (
+                // eslint-disable-next-line
+                <img
+                  src={resolveUploadUrl(category.imageUrl)}
+                  alt=""
+                  className="h-10 w-10 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-black/5 text-black/30">
+                  <PictureOutlined />
+                </div>
+              ),
+          },
           { title: "ชื่อ", dataIndex: "name", key: "name" },
           { title: "Slug", dataIndex: "slug", key: "slug" },
           { title: "จำนวนสินค้า", dataIndex: "productCount", key: "productCount", align: "center" },
@@ -167,6 +198,18 @@ export function CategoryTable() {
           if (open) {
             form.resetFields();
             if (modal.editing) form.setFieldsValue({ ...modal.editing });
+            setImageList(
+              modal.editing?.imageUrl
+                ? [
+                    {
+                      uid: "-1",
+                      name: "image",
+                      status: "done",
+                      url: resolveUploadUrl(modal.editing.imageUrl),
+                    },
+                  ]
+                : [],
+            );
           }
         }}
       >
@@ -180,6 +223,31 @@ export function CategoryTable() {
           </Form.Item>
           <Form.Item name="slug" label="Slug (ถ้าไม่กรอกจะสร้างจากชื่อให้อัตโนมัติ)">
             <Input placeholder="เช่น cameras" />
+          </Form.Item>
+          <Form.Item label="รูปหมวดหมู่">
+            <ImgCrop
+              rotationSlider
+              aspect={1}
+              modalTitle="ครอปรูปภาพ"
+              modalOk="ตกลง"
+              modalCancel="ยกเลิก"
+            >
+              <Upload
+                listType="picture-card"
+                fileList={imageList}
+                onChange={({ fileList }) => setImageList(fileList)}
+                beforeUpload={() => false}
+                accept="image/png,image/jpeg,image/webp"
+                maxCount={1}
+              >
+                {imageList.length >= 1 ? null : (
+                  <div className="text-black/55">
+                    <div className="text-[20px] leading-none">+</div>
+                    <div className="mt-1.5 text-[13px]">อัปโหลด</div>
+                  </div>
+                )}
+              </Upload>
+            </ImgCrop>
           </Form.Item>
         </Form>
       </Modal>

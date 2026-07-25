@@ -47,6 +47,13 @@ export async function setCategoryStatus(id: number, isActive: boolean, userId: n
   return categoryRepository.setActive(id, isActive, userId);
 }
 
+export async function setCategoryImage(id: number, imageUrl: string, userId: number) {
+  const category = await categoryRepository.findById(id);
+  if (!category) throw new NotFoundError("ไม่พบหมวดหมู่นี้");
+
+  return categoryRepository.setImage(id, imageUrl, userId);
+}
+
 export async function deleteCategory(id: number) {
   const category = await categoryRepository.findById(id);
   if (!category) throw new NotFoundError("ไม่พบหมวดหมู่นี้");
