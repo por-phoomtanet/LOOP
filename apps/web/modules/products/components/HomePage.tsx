@@ -145,12 +145,10 @@ export function HomePage() {
           <div className="mb-4 font-mono text-[12px] uppercase tracking-[.14em] text-black/45">
             เช่าต่อกันแบบ P2P
           </div>
-          <h1 className="font-arch text-[44px] font-extrabold leading-[1.02] tracking-[-.035em] text-black md:text-[60px]">
-            เช่าอะไรก็ได้
-            <br />
-            จากผู้คน
-            <br />
-            <span className="text-brand-600">ใกล้ตัวคุณ</span>
+          <h1 className="font-arch text-[44px] font-extrabold tracking-[-0.04em] text-black md:text-[50px] leading-[0.95]">
+            <span className="block">เช่าอะไรก็ได้</span>
+            <span className="block mt-1">จากผู้คน</span>
+            <span className="block mt-1 text-brand-600">ใกล้ตัวคุณ</span>
           </h1>
           <p className="mt-5 max-w-[460px] text-[16px] leading-relaxed text-black/60">
             ยืมอุปกรณ์ที่ต้องใช้เป็นวัน สุดสัปดาห์ หรือทั้งทริป —
