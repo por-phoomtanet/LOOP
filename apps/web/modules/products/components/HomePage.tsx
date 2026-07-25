@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ROUTES } from "@/constants";
 import {
@@ -63,6 +64,7 @@ const REVIEWS = [
 const PAGE_SIZE = 12;
 
 export function HomePage() {
+  const router = useRouter();
   const { categories, loaded, fetchCategories } = useMasterStore();
   const [products, setProducts] = useState<ProductCardData[]>([]);
   const [total, setTotal] = useState(0);
@@ -71,7 +73,6 @@ export function HomePage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loaded) void fetchCategories();
@@ -90,7 +91,6 @@ export function HomePage() {
     productsApi
       .getProducts({
         q: debouncedQuery || undefined,
-        category: activeCategory || undefined,
         page: 1,
         pageSize: PAGE_SIZE,
       })
@@ -111,7 +111,7 @@ export function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery, activeCategory]);
+  }, [debouncedQuery]);
 
   async function loadMore() {
     const next = page + 1;
@@ -119,7 +119,6 @@ export function HomePage() {
     try {
       const res = await productsApi.getProducts({
         q: debouncedQuery || undefined,
-        category: activeCategory || undefined,
         page: next,
         pageSize: PAGE_SIZE,
       });
@@ -227,20 +226,16 @@ export function HomePage() {
           <div>
             <h2 className="font-arch flex items-center gap-2.5 text-[30px] font-extrabold tracking-[-.025em] text-black">
               <SkateboardDoodle className="text-brand-400" size={28} />
-              {activeCategory
-                ? (categories.find((c) => c.slug === activeCategory)?.name ?? "สินค้าแนะนำ")
-                : "สินค้าแนะนำ"}
+              สินค้าแนะนำ
             </h2>
             <p className="mt-1.5 text-[14px] text-black/50">มีให้เช่าตอนนี้ {total} รายการ</p>
           </div>
-          {activeCategory && (
-            <button
-              onClick={() => setActiveCategory(null)}
-              className="text-brand-600 border-brand-600 border-b-[1.5px] pb-0.5 text-[14px] font-semibold"
-            >
-              ดูทั้งหมด →
-            </button>
-          )}
+          <Link
+            href={ROUTES.shop}
+            className="text-brand-600 border-brand-600 border-b-[1.5px] pb-0.5 text-[14px] font-semibold"
+          >
+            ดูทั้งหมด →
+          </Link>
         </div>
 
         {loading ? (
@@ -286,10 +281,7 @@ export function HomePage() {
           {categories.map((cat, i) => (
             <button
               key={cat.id}
-              onClick={() => {
-                setActiveCategory(cat.slug);
-                document.getElementById("browse")?.scrollIntoView({ behavior: "smooth" });
-              }}
+              onClick={() => router.push(`${ROUTES.shop}?category=${encodeURIComponent(cat.slug)}`)}
               className="relative aspect-[3/4] overflow-hidden rounded-2xl text-left transition-transform hover:-translate-y-1"
               style={
                 cat.imageUrl
