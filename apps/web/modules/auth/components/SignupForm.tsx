@@ -3,6 +3,7 @@
 import axios from "axios";
 import Link from "next/link";
 import { useState } from "react";
+import { EyeIcon } from "@/shared/components/EyeIcon";
 import { authApi } from "../services/authApi";
 import type { AccountType, OcrMockResult, RegisterResult } from "../types";
 
@@ -220,15 +221,30 @@ function Field({
   type?: string;
   placeholder?: string;
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = type === "password";
+
   return (
     <div className="mb-5">
       <label className="mb-2 block text-[13px] font-medium text-black/70">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none transition-colors focus:border-brand-400"
-      />
+      <div className="focus-within:border-brand-400 flex items-center rounded-lg border border-black/[.14] transition-colors">
+        <input
+          type={isPassword && showPassword ? "text" : type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full border-0 px-3.5 py-2.5 text-[14px] outline-none"
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+            className="flex-none border-0 bg-transparent px-3 text-black/40 hover:text-black/70"
+          >
+            <EyeIcon open={showPassword} />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

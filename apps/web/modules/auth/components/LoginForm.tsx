@@ -3,6 +3,7 @@
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { EyeIcon } from "@/shared/components/EyeIcon";
 import { useAuthStore } from "@/store/authStore";
 import { usePermissionStore } from "@/store/permissionStore";
 import { authApi } from "../services/authApi";
@@ -21,6 +22,7 @@ export function LoginForm({ onSuccess, compact = false }: Props) {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -79,12 +81,22 @@ export function LoginForm({ onSuccess, compact = false }: Props) {
       </div>
       <div className="mb-6">
         <label className="mb-2 block text-[13px] font-medium text-black/70">รหัสผ่าน</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="focus:border-brand-400 w-full rounded-lg border border-black/[.14] px-3.5 py-2.5 text-[14px] outline-none"
-        />
+        <div className="focus-within:border-brand-400 flex items-center rounded-lg border border-black/[.14]">
+          <input
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full border-0 px-3.5 py-2.5 text-[14px] outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+            className="flex-none border-0 bg-transparent px-3 text-black/40 hover:text-black/70"
+          >
+            <EyeIcon open={showPassword} />
+          </button>
+        </div>
       </div>
 
       <button
