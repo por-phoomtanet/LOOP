@@ -11,6 +11,8 @@ import {
   ShopOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
+import { Tooltip } from "antd";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -105,21 +107,34 @@ function NavLink({
     </div>
   );
 
-  if (!item.ready) return content;
+  const wrapped = collapsed ? (
+    <Tooltip
+      title={item.ready ? item.label : `${item.label} (เร็วๆ นี้)`}
+      placement="right"
+      mouseEnterDelay={0.1}
+    >
+      {content}
+    </Tooltip>
+  ) : (
+    content
+  );
+
+  if (!item.ready) return wrapped;
   return (
     <Link href={item.href} className="block">
-      {content}
+      {wrapped}
     </Link>
   );
 }
 
 export function AdminSidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  // เริ่มต้นเป็นพับเสมอ ยกเว้นผู้ใช้เคยกดขยายไว้ (จำค่าผ่าน localStorage)
+  const [collapsed, setCollapsed] = useState(true);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
+    setCollapsed(localStorage.getItem(COLLAPSE_KEY) !== "0");
     setMounted(true);
   }, []);
 
@@ -134,15 +149,26 @@ export function AdminSidebar() {
   return (
     <aside
       className="flex h-screen flex-none flex-col bg-[#0a0e27] transition-[width] duration-150"
-      style={{ width: mounted && collapsed ? 64 : 232 }}
+      style={{ width: collapsed ? 64 : 232 }}
     >
-      <div className="flex h-14 flex-none items-center px-4">
-        <span className="font-arch whitespace-nowrap text-[18px] font-black text-white">
-          LOOP<span className="text-white/35">.</span>
-          {!collapsed && (
-            <span className="ml-1.5 font-sans text-[13px] font-medium text-white/50">Admin</span>
-          )}
-        </span>
+      <div className="flex h-14 flex-none items-center justify-center px-4">
+        {collapsed ? (
+          <Image
+            src="/icon.png"
+            alt="renty admin"
+            width={32}
+            height={32}
+            className="h-8 w-8 rounded-md object-contain"
+          />
+        ) : (
+          <Image
+            src="/brand/renty-logo.png"
+            alt="renty admin"
+            width={140}
+            height={136}
+            className="h-9 w-auto rounded-md object-contain"
+          />
+        )}
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-2">
