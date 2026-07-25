@@ -1,6 +1,6 @@
 "use client";
 
-import { resolveUploadUrl } from "@/shared/lib/utils";
+import { formatShortLocation, resolveUploadUrl } from "@/shared/lib/utils";
 import type { ProductCardData } from "../types";
 
 const SHOP_COLORS = ["#2D5DA8", "#6FA3D8", "#c96442", "#178a5a", "#a8752f"];
@@ -11,7 +11,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const priceText = Number(product.pricePerDay).toLocaleString("th-TH");
 
   return (
-    <div className="flex cursor-pointer flex-col">
+    <div className="flex cursor-pointer flex-col rounded-2xl border border-black/10 bg-white p-3 shadow-sm">
       <div className="bg-brand-100 relative aspect-square overflow-hidden rounded-2xl">
         {product.thumbnailUrl ? (
           // eslint-disable-next-line
@@ -42,13 +42,13 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         </button>
       </div>
 
-      <div className="px-0.5 pt-3">
+      <div className="pt-3">
         <div className="flex items-baseline justify-between gap-2">
           <h3 className="text-[15px] font-semibold leading-tight tracking-[-.01em] text-black">
             {product.title}
           </h3>
           <span className="whitespace-nowrap text-[12.5px] font-medium text-black/55">
-            ★ {product.ratingAvg.toFixed(1)}
+            {product.reviewCount > 0 ? `★ ${product.ratingAvg.toFixed(1)}` : "ยังไม่มีรีวิว"}
           </span>
         </div>
         <div className="mt-1.5 flex items-center gap-1.5">
@@ -61,7 +61,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           <span className="text-[12.5px] font-semibold text-black/65">{product.ownerName}</span>
         </div>
         <div className="mt-0.5 text-[13px] text-black/50">
-          {product.categoryName} · {product.location}
+          {formatShortLocation(product.location)}
         </div>
         <div className="mt-2.5 flex items-baseline gap-1">
           <span className="font-arch text-brand-600 text-[19px] font-extrabold tracking-[-.02em]">
