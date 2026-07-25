@@ -58,3 +58,21 @@ export type AdminProduct = {
   thumbnailUrl: string | null;
   createdAt: string;
 };
+
+export type AdminProductDetail = {
+  id: number;
+  title: string;
+  description: string;
+  categoryName: string;
+  ownerName: string;
+  ownerEmail: string;
+  ownerPhone: string;
+  pricePerDay: string;
+  location: string;
+  status: "UNDER_REVIEW" | "ACTIVE" | "PAUSED";
+  ratingAvg: number;
+  reviewCount: number;
+  images: string[];
+  pickupOptions: { type: "MEETUP" | "GRAB" | "POST"; label: string }[];
+  createdAt: string;
+};

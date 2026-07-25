@@ -2,6 +2,7 @@ import { api } from "@/shared/services/api";
 import type { ApiResponse, PaginatedResponse } from "@/types";
 import type {
   AdminProduct,
+  AdminProductDetail,
   AdminUser,
   Category,
   DashboardStats,
@@ -80,5 +81,9 @@ export const adminApi = {
 
   getAdminProducts() {
     return api.get<ApiResponse<AdminProduct[]>>("/admin/products");
+  },
+
+  getAdminProduct(id: number) {
+    return api.get<ApiResponse<AdminProductDetail>>(`/admin/products/${id}`);
   },
 };

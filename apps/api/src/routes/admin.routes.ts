@@ -20,5 +20,6 @@ export const adminRoutes = new Elysia({ prefix: "/api/admin" })
         ({ params, body }) => userController.adminUpdateStatus(Number(params.id), body),
         validate({ body: updateStatusSchema }),
       )
-      .get("/products", () => productController.adminList()),
+      .get("/products", () => productController.adminList())
+      .get("/products/:id", ({ params }) => productController.adminGet(Number(params.id))),
   );

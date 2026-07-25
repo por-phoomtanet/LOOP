@@ -11,6 +11,11 @@ export async function adminList() {
   return { data: result, message: "ok" };
 }
 
+export async function adminGet(id: number) {
+  const result = await productService.getProductForAdmin(id);
+  return { data: result, message: "ok" };
+}
+
 export async function publicList(query: unknown) {
   const q = query as { q?: string; category?: string };
   const { page, pageSize } = paginationSchema.parse(query);

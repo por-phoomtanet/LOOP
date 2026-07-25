@@ -194,3 +194,56 @@ describe("GET /api/admin/products", () => {
     expect(Array.isArray(res.body.data)).toBe(true);
   });
 });
+
+describe("GET /api/admin/products/:id", () => {
+  it("rejects non-admin with 403", async () => {
+    const { token } = await registerUser("proddetailauth");
+    const res = await request(baseUrl)
+      .get("/api/admin/products/1")
+      .set("Authorization", `Bearer ${token}`);
+    expect(res.status).toBe(403);
+  });
+
+  it("404s for a product that doesn't exist", async () => {
+    const adminToken = await loginAdmin();
+    const res = await request(baseUrl)
+      .get("/api/admin/products/999999")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(res.status).toBe(404);
+  });
+
+  it("returns full read-only detail (description, owner contact, images, pickup options)", async () => {
+    const { token: ownerToken } = await registerUser("proddetailowner");
+    const catRes = await request(baseUrl).get("/api/categories");
+    const categoryId = catRes.body.data[0].id;
+
+    const created = await request(baseUrl)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({
+        title: "กล้องดูรายละเอียด",
+        description: "รายละเอียดสำหรับทดสอบหน้าแอดมิน",
+        categoryId,
+        pricePerDay: 120,
+        location: "กรุงเทพฯ",
+      });
+    const id = created.body.data.id;
+
+    await request(baseUrl)
+      .post(`/api/products/${id}/pickup-options`)
+      .set("Authorization", `Bearer ${ownerToken}`)
+      .send({ type: "GRAB" });
+
+    const adminToken = await loginAdmin();
+    const res = await request(baseUrl)
+      .get(`/api/admin/products/${id}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.title).toBe("กล้องดูรายละเอียด");
+    expect(res.body.data.description).toBe("รายละเอียดสำหรับทดสอบหน้าแอดมิน");
+    expect(res.body.data.ownerEmail).toBeDefined();
+    expect(Array.isArray(res.body.data.images)).toBe(true);
+    expect(res.body.data.pickupOptions).toEqual([{ type: "GRAB", label: "จัดส่งผ่าน Grab" }]);
+  });
+});

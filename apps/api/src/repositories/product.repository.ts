@@ -20,6 +20,18 @@ export const productRepository = {
     });
   },
 
+  findByIdForAdmin(id: number) {
+    return prisma.product.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        category: { select: { name: true } },
+        owner: { select: { name: true, email: true, phone: true } },
+        images: { orderBy: { sortOrder: "asc" } },
+        pickupOptions: true,
+      },
+    });
+  },
+
   async findActivePublic(
     filters: { q?: string; category?: string },
     pagination: { page: number; pageSize: number },

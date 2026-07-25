@@ -49,6 +49,28 @@ export async function listProductsForAdmin() {
   }));
 }
 
+export async function getProductForAdmin(id: number) {
+  const p = await productRepository.findByIdForAdmin(id);
+  if (!p) throw new NotFoundError("ไม่พบสินค้านี้");
+  return {
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    categoryName: p.category.name,
+    ownerName: p.owner.name,
+    ownerEmail: p.owner.email,
+    ownerPhone: p.owner.phone,
+    pricePerDay: p.pricePerDay,
+    location: p.location,
+    status: p.status,
+    ratingAvg: p.ratingAvg,
+    reviewCount: p.reviewCount,
+    images: p.images.map((img) => img.url),
+    pickupOptions: p.pickupOptions.map((o) => ({ type: o.type, label: o.label })),
+    createdAt: p.createdAt,
+  };
+}
+
 export async function listPublicProducts(
   filters: { q?: string; category?: string },
   pagination: { page: number; pageSize: number },
