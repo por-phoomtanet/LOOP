@@ -1,6 +1,6 @@
 "use client";
 
-import { App, Form, Input, Modal, Spin, Table, Tag } from "antd";
+import { App, Form, Image, Input, Modal, Spin, Table, Tabs, Tag } from "antd";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/shared/components/PageHeader";
@@ -150,79 +150,109 @@ export function ProductTable() {
             <Spin />
           </div>
         ) : (
-          <div className="pt-2">
-            {detail.images.length > 0 && (
-              <div className="mb-4 flex gap-2 overflow-x-auto">
-                {detail.images.map((url) => (
-                  // eslint-disable-next-line
-                  <img
-                    key={url}
-                    src={resolveUploadUrl(url)}
-                    alt={detail.title}
-                    className="h-20 w-20 flex-none rounded object-cover"
-                  />
-                ))}
-              </div>
-            )}
+          <Tabs
+            items={[
+              {
+                key: "info",
+                label: "ข้อมูล",
+                children: (
+                  <div>
+                    {detail.images.length > 0 && (
+                      <Image.PreviewGroup>
+                        <div className="mb-4 flex gap-2 overflow-x-auto">
+                          {detail.images.map((url) => (
+                            <Image
+                              key={url}
+                              src={resolveUploadUrl(url)}
+                              alt={detail.title}
+                              width={80}
+                              height={80}
+                              className="flex-none rounded object-cover"
+                            />
+                          ))}
+                        </div>
+                      </Image.PreviewGroup>
+                    )}
 
-            <Form layout="vertical">
-              <div className="grid grid-cols-2 gap-x-4">
-                <Form.Item label="หมวดหมู่">
-                  <Input readOnly value={detail.categoryName} />
-                </Form.Item>
-                <Form.Item label="ราคา/วัน">
-                  <Input readOnly value={`฿${detail.pricePerDay}`} />
-                </Form.Item>
-                <Form.Item label="ที่ตั้ง">
-                  <Input readOnly value={detail.location} />
-                </Form.Item>
-                <Form.Item label="สถานะ">
-                  <Input
-                    readOnly
-                    value={STATUS_LABEL[detail.status]}
-                    style={{ color: STATUS_COLOR[detail.status], fontWeight: 600 }}
-                  />
-                </Form.Item>
-                <Form.Item label="คะแนน">
-                  <Input
-                    readOnly
-                    value={
-                      detail.reviewCount > 0
-                        ? `★ ${detail.ratingAvg.toFixed(1)} (${detail.reviewCount} รีวิว)`
-                        : "ยังไม่มีรีวิว"
-                    }
-                  />
-                </Form.Item>
-                <Form.Item label="ลงประกาศเมื่อ">
-                  <Input readOnly value={new Date(detail.createdAt).toLocaleDateString("th-TH")} />
-                </Form.Item>
-              </div>
+                    <Form layout="vertical">
+                      <div className="grid grid-cols-2 gap-x-4">
+                        <Form.Item label="หมวดหมู่">
+                          <Input readOnly value={detail.categoryName} />
+                        </Form.Item>
+                        <Form.Item label="ราคา/วัน">
+                          <Input readOnly value={`฿${detail.pricePerDay}`} />
+                        </Form.Item>
+                        <Form.Item label="ที่ตั้ง">
+                          <Input readOnly value={detail.location} />
+                        </Form.Item>
+                        <Form.Item label="สถานะ">
+                          <Input
+                            readOnly
+                            value={STATUS_LABEL[detail.status]}
+                            style={{ color: STATUS_COLOR[detail.status], fontWeight: 600 }}
+                          />
+                        </Form.Item>
+                        <Form.Item label="คะแนน">
+                          <Input
+                            readOnly
+                            value={
+                              detail.reviewCount > 0
+                                ? `★ ${detail.ratingAvg.toFixed(1)} (${detail.reviewCount} รีวิว)`
+                                : "ยังไม่มีรีวิว"
+                            }
+                          />
+                        </Form.Item>
+                        <Form.Item label="ลงประกาศเมื่อ">
+                          <Input
+                            readOnly
+                            value={new Date(detail.createdAt).toLocaleDateString("th-TH")}
+                          />
+                        </Form.Item>
+                      </div>
 
-              <Form.Item label="ผู้ขาย">
-                <Input
-                  readOnly
-                  value={`${detail.ownerName} (${detail.ownerEmail}, ${detail.ownerPhone})`}
-                />
-              </Form.Item>
-              <Form.Item label="การรับสินค้า">
-                {detail.pickupOptions.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {detail.pickupOptions.map((o, i) => (
-                      <Tag key={i}>
-                        {PICKUP_LABEL[o.type]}
-                        {o.type === "MEETUP" ? `: ${o.label}` : ""}
-                      </Tag>
-                    ))}
+                      <Form.Item label="ผู้ขาย">
+                        <Input
+                          readOnly
+                          value={`${detail.ownerName} (${detail.ownerEmail}, ${detail.ownerPhone})`}
+                        />
+                      </Form.Item>
+                      <Form.Item label="การรับสินค้า">
+                        {detail.pickupOptions.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {detail.pickupOptions.map((o, i) => (
+                              <Tag key={i}>
+                                {PICKUP_LABEL[o.type]}
+                                {o.type === "MEETUP" ? `: ${o.label}` : ""}
+                              </Tag>
+                            ))}
+                          </div>
+                        ) : (
+                          <Input readOnly value="—" />
+                        )}
+                      </Form.Item>
+                      <Form.Item label="รายละเอียด" className="mb-0">
+                        <Input.TextArea readOnly value={detail.description} rows={3} />
+                      </Form.Item>
+                    </Form>
                   </div>
-                ) : (
-                  <Input readOnly value="—" />
-                )}
-              </Form.Item>
-              <Form.Item label="รายละเอียด" className="mb-0">
-                <Input.TextArea readOnly value={detail.description} rows={3} />
-              </Form.Item>
-            </Form>
-          </div>
+                ),
+              },
+              {
+                key: "reviews",
+                label: "รีวิว",
+                children:
+                  detail.reviewCount > 0 ? (
+                    <div className="py-2 text-[14px] text-black/70">
+                      ★ {detail.ratingAvg.toFixed(1)} จาก {detail.reviewCount} รีวิว
+                    </div>
+                  ) : (
+                    <div className="py-10 text-center text-black/40">
+                      ยังไม่มีรีวิวสำหรับสินค้านี้
+                    </div>
+                  ),
+              },
+            ]}
+          />
         )}
       </Modal>
     </div>
