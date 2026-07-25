@@ -153,21 +153,31 @@ export function AdminSidebar() {
     >
       <div className="flex h-14 flex-none items-center justify-center px-4">
         {collapsed ? (
-          <Image
-            src="/icon.png"
-            alt="renty admin"
-            width={32}
-            height={32}
-            className="h-8 w-8 rounded-md object-contain"
-          />
+          <div className="flex items-center justify-center">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
+              <Image
+                src="/brand/renty-logo-full.png"
+                alt="Renty Admin"
+                width={32}
+                height={32}
+                className="h-8 w-8 object-contain"
+              />
+            </div>
+          </div>
         ) : (
-          <Image
-            src="/brand/renty-logo.png"
-            alt="renty admin"
-            width={140}
-            height={136}
-            className="h-9 w-auto rounded-md object-contain"
-          />
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
+              <Image
+                src="/brand/renty-logo-full.png"
+                alt="Renty Admin"
+                width={32}
+                height={32}
+                className="h-8 w-8 object-contain"
+              />
+            </div>
+
+            <span className="text-lg font-semibold text-white">Admin</span>
+          </div>
         )}
       </div>
 
