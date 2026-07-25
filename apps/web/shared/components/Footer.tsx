@@ -60,26 +60,6 @@ export function Footer() {
       <SparkleDoodle className="absolute bottom-[26%] right-[16%] text-white/10" size={30} />
 
       <div className="relative z-10 mx-auto w-full max-w-[1280px] px-8 py-14">
-        {/* values band */}
-        <div className="mb-12 grid gap-4 border-b border-white/15 pb-12 sm:grid-cols-3">
-          {VALUES.map(({ icon: Icon, label, th }) => (
-            <div key={label} className="flex items-center gap-3.5">
-              <span
-                className="bg-brand-50 flex h-11 w-11 flex-none items-center justify-center rounded-full"
-                style={{ color: ORANGE }}
-              >
-                <Icon size={22} />
-              </span>
-              <div>
-                <div className="font-arch text-[15px] font-extrabold tracking-[.06em] text-white">
-                  {label}
-                </div>
-                <div className="text-[13px] text-white/60">{th}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
         <div className="grid gap-10 md:grid-cols-[1.4fr_2fr]">
           <div>
             <Image
@@ -93,7 +73,27 @@ export function Footer() {
             <p className="mt-3 text-[13.5px] font-semibold italic" style={{ color: ORANGE }}>
               ride together, stay happy 🐾
             </p>
-            <p className="mt-2 max-w-[300px] text-[13px] leading-relaxed text-white/65">
+
+            <div className="mt-4 flex flex-col gap-2.5">
+              {VALUES.map(({ icon: Icon, label, th }) => (
+                <div key={label} className="flex items-center gap-2.5">
+                  <span
+                    className="bg-brand-50 flex h-8 w-8 flex-none items-center justify-center rounded-full"
+                    style={{ color: ORANGE }}
+                  >
+                    <Icon size={16} />
+                  </span>
+                  <div>
+                    <div className="font-arch text-[12.5px] font-extrabold tracking-[.04em] text-white">
+                      {label}
+                    </div>
+                    <div className="text-[12px] text-white/60">{th}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-4 max-w-[300px] text-[13px] leading-relaxed text-white/65">
               แพลตฟอร์มให้เช่าสินค้าระหว่างบุคคล เช่าอะไรก็ได้จากคนใกล้ตัว — ปลอดภัย ยืนยันตัวตน
               คุ้มครองทุกการเช่า
             </p>
