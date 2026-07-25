@@ -17,12 +17,17 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, clearAuth } = useAuthStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
   function handleExit() {
+    router.push("/");
+  }
+
+  function handleLogout() {
+    clearAuth();
     router.push("/");
   }
 
@@ -38,6 +43,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 className="border-0 bg-transparent text-[13.5px] text-black/60 hover:text-black"
               >
                 ออกจากแอดมิน
+              </button>
+              <button
+                onClick={handleLogout}
+                className="border-0 bg-transparent text-[13.5px] text-black/60 hover:text-black"
+              >
+                ออกจากระบบ
               </button>
               <div className="h-8 w-8 flex-none rounded-full bg-black/10" />
               {mounted && user && (
