@@ -177,24 +177,24 @@ export function ProductTable() {
                     <Form layout="vertical">
                       <div className="grid grid-cols-2 gap-x-4">
                         <Form.Item label="หมวดหมู่">
-                          <Input readOnly value={detail.categoryName} />
+                          <Input disabled value={detail.categoryName} />
                         </Form.Item>
                         <Form.Item label="ราคา/วัน">
-                          <Input readOnly value={`฿${detail.pricePerDay}`} />
+                          <Input disabled value={`฿${detail.pricePerDay}`} />
                         </Form.Item>
                         <Form.Item label="ที่ตั้ง">
-                          <Input readOnly value={detail.location} />
+                          <Input disabled value={detail.location} />
                         </Form.Item>
                         <Form.Item label="สถานะ">
                           <Input
-                            readOnly
+                            disabled
                             value={STATUS_LABEL[detail.status]}
                             style={{ color: STATUS_COLOR[detail.status], fontWeight: 600 }}
                           />
                         </Form.Item>
                         <Form.Item label="คะแนน">
                           <Input
-                            readOnly
+                            disabled
                             value={
                               detail.reviewCount > 0
                                 ? `★ ${detail.ratingAvg.toFixed(1)} (${detail.reviewCount} รีวิว)`
@@ -204,7 +204,7 @@ export function ProductTable() {
                         </Form.Item>
                         <Form.Item label="ลงประกาศเมื่อ">
                           <Input
-                            readOnly
+                            disabled
                             value={new Date(detail.createdAt).toLocaleDateString("th-TH")}
                           />
                         </Form.Item>
@@ -212,7 +212,7 @@ export function ProductTable() {
 
                       <Form.Item label="ผู้ขาย">
                         <Input
-                          readOnly
+                          disabled
                           value={`${detail.ownerName} (${detail.ownerEmail}, ${detail.ownerPhone})`}
                         />
                       </Form.Item>
@@ -227,11 +227,11 @@ export function ProductTable() {
                             ))}
                           </div>
                         ) : (
-                          <Input readOnly value="—" />
+                          <Input disabled value="—" />
                         )}
                       </Form.Item>
                       <Form.Item label="รายละเอียด" className="mb-0">
-                        <Input.TextArea readOnly value={detail.description} rows={3} />
+                        <Input.TextArea disabled value={detail.description} rows={3} />
                       </Form.Item>
                     </Form>
                   </div>
