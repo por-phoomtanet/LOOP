@@ -74,6 +74,9 @@ export async function createProduct(input: ProductInput, userId: number) {
     lng: input.lng ?? null,
     ownerId: userId,
     createdById: userId,
+    // ลงประกาศแล้วขึ้นขายทันที ไม่ต้องรอแอดมินอนุมัติ
+    // (UNDER_REVIEW ยังคงอยู่ใน enum สำหรับประกาศเก่า + เผื่อ moderation ภายหลัง)
+    status: "ACTIVE",
   });
 }
 

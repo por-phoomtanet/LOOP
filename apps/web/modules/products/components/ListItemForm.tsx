@@ -1,5 +1,7 @@
 "use client";
 
+// ต้อง import ก่อน antd/antd-img-crop เพื่อให้ crop modal ใช้ createRoot ของ React 19
+import "@ant-design/v5-patch-for-react-19";
 import { Upload } from "antd";
 import type { UploadFile } from "antd";
 import ImgCrop from "antd-img-crop";
@@ -153,10 +155,10 @@ export function ListItemForm({ listing, onSaved }: Props) {
           </svg>
         </div>
         <h2 className="font-arch mb-2.5 text-[26px] font-extrabold tracking-[-.02em]">
-          ส่งประกาศแล้ว!
+          ลงประกาศสำเร็จ!
         </h2>
         <p className="mx-auto mb-7 max-w-[420px] text-[14.5px] leading-relaxed text-black/60">
-          สินค้าของคุณกำลังรอตรวจสอบ เราจะแจ้งเตือนเมื่อประกาศพร้อมใช้งานบน renty
+          สินค้าของคุณขึ้นแสดงบน renty แล้ว พร้อมให้คนอื่นเช่าได้ทันที
         </p>
         <div className="flex items-center justify-center gap-2.5">
           <Link

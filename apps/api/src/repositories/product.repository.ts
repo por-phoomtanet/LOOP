@@ -60,6 +60,7 @@ export const productRepository = {
     lng: number | null;
     ownerId: number;
     createdById: number;
+    status: ProductStatus;
   }) {
     return prisma.product.create({ data });
   },

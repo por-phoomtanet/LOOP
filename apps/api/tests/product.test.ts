@@ -30,14 +30,14 @@ async function createProduct(token: string, categoryId: number, overrides: objec
 }
 
 describe("POST /api/products", () => {
-  it("creates a listing forced to UNDER_REVIEW for the authenticated owner", async () => {
+  it("creates a listing that goes live immediately for the authenticated owner", async () => {
     const { token } = await registerUser("listcreate");
     const categoryId = await activeCategoryId();
 
     const res = await createProduct(token, categoryId);
 
     expect(res.status).toBe(201);
-    expect(res.body.data.status).toBe("UNDER_REVIEW");
+    expect(res.body.data.status).toBe("ACTIVE");
     expect(res.body.data.ownerId).toBeDefined();
   });
 
@@ -91,28 +91,31 @@ describe("PUT /api/products/:id", () => {
 });
 
 describe("PATCH /api/products/:id/status", () => {
-  it("blocks pause/resume while still UNDER_REVIEW", async () => {
+  it("blocks pause/resume for a listing still UNDER_REVIEW", async () => {
     const { token } = await registerUser("pauseunreviewed");
     const categoryId = await activeCategoryId();
     const created = await createProduct(token, categoryId);
+    const id = created.body.data.id;
+
+    // ประกาศใหม่ขึ้น ACTIVE ทันทีแล้ว — จำลองประกาศเก่าที่ยัง UNDER_REVIEW
+    // เพื่อคุม guard ใน setProductStatus ไว้เหมือนเดิม
+    await prisma.product.update({ where: { id }, data: { status: "UNDER_REVIEW" } });
 
     const res = await request(baseUrl)
-      .patch(`/api/products/${created.body.data.id}/status`)
+      .patch(`/api/products/${id}/status`)
       .set("Authorization", `Bearer ${token}`)
       .send({ status: "PAUSED" });
 
     expect(res.status).toBe(400);
   });
 
-  it("lets the owner pause and resume a listing that has been approved", async () => {
+  it("lets the owner pause and resume a live listing", async () => {
     const { token } = await registerUser("pauseresume");
     const categoryId = await activeCategoryId();
     const created = await createProduct(token, categoryId);
     const id = created.body.data.id;
 
-    // no admin-approve-product endpoint exists yet (Admin > Products is read-only) —
-    // simulate the post-approval state directly so pause/resume can be exercised
-    await prisma.product.update({ where: { id }, data: { status: "ACTIVE" } });
+    // ประกาศขึ้น ACTIVE ตั้งแต่สร้าง จึงพัก/เริ่มใหม่ได้เลย ไม่ต้องจำลองการอนุมัติ
 
     const paused = await request(baseUrl)
       .patch(`/api/products/${id}/status`)
