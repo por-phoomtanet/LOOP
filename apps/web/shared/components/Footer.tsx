@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ROUTES } from "@/constants";
 import {
@@ -11,10 +10,6 @@ import {
 
 // สีส้มของ CI — accent อุ่นแทรกในโทนเย็น
 const ORANGE = "#e08a63";
-
-// filter สำหรับย้อมโลโก้ (line-art น้ำเงิน) ให้เป็นครีม #FFF7EB บนพื้นน้ำเงิน
-const CREAM_LOGO_FILTER =
-  "brightness(0) saturate(100%) invert(96%) sepia(13%) saturate(220%) hue-rotate(314deg) brightness(104%) contrast(98%)";
 
 const VALUES = [
   { icon: HeartDoodle, label: "LOVE", th: "ด้วยความรัก" },
@@ -62,19 +57,7 @@ export function Footer() {
       <div className="relative z-10 mx-auto w-full max-w-[1280px] px-8 py-14">
         <div className="grid gap-10 md:grid-cols-[1.4fr_2fr]">
           <div>
-            <Image
-              src="/brand/renty-logo-full.png"
-              alt="renty — ride together, stay happy"
-              width={200}
-              height={140}
-              className="h-auto w-[168px] object-contain"
-              style={{ filter: CREAM_LOGO_FILTER }}
-            />
-            <p className="mt-3 text-[13.5px] font-semibold italic" style={{ color: ORANGE }}>
-              ride together, stay happy 🐾
-            </p>
-
-            <div className="mt-4 flex flex-col gap-2.5">
+            <div className=" flex flex-col gap-3.5">
               {VALUES.map(({ icon: Icon, label, th }) => (
                 <div key={label} className="flex items-center gap-2.5">
                   <span
@@ -92,11 +75,6 @@ export function Footer() {
                 </div>
               ))}
             </div>
-
-            <p className="mt-4 max-w-[300px] text-[13px] leading-relaxed text-white/65">
-              แพลตฟอร์มให้เช่าสินค้าระหว่างบุคคล เช่าอะไรก็ได้จากคนใกล้ตัว — ปลอดภัย ยืนยันตัวตน
-              คุ้มครองทุกการเช่า
-            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
@@ -120,7 +98,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t border-white/15 pt-6 text-[12.5px] text-white/50">
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/15 pt-6 text-[12.5px] text-white/50">
           <span>© 2026 renty · สงวนลิขสิทธิ์</span>
           <span>
             ทำด้วย <span style={{ color: ORANGE }}>♥</span> เพื่อชุมชนคนชอบเช่า

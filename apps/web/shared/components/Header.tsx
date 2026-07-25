@@ -18,7 +18,7 @@ const dict = {
     adminNavLabel: "แผงแอดมิน",
     listItem: "ลงประกาศให้เช่า",
     myRentals: "รายการเช่าของฉัน",
-    myListings: "รายการปล่อยเช่าของฉัน",
+    myListings: "จัดการข้อมูลให้เช่า",
     howItWorks: "วิธีใช้งาน",
     helpCenter: "ศูนย์ช่วยเหลือ",
     signup: "สมัครสมาชิก",
