@@ -268,7 +268,7 @@ export const ImageSlot = forwardRef<ImageSlotHandle, Props>(function ImageSlot(
         </div>
       </div>
 
-      <div className="mt-3 flex max-w-[300px] items-center gap-3">
+      <div className="mt-3 flex w-full max-w-[300px] items-center gap-3">
         <span className="text-[12px] font-medium text-black/45">ซูม</span>
         <input
           type="range"
