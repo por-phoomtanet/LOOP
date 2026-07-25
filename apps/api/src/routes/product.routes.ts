@@ -22,7 +22,8 @@ const statusSchema = z.object({
 });
 
 const pickupOptionSchema = z.object({
-  label: z.string().min(1),
+  type: z.enum(["MEETUP", "GRAB", "POST"]),
+  label: z.string().min(1).optional(),
 });
 
 export const productRoutes = new Elysia({ prefix: "/api/products" })

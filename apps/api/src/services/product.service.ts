@@ -1,6 +1,13 @@
+import type { PickupMethod } from "@loop/db";
 import { categoryRepository } from "../repositories/category.repository";
 import { productRepository } from "../repositories/product.repository";
-import { BadRequestError, ForbiddenError, NotFoundError } from "../utils/errors";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "../utils/errors";
+
+// GRAB/POST เป็น toggle เดียวต่อประกาศ ไม่ต้องพิมพ์ label เอง — ใช้ข้อความคงที่
+const FIXED_PICKUP_LABELS: Record<Exclude<PickupMethod, "MEETUP">, string> = {
+  GRAB: "จัดส่งผ่าน Grab",
+  POST: "จัดส่งทางไปรษณีย์",
+};
 
 type ProductInput = {
   title: string;
@@ -109,9 +116,23 @@ export async function addProductImages(id: number, userId: number, files: { file
   );
 }
 
-export async function addPickupOption(id: number, userId: number, label: string) {
+export async function addPickupOption(
+  id: number,
+  userId: number,
+  input: { type: PickupMethod; label?: string },
+) {
   await findOwnedProduct(id, userId);
-  return productRepository.addPickupOption(id, label);
+
+  if (input.type === "MEETUP") {
+    const label = input.label?.trim();
+    if (!label) throw new BadRequestError("กรุณาระบุจุดนัดรับ");
+    return productRepository.addPickupOption(id, "MEETUP", label);
+  }
+
+  // Grab/ไปรษณีย์ เป็น toggle — มีได้แค่ 1 รายการต่อประเภทต่อประกาศ
+  const existing = await productRepository.findPickupOptionByProductAndType(id, input.type);
+  if (existing) throw new ConflictError("เปิดใช้งานช่องทางนี้ไว้อยู่แล้ว");
+  return productRepository.addPickupOption(id, input.type, FIXED_PICKUP_LABELS[input.type]);
 }
 
 export async function removePickupOption(id: number, optionId: number, userId: number) {
@@ -137,7 +158,7 @@ export async function listMyListings(userId: number) {
     ratingAvg: p.ratingAvg,
     reviewCount: p.reviewCount,
     images: p.images.map((img) => ({ id: img.id, url: img.url, sortOrder: img.sortOrder })),
-    pickupOptions: p.pickupOptions.map((o) => ({ id: o.id, label: o.label })),
+    pickupOptions: p.pickupOptions.map((o) => ({ id: o.id, type: o.type, label: o.label })),
     createdAt: p.createdAt,
   }));
 }

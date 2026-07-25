@@ -3,6 +3,7 @@ import type { ApiResponse, PaginatedResponse } from "@/types";
 import type {
   Category,
   MyListing,
+  PickupMethod,
   PickupOption,
   ProductCardData,
   ProductImage,
@@ -45,8 +46,8 @@ export const productsApi = {
     });
   },
 
-  addPickupOption(id: number, label: string) {
-    return api.post<ApiResponse<PickupOption>>(`/products/${id}/pickup-options`, { label });
+  addPickupOption(id: number, input: { type: PickupMethod; label?: string }) {
+    return api.post<ApiResponse<PickupOption>>(`/products/${id}/pickup-options`, input);
   },
 
   removePickupOption(id: number, optionId: number) {

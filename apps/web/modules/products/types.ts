@@ -14,8 +14,11 @@ export type ProductImage = {
   sortOrder: number;
 };
 
+export type PickupMethod = "MEETUP" | "GRAB" | "POST";
+
 export type PickupOption = {
   id: number;
+  type: PickupMethod;
   label: string;
 };
 

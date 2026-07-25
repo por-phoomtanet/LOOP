@@ -234,7 +234,7 @@ describe("POST /api/products/:id/images", () => {
 });
 
 describe("pickup options", () => {
-  it("lets the owner add and remove a pickup option", async () => {
+  it("lets the owner add and remove a MEETUP pickup location", async () => {
     const { token } = await registerUser("pickupowner");
     const categoryId = await activeCategoryId();
     const created = await createProduct(token, categoryId);
@@ -243,14 +243,67 @@ describe("pickup options", () => {
     const added = await request(baseUrl)
       .post(`/api/products/${id}/pickup-options`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ label: "BTS อโศก" });
+      .send({ type: "MEETUP", label: "BTS อโศก" });
     expect(added.status).toBe(201);
+    expect(added.body.data.type).toBe("MEETUP");
     expect(added.body.data.label).toBe("BTS อโศก");
 
     const removed = await request(baseUrl)
       .delete(`/api/products/${id}/pickup-options/${added.body.data.id}`)
       .set("Authorization", `Bearer ${token}`);
     expect(removed.status).toBe(200);
+  });
+
+  it("rejects a MEETUP option with no label", async () => {
+    const { token } = await registerUser("pickupnolabel");
+    const categoryId = await activeCategoryId();
+    const created = await createProduct(token, categoryId);
+
+    const res = await request(baseUrl)
+      .post(`/api/products/${created.body.data.id}/pickup-options`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ type: "MEETUP" });
+    expect(res.status).toBe(400);
+  });
+
+  it("lets the owner toggle GRAB and POST on with a fixed label, ignoring any client label", async () => {
+    const { token } = await registerUser("pickuptoggle");
+    const categoryId = await activeCategoryId();
+    const created = await createProduct(token, categoryId);
+    const id = created.body.data.id;
+
+    const grab = await request(baseUrl)
+      .post(`/api/products/${id}/pickup-options`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ type: "GRAB" });
+    expect(grab.status).toBe(201);
+    expect(grab.body.data.type).toBe("GRAB");
+    expect(grab.body.data.label).toBe("จัดส่งผ่าน Grab");
+
+    const post = await request(baseUrl)
+      .post(`/api/products/${id}/pickup-options`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ type: "POST" });
+    expect(post.status).toBe(201);
+    expect(post.body.data.type).toBe("POST");
+  });
+
+  it("rejects a second GRAB toggle on the same listing with 409", async () => {
+    const { token } = await registerUser("pickupdupe");
+    const categoryId = await activeCategoryId();
+    const created = await createProduct(token, categoryId);
+    const id = created.body.data.id;
+
+    await request(baseUrl)
+      .post(`/api/products/${id}/pickup-options`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ type: "GRAB" });
+
+    const res = await request(baseUrl)
+      .post(`/api/products/${id}/pickup-options`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ type: "GRAB" });
+    expect(res.status).toBe(409);
   });
 
   it("rejects adding a pickup option to another user's listing with 403", async () => {
@@ -262,7 +315,7 @@ describe("pickup options", () => {
     const res = await request(baseUrl)
       .post(`/api/products/${created.body.data.id}/pickup-options`)
       .set("Authorization", `Bearer ${attackerToken}`)
-      .send({ label: "แฮ็ก" });
+      .send({ type: "MEETUP", label: "แฮ็ก" });
     expect(res.status).toBe(403);
   });
 });

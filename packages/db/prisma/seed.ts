@@ -221,7 +221,12 @@ async function main() {
         ratingAvg: sp.rating,
         reviewCount: sp.reviews,
         images: { create: [{ url: U(sp.img), sortOrder: 0 }] },
-        pickupOptions: { create: [{ label: "BTS อโศก" }, { label: "จัดส่งผ่าน Grab" }] },
+        pickupOptions: {
+          create: [
+            { type: "MEETUP", label: "BTS อโศก" },
+            { type: "GRAB", label: "จัดส่งผ่าน Grab" },
+          ],
+        },
       },
     });
   }

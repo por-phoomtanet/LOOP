@@ -57,8 +57,8 @@ export async function uploadImages(id: number, userId: number, files: File[]) {
 }
 
 export async function addPickupOption(id: number, userId: number, body: unknown) {
-  const { label } = body as { label: string };
-  const result = await productService.addPickupOption(id, userId, label);
+  const input = body as Parameters<typeof productService.addPickupOption>[2];
+  const result = await productService.addPickupOption(id, userId, input);
   return { data: result, message: "ok" };
 }
 

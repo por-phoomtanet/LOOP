@@ -1,4 +1,4 @@
-import type { ProductStatus } from "@loop/db";
+import type { PickupMethod, ProductStatus } from "@loop/db";
 import { prisma } from "@loop/db";
 
 const ownerListInclude = {
@@ -108,12 +108,16 @@ export const productRepository = {
     return prisma.productImage.create({ data: { productId, url, sortOrder } });
   },
 
-  addPickupOption(productId: number, label: string) {
-    return prisma.pickupOption.create({ data: { productId, label } });
+  addPickupOption(productId: number, type: PickupMethod, label: string) {
+    return prisma.pickupOption.create({ data: { productId, type, label } });
   },
 
   findPickupOptionById(id: number) {
     return prisma.pickupOption.findUnique({ where: { id } });
+  },
+
+  findPickupOptionByProductAndType(productId: number, type: PickupMethod) {
+    return prisma.pickupOption.findFirst({ where: { productId, type } });
   },
 
   removePickupOption(id: number) {

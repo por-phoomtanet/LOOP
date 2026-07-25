@@ -12,14 +12,19 @@ import { useEffect, useState } from "react";
 import { resolveUploadUrl } from "@/shared/lib/utils";
 import { LocationField } from "./LocationField";
 import { productsApi } from "../services/productsApi";
-import type { Category, MyListing } from "../types";
+import type { Category, MyListing, PickupMethod } from "../types";
 
 type Props = {
   listing?: MyListing;
   onSaved?: () => void;
 };
 
-type PendingPickupOption = { id?: number; label: string };
+type PendingPickupOption = { id?: number; type: PickupMethod; label: string };
+
+const FIXED_PICKUP_LABELS: Record<"GRAB" | "POST", string> = {
+  GRAB: "จัดส่งผ่าน Grab",
+  POST: "จัดส่งทางไปรษณีย์",
+};
 
 const MAX_IMAGES = 10; // ตรงกับ limit ฝั่ง API (.array("files", 10))
 
@@ -38,6 +43,9 @@ export function ListItemForm({ listing, onSaved }: Props) {
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [pickupOptions, setPickupOptions] = useState<PendingPickupOption[]>(
     listing?.pickupOptions ?? [],
+  );
+  const [meetupEnabled, setMeetupEnabled] = useState(
+    () => listing?.pickupOptions?.some((o) => o.type === "MEETUP") ?? false,
   );
   const [removedOptionIds, setRemovedOptionIds] = useState<number[]>([]);
   const [newOptionLabel, setNewOptionLabel] = useState("");
@@ -59,17 +67,38 @@ export function ListItemForm({ listing, onSaved }: Props) {
     pricePerDay !== "" &&
     location.trim();
 
-  function addPickupChip() {
+  const meetupOptions = pickupOptions.filter((o) => o.type === "MEETUP");
+  const grabOption = pickupOptions.find((o) => o.type === "GRAB");
+  const postOption = pickupOptions.find((o) => o.type === "POST");
+
+  function addMeetupLocation() {
     const label = newOptionLabel.trim();
     if (!label) return;
-    setPickupOptions((prev) => [...prev, { label }]);
+    setPickupOptions((prev) => [...prev, { type: "MEETUP", label }]);
     setNewOptionLabel("");
   }
 
-  function removePickupChip(index: number) {
-    const opt = pickupOptions[index];
-    if (opt.id) setRemovedOptionIds((prev) => [...prev, opt.id!]);
-    setPickupOptions((prev) => prev.filter((_, i) => i !== index));
+  function removeOption(target: PendingPickupOption) {
+    if (target.id) setRemovedOptionIds((prev) => [...prev, target.id!]);
+    setPickupOptions((prev) => prev.filter((o) => o !== target));
+  }
+
+  function toggleFixedMethod(type: "GRAB" | "POST") {
+    const existing = pickupOptions.find((o) => o.type === type);
+    if (existing) {
+      removeOption(existing);
+    } else {
+      setPickupOptions((prev) => [...prev, { type, label: FIXED_PICKUP_LABELS[type] }]);
+    }
+  }
+
+  function toggleMeetup() {
+    if (meetupEnabled) {
+      meetupOptions.forEach(removeOption);
+      setMeetupEnabled(false);
+    } else {
+      setMeetupEnabled(true);
+    }
   }
 
   function resetForm() {
@@ -82,6 +111,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
     setLng(null);
     setFileList([]);
     setPickupOptions([]);
+    setMeetupEnabled(false);
     setRemovedOptionIds([]);
     setNewOptionLabel("");
     setSubmitted(false);
@@ -123,7 +153,12 @@ export function ListItemForm({ listing, onSaved }: Props) {
         await productsApi.removePickupOption(productId, optionId);
       }
       for (const opt of pickupOptions) {
-        if (!opt.id) await productsApi.addPickupOption(productId, opt.label);
+        if (!opt.id) {
+          await productsApi.addPickupOption(productId, {
+            type: opt.type,
+            ...(opt.type === "MEETUP" ? { label: opt.label } : {}),
+          });
+        }
       }
 
       if (isEdit) {
@@ -315,69 +350,73 @@ export function ListItemForm({ listing, onSaved }: Props) {
         </div>
 
         <div>
-          <label className="mb-2 block text-[13px] font-semibold text-black/60">
-            สถานที่นัดรับ
-          </label>
+          <label className="mb-2 block text-[13px] font-semibold text-black/60">การรับสินค้า</label>
           <div className="flex flex-col gap-2">
-            {pickupOptions.map((opt, i) => (
-              <div
-                key={opt.id ?? `new-${i}`}
-                className="flex items-center gap-2.5 rounded-[10px] border border-black/[.14] px-3 py-2.5"
-              >
-                <span className="bg-brand-600 flex h-[22px] w-[22px] flex-none items-center justify-center rounded-[6px]">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#fff"
-                    strokeWidth="3"
-                  >
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                </span>
-                <div className="flex-1 text-[14px] text-black">{opt.label}</div>
-                <button
-                  type="button"
-                  onClick={() => removePickupChip(i)}
-                  aria-label="ลบสถานที่นัดรับ"
-                  className="flex-none border-0 bg-transparent p-1 text-black/35 hover:text-black"
-                >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M18 6L6 18" />
-                    <path d="M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className="mt-2 flex gap-2">
-            <input
-              value={newOptionLabel}
-              onChange={(e) => setNewOptionLabel(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addPickupChip();
-                }
-              }}
-              placeholder="เพิ่มสถานที่อื่น…"
-              className="focus:border-brand-400 flex-1 rounded-[10px] border border-black/[.15] px-3 py-2.5 text-[14px] text-black outline-none transition-colors"
+            <div className="rounded-[10px] border border-black/[.14]">
+              <ToggleRow checked={meetupEnabled} label="นัดรับ" onToggle={toggleMeetup} bare />
+              {meetupEnabled && (
+                <div className="flex flex-col gap-2 border-t border-black/[.1] p-3">
+                  {meetupOptions.map((opt, i) => (
+                    <div
+                      key={opt.id ?? `new-${i}`}
+                      className="flex items-center gap-2.5 rounded-[10px] border border-black/[.14] px-3 py-2.5"
+                    >
+                      <div className="flex-1 text-[14px] text-black">{opt.label}</div>
+                      <button
+                        type="button"
+                        onClick={() => removeOption(opt)}
+                        aria-label="ลบจุดนัดรับ"
+                        className="flex-none border-0 bg-transparent p-1 text-black/35 hover:text-black"
+                      >
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M18 6L6 18" />
+                          <path d="M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                  <div className="flex gap-2">
+                    <input
+                      value={newOptionLabel}
+                      onChange={(e) => setNewOptionLabel(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addMeetupLocation();
+                        }
+                      }}
+                      placeholder="เช่น BTS อโศก"
+                      className="focus:border-brand-400 flex-1 rounded-[10px] border border-black/[.15] px-3 py-2.5 text-[14px] text-black outline-none transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={addMeetupLocation}
+                      className="bg-brand-600 flex-none rounded-[10px] px-[18px] text-[13.5px] font-semibold text-white"
+                    >
+                      เพิ่ม
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <ToggleRow
+              checked={!!grabOption}
+              label="Grab"
+              onToggle={() => toggleFixedMethod("GRAB")}
             />
-            <button
-              type="button"
-              onClick={addPickupChip}
-              className="bg-brand-600 flex-none rounded-[10px] px-[18px] text-[13.5px] font-semibold text-white"
-            >
-              เพิ่ม
-            </button>
+            <ToggleRow
+              checked={!!postOption}
+              label="ไปรษณีย์"
+              onToggle={() => toggleFixedMethod("POST")}
+            />
           </div>
         </div>
 
@@ -404,6 +443,41 @@ export function ListItemForm({ listing, onSaved }: Props) {
         {submitting ? "กำลังบันทึก…" : isEdit ? "บันทึกการแก้ไข" : "ส่งประกาศ"}
       </button>
     </form>
+  );
+}
+
+function ToggleRow({
+  checked,
+  label,
+  onToggle,
+  bare = false,
+}: {
+  checked: boolean;
+  label: string;
+  onToggle: () => void;
+  bare?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors ${
+        bare ? "" : "rounded-[10px] border border-black/[.14] hover:border-black/25"
+      }`}
+    >
+      <span
+        className={`flex h-[22px] w-[22px] flex-none items-center justify-center rounded-[6px] border transition-colors ${
+          checked ? "bg-brand-600 border-brand-600" : "border-black/20 bg-white"
+        }`}
+      >
+        {checked && (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+        )}
+      </span>
+      <span className="flex-1 text-[14px] text-black">{label}</span>
+    </button>
   );
 }
 

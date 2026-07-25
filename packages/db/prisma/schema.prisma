@@ -144,10 +144,17 @@ model ProductImage {
   createdAt DateTime @default(now())
 }
 
+enum PickupMethod {
+  MEETUP // นัดรับ — label คือจุดนัดรับที่เจ้าของกำหนดเอง มีได้หลายจุด
+  GRAB // จัดส่งผ่าน Grab — toggle เดียวต่อประกาศ
+  POST // จัดส่งทางไปรษณีย์ — toggle เดียวต่อประกาศ
+}
+
 model PickupOption {
-  id        Int      @id @default(autoincrement())
+  id        Int          @id @default(autoincrement())
   productId Int
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  type      PickupMethod @default(MEETUP)
   label     String
-  createdAt DateTime @default(now())
+  createdAt DateTime     @default(now())
 }
