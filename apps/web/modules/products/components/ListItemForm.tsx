@@ -17,6 +17,8 @@ type Props = {
 
 type PendingPickupOption = { id?: number; label: string };
 
+const MAX_IMAGES = 10; // ตรงกับ limit ฝั่ง API (.array("files", 10))
+
 export function ListItemForm({ listing, onSaved }: Props) {
   const router = useRouter();
   const isEdit = !!listing;
@@ -29,8 +31,8 @@ export function ListItemForm({ listing, onSaved }: Props) {
   const [location, setLocation] = useState(listing?.location ?? "");
   const [lat, setLat] = useState<number | null>(listing?.lat ?? null);
   const [lng, setLng] = useState<number | null>(listing?.lng ?? null);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const imageSlotRef = useRef<ImageSlotHandle>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const imageSlotRefs = useRef<(ImageSlotHandle | null)[]>([]);
   const [pickupOptions, setPickupOptions] = useState<PendingPickupOption[]>(
     listing?.pickupOptions ?? [],
   );
@@ -54,6 +56,20 @@ export function ListItemForm({ listing, onSaved }: Props) {
     pricePerDay !== "" &&
     location.trim();
 
+  // แก้/ลบรูปที่ index นั้น (onChange=null จาก ImageSlot = กด "เปลี่ยนรูป" → เอารูปออก)
+  function updateImageAt(index: number, file: File | null) {
+    setImageFiles((prev) => {
+      if (file === null) return prev.filter((_, i) => i !== index);
+      const next = [...prev];
+      next[index] = file;
+      return next;
+    });
+  }
+
+  function addImage(file: File | null) {
+    if (file) setImageFiles((prev) => [...prev, file]);
+  }
+
   function addPickupChip() {
     const label = newOptionLabel.trim();
     if (!label) return;
@@ -75,7 +91,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
     setLocation("");
     setLat(null);
     setLng(null);
-    setImageFile(null);
+    setImageFiles([]);
     setPickupOptions([]);
     setRemovedOptionIds([]);
     setNewOptionLabel("");
@@ -107,9 +123,11 @@ export function ListItemForm({ listing, onSaved }: Props) {
         productId = res.data.data.id;
       }
 
-      if (imageFile) {
-        const cropped = (await imageSlotRef.current?.getCroppedFile()) ?? imageFile;
-        await productsApi.uploadImages(productId, [cropped]);
+      if (imageFiles.length > 0) {
+        const cropped = await Promise.all(
+          imageFiles.map(async (f, i) => (await imageSlotRefs.current[i]?.getCroppedFile()) ?? f),
+        );
+        await productsApi.uploadImages(productId, cropped);
       }
       for (const optionId of removedOptionIds) {
         await productsApi.removePickupOption(productId, optionId);
@@ -210,9 +228,14 @@ export function ListItemForm({ listing, onSaved }: Props) {
       )}
 
       <div className="mb-5 mt-8">
-        <div className="mb-2.5 text-[13px] font-semibold text-black/60">รูปภาพ</div>
+        <div className="mb-2.5 flex items-center gap-2 text-[13px] font-semibold text-black/60">
+          รูปภาพ
+          <span className="font-normal text-black/40">
+            ({imageFiles.length}/{MAX_IMAGES}) — เพิ่มได้หลายรูป
+          </span>
+        </div>
         {listing && listing.images.length > 0 && (
-          <div className="mb-2.5 flex gap-2">
+          <div className="mb-2.5 flex flex-wrap gap-2">
             {listing.images.map((img) => (
               // eslint-disable-next-line
               <img
@@ -224,8 +247,20 @@ export function ListItemForm({ listing, onSaved }: Props) {
             ))}
           </div>
         )}
-        <div className="flex justify-center">
-          <ImageSlot ref={imageSlotRef} file={imageFile} onChange={setImageFile} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {imageFiles.map((file, i) => (
+            <ImageSlot
+              key={i}
+              ref={(el) => {
+                imageSlotRefs.current[i] = el;
+              }}
+              file={file}
+              onChange={(f) => updateImageAt(i, f)}
+            />
+          ))}
+          {imageFiles.length < MAX_IMAGES && (
+            <ImageSlot key={`add-${imageFiles.length}`} file={null} onChange={addImage} />
+          )}
         </div>
       </div>
 
