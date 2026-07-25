@@ -4,7 +4,8 @@
 // imperative render (Modal/message/notification) ใช้ createRoot ของ React 19
 // ต้อง import ก่อน antd เสมอ
 import "@ant-design/v5-patch-for-react-19";
-import { App as AntdApp, ConfigProvider } from "antd";
+import { App as AntdApp, ConfigProvider, Dropdown } from "antd";
+import type { MenuProps } from "antd";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AdminSidebar } from "@/shared/components/AdminSidebar";
@@ -31,32 +32,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     router.push("/");
   }
 
+  const profileMenuItems: MenuProps["items"] = [
+    { key: "exit-admin", label: "ออกจากแอดมิน", onClick: handleExit },
+    { key: "logout", label: "ออกจากระบบ", danger: true, onClick: handleLogout },
+  ];
+
   return (
     <ConfigProvider theme={{ token: { colorPrimary: "#3b5bfd", borderRadius: 8 } }}>
       <AntdApp>
         <div className="flex h-screen overflow-hidden bg-[#f7f7f7]">
           <AdminSidebar />
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <header className="flex h-14 flex-none items-center justify-end gap-4 border-b border-black/10 bg-white px-6">
-              <button
-                onClick={handleExit}
-                className="border-0 bg-transparent text-[13.5px] text-black/60 hover:text-black"
+            <header className="flex h-14 flex-none items-center justify-end border-b border-black/10 bg-white px-6">
+              <Dropdown
+                menu={{ items: profileMenuItems }}
+                trigger={["click"]}
+                placement="bottomRight"
               >
-                ออกจากแอดมิน
-              </button>
-              <button
-                onClick={handleLogout}
-                className="border-0 bg-transparent text-[13.5px] text-black/60 hover:text-black"
-              >
-                ออกจากระบบ
-              </button>
-              <div className="h-8 w-8 flex-none rounded-full bg-black/10" />
-              {mounted && user && (
-                <span className="whitespace-nowrap text-[13.5px] text-black/70">
-                  {user.name}{" "}
-                  <span className="text-black/40">({ROLE_LABELS[user.role] ?? user.role})</span>
-                </span>
-              )}
+                <button className="flex cursor-pointer items-center gap-2.5 border-0 bg-transparent py-1.5">
+                  <div className="h-8 w-8 flex-none rounded-full bg-black/10" />
+                  {mounted && user && (
+                    <span className="whitespace-nowrap text-[13.5px] text-black/70">
+                      {user.name}{" "}
+                      <span className="text-black/40">({ROLE_LABELS[user.role] ?? user.role})</span>
+                    </span>
+                  )}
+                </button>
+              </Dropdown>
             </header>
             <main className="flex-1 overflow-y-auto overflow-x-hidden px-8 py-8">{children}</main>
           </div>
