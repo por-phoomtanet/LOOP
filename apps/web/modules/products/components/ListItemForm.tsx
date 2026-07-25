@@ -1,11 +1,13 @@
 "use client";
 
+import { Upload } from "antd";
+import type { UploadFile } from "antd";
+import ImgCrop from "antd-img-crop";
 import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { resolveUploadUrl } from "@/shared/lib/utils";
-import { ImageSlot, type ImageSlotHandle } from "./ImageSlot";
 import { LocationField } from "./LocationField";
 import { productsApi } from "../services/productsApi";
 import type { Category, MyListing } from "../types";
@@ -31,8 +33,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
   const [location, setLocation] = useState(listing?.location ?? "");
   const [lat, setLat] = useState<number | null>(listing?.lat ?? null);
   const [lng, setLng] = useState<number | null>(listing?.lng ?? null);
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
-  const imageSlotRefs = useRef<(ImageSlotHandle | null)[]>([]);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [pickupOptions, setPickupOptions] = useState<PendingPickupOption[]>(
     listing?.pickupOptions ?? [],
   );
@@ -56,20 +57,6 @@ export function ListItemForm({ listing, onSaved }: Props) {
     pricePerDay !== "" &&
     location.trim();
 
-  // แก้/ลบรูปที่ index นั้น (onChange=null จาก ImageSlot = กด "เปลี่ยนรูป" → เอารูปออก)
-  function updateImageAt(index: number, file: File | null) {
-    setImageFiles((prev) => {
-      if (file === null) return prev.filter((_, i) => i !== index);
-      const next = [...prev];
-      next[index] = file;
-      return next;
-    });
-  }
-
-  function addImage(file: File | null) {
-    if (file) setImageFiles((prev) => [...prev, file]);
-  }
-
   function addPickupChip() {
     const label = newOptionLabel.trim();
     if (!label) return;
@@ -91,7 +78,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
     setLocation("");
     setLat(null);
     setLng(null);
-    setImageFiles([]);
+    setFileList([]);
     setPickupOptions([]);
     setRemovedOptionIds([]);
     setNewOptionLabel("");
@@ -123,11 +110,12 @@ export function ListItemForm({ listing, onSaved }: Props) {
         productId = res.data.data.id;
       }
 
-      if (imageFiles.length > 0) {
-        const cropped = await Promise.all(
-          imageFiles.map(async (f, i) => (await imageSlotRefs.current[i]?.getCroppedFile()) ?? f),
-        );
-        await productsApi.uploadImages(productId, cropped);
+      // ไฟล์ที่ครอปแล้วอยู่ใน originFileObj (antd-img-crop แทนที่ให้หลังครอป)
+      const files = fileList
+        .map((f) => f.originFileObj as File | undefined)
+        .filter((f): f is File => !!f);
+      if (files.length > 0) {
+        await productsApi.uploadImages(productId, files);
       }
       for (const optionId of removedOptionIds) {
         await productsApi.removePickupOption(productId, optionId);
@@ -231,7 +219,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
         <div className="mb-2.5 flex items-center gap-2 text-[13px] font-semibold text-black/60">
           รูปภาพ
           <span className="font-normal text-black/40">
-            ({imageFiles.length}/{MAX_IMAGES}) — เพิ่มได้หลายรูป
+            ({fileList.length}/{MAX_IMAGES}) — เพิ่มได้หลายรูป
           </span>
         </div>
         {listing && listing.images.length > 0 && (
@@ -247,21 +235,33 @@ export function ListItemForm({ listing, onSaved }: Props) {
             ))}
           </div>
         )}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {imageFiles.map((file, i) => (
-            <ImageSlot
-              key={i}
-              ref={(el) => {
-                imageSlotRefs.current[i] = el;
-              }}
-              file={file}
-              onChange={(f) => updateImageAt(i, f)}
-            />
-          ))}
-          {imageFiles.length < MAX_IMAGES && (
-            <ImageSlot key={`add-${imageFiles.length}`} file={null} onChange={addImage} />
-          )}
-        </div>
+        <ImgCrop
+          rotationSlider
+          aspect={1}
+          modalTitle="ครอปรูปภาพ"
+          modalOk="ตกลง"
+          modalCancel="ยกเลิก"
+        >
+          <Upload
+            listType="picture-card"
+            fileList={fileList}
+            onChange={({ fileList: fl }) => setFileList(fl)}
+            beforeUpload={() => false}
+            accept="image/png,image/jpeg,image/webp"
+            maxCount={MAX_IMAGES}
+            onPreview={async (file) => {
+              const src = file.url ?? URL.createObjectURL(file.originFileObj as File);
+              window.open(src);
+            }}
+          >
+            {fileList.length >= MAX_IMAGES ? null : (
+              <div className="text-black/55">
+                <div className="text-[20px] leading-none">+</div>
+                <div className="mt-1.5 text-[13px]">อัปโหลด</div>
+              </div>
+            )}
+          </Upload>
+        </ImgCrop>
       </div>
 
       <div className="flex flex-col gap-[18px]">
