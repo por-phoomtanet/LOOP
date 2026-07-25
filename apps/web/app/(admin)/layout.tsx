@@ -1,5 +1,9 @@
 "use client";
 
+// Next 15 App Router รัน React 19 (bundle มากับ next เอง) — patch นี้ทำให้ AntD v5
+// imperative render (Modal/message/notification) ใช้ createRoot ของ React 19
+// ต้อง import ก่อน antd เสมอ
+import "@ant-design/v5-patch-for-react-19";
 import { App as AntdApp, ConfigProvider } from "antd";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
