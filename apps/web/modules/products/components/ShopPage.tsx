@@ -95,7 +95,7 @@ export function ShopPage({ initialCategory = null }: Props) {
     <div className="bg-white">
       {/* search + category strip */}
       <div className="border-b border-black/10 bg-black/[.02]">
-        <div className="mx-auto flex w-full max-w-[1280px] items-center gap-4 overflow-x-auto px-8 py-3.5">
+        <div className="mx-auto flex w-full max-w-[1280px] items-center gap-4 overflow-x-auto px-4 py-3.5 md:px-8">
           <div className="focus-within:border-brand-600 flex h-[37px] w-[280px] flex-none items-center gap-2.5 rounded-full border-[1.5px] border-black/[.14] bg-white px-4 transition-colors">
             <svg
               width="15"
@@ -148,7 +148,7 @@ export function ShopPage({ initialCategory = null }: Props) {
       </div>
 
       {/* product grid */}
-      <section className="mx-auto w-full max-w-[1280px] px-8 pb-24 pt-9">
+      <section className="mx-auto w-full max-w-[1280px] px-4 pb-24 pt-9 md:px-8">
         <div className="mb-6">
           <h1 className="font-arch flex items-center gap-2.5 text-[30px] font-extrabold tracking-[-.025em] text-black">
             <SkateboardDoodle className="text-brand-400" size={28} />
@@ -158,14 +158,14 @@ export function ShopPage({ initialCategory = null }: Props) {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:gap-5 md:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="bg-brand-100 aspect-square animate-pulse rounded-2xl" />
             ))}
           </div>
         ) : products.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-5 md:grid-cols-4">
               {products.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}

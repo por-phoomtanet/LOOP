@@ -195,7 +195,7 @@ export function HomePage() {
       </section>
 
       {/* search */}
-      <div className="mx-auto w-full max-w-[1280px] px-8 pt-4">
+      <div className="mx-auto w-full max-w-[1280px] px-4 pt-4 md:px-8">
         <div className="focus-within:border-brand-600 flex h-11 max-w-[480px] items-center gap-2.5 rounded-full border-[1.5px] border-black/[.14] bg-white px-[18px] transition-colors">
           <svg
             width="16"
@@ -219,7 +219,7 @@ export function HomePage() {
       </div>
 
       {/* product grid */}
-      <section id="browse" className="mx-auto w-full max-w-[1280px] px-8 pb-2 pt-9">
+      <section id="browse" className="mx-auto w-full max-w-[1280px] px-4 pb-2 pt-9 md:px-8">
         <div className="mb-6 flex items-end justify-between">
           <div>
             <h2 className="font-arch flex items-center gap-2.5 text-[30px] font-extrabold tracking-[-.025em] text-black">
@@ -237,14 +237,14 @@ export function HomePage() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:gap-5 md:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="bg-brand-100 aspect-square animate-pulse rounded-2xl" />
             ))}
           </div>
         ) : products.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 md:gap-5 md:grid-cols-4">
               {products.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
