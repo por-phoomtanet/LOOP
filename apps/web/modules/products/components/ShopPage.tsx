@@ -96,7 +96,7 @@ export function ShopPage({ initialCategory = null }: Props) {
       {/* search + category strip */}
       <div className="border-b border-black/10 bg-black/[.02]">
         <div className="mx-auto flex w-full max-w-[1280px] items-center gap-4 overflow-x-auto px-4 py-3.5 md:px-8">
-          <div className="focus-within:border-brand-600 flex h-[37px] w-[280px] flex-none items-center gap-2.5 rounded-full border-[1.5px] border-black/[.14] bg-white px-4 transition-colors">
+          <div className="focus-within:border-brand-600 flex h-[37px] w-[190px] flex-none items-center gap-2.5 rounded-full border-[1.5px] border-black/[.14] bg-white px-4 transition-colors sm:w-[280px]">
             <svg
               width="15"
               height="15"

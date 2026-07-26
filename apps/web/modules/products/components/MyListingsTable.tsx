@@ -68,13 +68,13 @@ export function MyListingsTable() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1000px] px-8 py-12">
-      <div className="mb-2 flex items-end justify-between gap-5">
+    <div className="mx-auto w-full max-w-[1000px] px-4 py-8 md:px-8 md:py-12">
+      <div className="mb-2 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
         <div>
           <div className="mb-2.5 font-mono text-[11px] uppercase tracking-[.12em] text-black/40">
             รายการของคุณ
           </div>
-          <h1 className="font-arch text-[30px] font-extrabold tracking-[-.025em] text-black">
+          <h1 className="font-arch text-[24px] font-extrabold tracking-[-.02em] text-black sm:text-[30px] sm:tracking-[-.025em]">
             รายการปล่อยเช่าของฉัน
           </h1>
           <p className="mt-2.5 max-w-[560px] text-[14.5px] text-black/55">
@@ -83,7 +83,7 @@ export function MyListingsTable() {
         </div>
         <Link
           href="/list-item"
-          className="bg-brand-600 flex-none whitespace-nowrap rounded-[10px] px-5 py-[11px] text-[14px] font-semibold text-white"
+          className="bg-brand-600 flex-none whitespace-nowrap self-start rounded-[10px] px-5 py-[11px] text-[14px] font-semibold text-white"
         >
           ลงประกาศให้เช่า
         </Link>
@@ -121,29 +121,33 @@ export function MyListingsTable() {
             return (
               <div
                 key={listing.id}
-                className="flex items-center gap-4 border-t border-black/[.08] px-5 py-4 first:border-t-0"
+                className="flex flex-col gap-3 border-t border-black/[.08] px-4 py-4 first:border-t-0 sm:flex-row sm:items-center sm:gap-4 sm:px-5"
               >
-                {listing.images[0] ? (
-                  // eslint-disable-next-line
-                  <img
-                    src={resolveUploadUrl(listing.images[0].url)}
-                    alt=""
-                    className="h-14 w-14 flex-none rounded-[10px] object-cover"
-                  />
-                ) : (
-                  <div className="h-14 w-14 flex-none rounded-[10px] bg-black/[.06]" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14.5px] font-bold text-black">{listing.title}</p>
-                  <p className="mt-[3px] text-[13px] text-black/55">฿{listing.pricePerDay} / วัน</p>
+                <div className="flex items-center gap-3 sm:min-w-0 sm:flex-1 sm:gap-4">
+                  {listing.images[0] ? (
+                    // eslint-disable-next-line
+                    <img
+                      src={resolveUploadUrl(listing.images[0].url)}
+                      alt=""
+                      className="h-14 w-14 flex-none rounded-[10px] object-cover"
+                    />
+                  ) : (
+                    <div className="h-14 w-14 flex-none rounded-[10px] bg-black/[.06]" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[14.5px] font-bold text-black">{listing.title}</p>
+                    <p className="mt-[3px] text-[13px] text-black/55">
+                      ฿{listing.pricePerDay} / วัน
+                    </p>
+                  </div>
+                  <span
+                    className="flex-none whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-semibold"
+                    style={{ background: badge.bg, color: badge.color }}
+                  >
+                    {badge.label}
+                  </span>
                 </div>
-                <span
-                  className="flex-none whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-semibold"
-                  style={{ background: badge.bg, color: badge.color }}
-                >
-                  {badge.label}
-                </span>
-                <div className="flex flex-none items-center gap-2">
+                <div className="flex flex-none flex-wrap items-center gap-2">
                   {listing.status !== "UNDER_REVIEW" && (
                     <button
                       type="button"
