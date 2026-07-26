@@ -11,8 +11,8 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   const priceText = Number(product.pricePerDay).toLocaleString("th-TH");
 
   return (
-    <div className="flex cursor-pointer flex-col rounded-2xl border border-black/10 bg-white p-3 shadow-sm">
-      <div className="bg-brand-100 relative aspect-square overflow-hidden rounded-2xl">
+    <div className="flex cursor-pointer flex-col overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
+      <div className="bg-brand-100 relative aspect-square overflow-hidden">
         {product.thumbnailUrl ? (
           // eslint-disable-next-line
           <img
@@ -42,7 +42,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
         </button>
       </div>
 
-      <div className="pt-3">
+      <div className="p-3">
         <div className="flex items-baseline justify-between gap-2">
           <h3 className="text-[15px] font-semibold leading-tight tracking-[-.01em] text-black">
             {product.title}
