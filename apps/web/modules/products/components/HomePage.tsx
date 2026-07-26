@@ -77,6 +77,8 @@ export function HomePage() {
   const [stepsVisible, setStepsVisible] = useState(false);
   const stepsSectionRef = useRef<HTMLDivElement>(null);
   const categoryScrollRef = useRef<HTMLDivElement>(null);
+  // แยกการ "ปัดเลื่อน" ออกจาก "แตะ/คลิก" ของการ์ดหมวดหมู่ — กันปัดแล้วดันไปเปิดหน้า shop โดยไม่ตั้งใจ
+  const categoryDragRef = useRef({ startX: 0, dragged: false });
 
   // เล่น animation ของ "สามขั้นตอน" ครั้งเดียวตอนเลื่อนเข้ามาในจอ
   useEffect(() => {
@@ -158,7 +160,13 @@ export function HomePage() {
     return (
       <button
         key={cat.id}
-        onClick={() => router.push(`${ROUTES.shop}?category=${encodeURIComponent(cat.slug)}`)}
+        onClick={(e) => {
+          if (categoryDragRef.current.dragged) {
+            e.preventDefault();
+            return;
+          }
+          router.push(`${ROUTES.shop}?category=${encodeURIComponent(cat.slug)}`);
+        }}
         className="relative aspect-[3/4] w-full snap-start overflow-hidden rounded-2xl text-left transition-transform hover:-translate-y-1"
         style={
           cat.imageUrl
@@ -348,7 +356,15 @@ export function HomePage() {
         <div className="relative sm:hidden">
           <div
             ref={categoryScrollRef}
-            className="snap-x snap-mandatory overflow-x-auto scroll-smooth pb-1 [&::-webkit-scrollbar]:hidden"
+            onPointerDown={(e) => {
+              categoryDragRef.current = { startX: e.clientX, dragged: false };
+            }}
+            onPointerMove={(e) => {
+              if (Math.abs(e.clientX - categoryDragRef.current.startX) > 8) {
+                categoryDragRef.current.dragged = true;
+              }
+            }}
+            className="snap-x snap-proximity overflow-x-auto overscroll-x-contain scroll-smooth pb-1 [&::-webkit-scrollbar]:hidden"
           >
             <div
               className="grid w-full grid-flow-col grid-rows-2 gap-3"
@@ -362,15 +378,15 @@ export function HomePage() {
             type="button"
             onClick={() => scrollCategories("left")}
             aria-label="เลื่อนหมวดหมู่ไปทางซ้าย"
-            className="absolute left-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-black/5 bg-white/50 text-black/40 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/80"
+            className="absolute left-0 top-1/2 flex h-1000 w-8 -translate-y-1/2 items-center justify-center border-0 bg-transparent text-black/35 transition-colors hover:text-black/60"
           >
             <svg
-              width="17"
-              height="17"
+              width="26"
+              height="56"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2.4"
+              strokeWidth="3"
             >
               <path d="M15 18l-6-6 6-6" />
             </svg>
@@ -379,15 +395,15 @@ export function HomePage() {
             type="button"
             onClick={() => scrollCategories("right")}
             aria-label="เลื่อนหมวดหมู่ไปทางขวา"
-            className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-black/5 bg-white/50 text-black/40 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/80"
+            className="absolute right-0 top-1/2 flex h-20 w-8 -translate-y-1/2 items-center justify-center border-0 bg-transparent text-black/35 transition-colors hover:text-black/60"
           >
             <svg
-              width="17"
-              height="17"
+              width="26"
+              height="26"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2.4"
+              strokeWidth="3"
             >
               <path d="M9 18l6-6-6-6" />
             </svg>
