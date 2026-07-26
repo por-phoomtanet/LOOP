@@ -352,7 +352,8 @@ export function HomePage() {
           <StarDoodle className="text-brand-yellow" size={28} />
           เลือกตามหมวดหมู่
         </h2>
-        {/* มือถือ: โชว์ 2 แถว (สัดส่วนกล่องเท่าเดิม) แล้วใช้ปุ่มลูกศร/ปัดนิ้วดูหมวดที่เหลือ */}
+        {/* มือถือ: แบ่งเป็นหน้าๆ ละ 4 กล่อง (2x2) เลื่อนทีละหน้าเต็มจอ — เลี่ยง grid-auto-columns
+            แบบ % เพราะ WebKit/Safari จริงคำนวณผิดจนกล่องหาย ใช้ grid-cols-2 ธรรมดาในแต่ละหน้าแทน */}
         <div className="relative sm:hidden">
           <div
             ref={categoryScrollRef}
@@ -364,29 +365,30 @@ export function HomePage() {
                 categoryDragRef.current.dragged = true;
               }
             }}
-            className="snap-x snap-proximity overflow-x-auto overscroll-x-contain scroll-smooth pb-1 [&::-webkit-scrollbar]:hidden"
+            className="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth [&::-webkit-scrollbar]:hidden"
           >
-            <div
-              className="grid w-full grid-flow-col grid-rows-2 gap-3"
-              style={{ gridAutoColumns: "calc((100% - 12px) / 2)" }}
-            >
-              {categories.map((cat, i) => renderCategoryTile(cat, i))}
-            </div>
+            {Array.from({ length: Math.ceil(categories.length / 4) }, (_, pageIndex) => (
+              <div key={pageIndex} className="grid w-full flex-none snap-start grid-cols-2 gap-3">
+                {categories
+                  .slice(pageIndex * 4, pageIndex * 4 + 4)
+                  .map((cat, i) => renderCategoryTile(cat, pageIndex * 4 + i))}
+              </div>
+            ))}
           </div>
 
           <button
             type="button"
             onClick={() => scrollCategories("left")}
             aria-label="เลื่อนหมวดหมู่ไปทางซ้าย"
-            className="absolute left-0 top-1/2 flex h-1000 w-8 -translate-y-1/2 items-center justify-center border-0 bg-transparent text-black/35 transition-colors hover:text-black/60"
+            className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border-0 bg-white/70 text-black/50 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/90"
           >
             <svg
-              width="26"
-              height="56"
+              width="15"
+              height="15"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="3"
+              strokeWidth="2.4"
             >
               <path d="M15 18l-6-6 6-6" />
             </svg>
@@ -395,15 +397,15 @@ export function HomePage() {
             type="button"
             onClick={() => scrollCategories("right")}
             aria-label="เลื่อนหมวดหมู่ไปทางขวา"
-            className="absolute right-0 top-1/2 flex h-20 w-8 -translate-y-1/2 items-center justify-center border-0 bg-transparent text-black/35 transition-colors hover:text-black/60"
+            className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border-0 bg-white/70 text-black/50 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/90"
           >
             <svg
-              width="26"
-              height="26"
+              width="15"
+              height="15"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="3"
+              strokeWidth="2.4"
             >
               <path d="M9 18l6-6-6-6" />
             </svg>
