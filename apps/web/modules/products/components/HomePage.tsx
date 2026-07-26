@@ -73,6 +73,7 @@ export function HomePage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [reviewIndex, setReviewIndex] = useState(0);
 
   useEffect(() => {
     if (!loaded) void fetchCategories();
@@ -132,6 +133,14 @@ export function HomePage() {
   }
 
   const hasMore = products.length < total;
+
+  function prevReview() {
+    setReviewIndex((i) => (i - 1 + REVIEWS.length) % REVIEWS.length);
+  }
+
+  function nextReview() {
+    setReviewIndex((i) => (i + 1) % REVIEWS.length);
+  }
 
   return (
     <div className="bg-white">
@@ -338,8 +347,8 @@ export function HomePage() {
       {/* reviews */}
       <section className="mx-auto w-full max-w-[1280px] px-8 py-16">
         <div className="mb-7 flex flex-wrap items-end justify-between gap-5">
-          <h2 className="font-arch flex items-center gap-2.5 text-[30px] font-extrabold tracking-[-.025em] text-black">
-            <HeartDoodle className="text-brand-600" size={28} />
+          <h2 className="font-arch flex items-center gap-2 whitespace-nowrap text-[20px] font-extrabold tracking-[-.02em] text-black sm:gap-2.5 sm:text-[30px] sm:tracking-[-.025em]">
+            <HeartDoodle className="text-brand-600 h-5 w-5 flex-none sm:h-7 sm:w-7" size={28} />
             ได้รับความไว้วางใจจากชุมชน
           </h2>
           <div className="flex items-center gap-2 text-[14px] text-black/55">
@@ -347,7 +356,64 @@ export function HomePage() {
             คะแนนเฉลี่ยจาก 8,200 การเช่า
           </div>
         </div>
-        <div className="grid gap-5 md:grid-cols-3">
+        {/* มือถือ: การ์ดเดียว เลื่อนด้วยลูกศรซ้าย/ขวา */}
+        <div className="md:hidden">
+          <div className="relative rounded-2xl border border-black/10 p-5">
+            <div className="text-brand-600 mb-3 text-[13px] tracking-[.1em]">★★★★★</div>
+            <p className="mb-4 text-[14px] leading-relaxed text-black">
+              {REVIEWS[reviewIndex].quote}
+            </p>
+            <div className="text-[13px] font-semibold text-black">{REVIEWS[reviewIndex].name}</div>
+            <div className="text-[12px] text-black/50">{REVIEWS[reviewIndex].role}</div>
+          </div>
+          <div className="mt-4 flex items-center justify-center gap-5">
+            <button
+              type="button"
+              onClick={prevReview}
+              aria-label="รีวิวก่อนหน้า"
+              className="flex h-9 w-9 flex-none items-center justify-center rounded-full border border-black/15 text-black/60 transition-colors hover:border-black/35 hover:text-black"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+            <div className="flex gap-1.5">
+              {REVIEWS.map((r, i) => (
+                <span
+                  key={r.name}
+                  className="h-1.5 w-1.5 rounded-full transition-colors"
+                  style={{ background: i === reviewIndex ? "#2D5DA8" : "rgba(10,10,10,.15)" }}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={nextReview}
+              aria-label="รีวิวถัดไป"
+              className="flex h-9 w-9 flex-none items-center justify-center rounded-full border border-black/15 text-black/60 transition-colors hover:border-black/35 hover:text-black"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div className="hidden gap-5 md:grid md:grid-cols-3">
           {REVIEWS.map((r) => (
             <div key={r.name} className="rounded-2xl border border-black/10 p-6">
               <div className="text-brand-600 mb-3.5 text-[14px] tracking-[.1em]">★★★★★</div>
@@ -360,10 +426,10 @@ export function HomePage() {
       </section>
 
       {/* cta */}
-      <section className="mx-auto w-full max-w-[1280px] px-8 pb-16">
-        <div className="border-brand-600 flex flex-wrap items-center justify-between gap-10 rounded-[22px] border-[1.5px] p-10 md:p-14">
+      <section className="mx-auto w-full max-w-[1280px] px-4 pb-16 md:px-8">
+        <div className="border-brand-600 flex flex-wrap items-center justify-between gap-6 rounded-[22px] border-[1.5px] p-6 sm:gap-10 sm:p-10 md:p-14">
           <div>
-            <h2 className="font-arch mb-2.5 text-[30px] font-extrabold leading-[1.05] tracking-[-.03em] text-black md:text-[34px]">
+            <h2 className="font-arch mb-2.5 whitespace-nowrap text-[18px] font-extrabold leading-[1.05] tracking-[-.02em] text-black sm:text-[30px] sm:tracking-[-.03em] md:text-[34px]">
               มีของที่วางทิ้งไว้เฉยๆ ไหม?
             </h2>
             <p className="max-w-[480px] text-[16px] text-black/60">

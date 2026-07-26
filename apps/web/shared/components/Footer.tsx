@@ -54,12 +54,15 @@ export function Footer() {
       <HeartDoodle className="absolute left-[38%] top-8 text-white/10" size={30} />
       <SparkleDoodle className="absolute bottom-[26%] right-[16%] text-white/10" size={30} />
 
-      <div className="relative z-10 mx-auto w-full max-w-[1280px] px-8 py-14">
-        <div className="grid gap-10 md:grid-cols-[1.4fr_2fr]">
+      <div className="relative z-10 mx-auto w-full max-w-[1280px] px-4 py-8 md:px-8 md:py-14">
+        <div className="grid gap-6 md:grid-cols-[1.4fr_2fr] md:gap-10">
           <div>
-            <div className=" flex flex-col gap-3.5">
+            <div className="grid grid-cols-3 gap-3 md:flex md:flex-col md:gap-3.5">
               {VALUES.map(({ icon: Icon, label, th }) => (
-                <div key={label} className="flex items-center gap-2.5">
+                <div
+                  key={label}
+                  className="flex flex-col items-center gap-1.5 text-center md:flex-row md:items-center md:gap-2.5 md:text-left"
+                >
                   <span
                     className="bg-brand-50 flex h-8 w-8 flex-none items-center justify-center rounded-full"
                     style={{ color: ORANGE }}
@@ -67,26 +70,26 @@ export function Footer() {
                     <Icon size={16} />
                   </span>
                   <div>
-                    <div className="font-arch text-[12.5px] font-extrabold tracking-[.04em] text-white">
+                    <div className="font-arch text-[11px] font-extrabold tracking-[.04em] text-white md:text-[12.5px]">
                       {label}
                     </div>
-                    <div className="text-[12px] text-white/60">{th}</div>
+                    <div className="text-[10.5px] text-white/60 md:text-[12px]">{th}</div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+          <div className="grid grid-cols-3 gap-3 text-center sm:gap-8 md:text-left">
             {LINK_COLUMNS.map((col) => (
               <div key={col.title}>
-                <div className="mb-3 text-[13px] font-bold text-white">{col.title}</div>
-                <ul className="flex flex-col gap-2.5">
+                <div className="mb-2 text-[13px] font-bold text-white md:mb-3">{col.title}</div>
+                <ul className="flex flex-col gap-1.5 md:gap-2.5">
                   {col.links.map((link) => (
                     <li key={link.label}>
                       <Link
                         href={link.href}
-                        className="text-[13.5px] text-white/60 transition-colors hover:text-white"
+                        className="text-[12.5px] text-white/60 transition-colors hover:text-white md:text-[13.5px]"
                       >
                         {link.label}
                       </Link>
@@ -98,7 +101,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/15 pt-6 text-[12.5px] text-white/50">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/15 pt-4 text-[12.5px] text-white/50 md:mt-8 md:pt-6">
           <span>© 2026 renty · สงวนลิขสิทธิ์</span>
           <span>
             ทำด้วย <span style={{ color: ORANGE }}>♥</span> เพื่อชุมชนคนชอบเช่า
