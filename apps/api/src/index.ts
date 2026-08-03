@@ -2,7 +2,8 @@ import { validateEnv } from "./utils/env";
 
 // ต้อง validate env ก่อน import ./app (ซึ่ง import @loop/db → PrismaClient ที่ต้องใช้ DATABASE_URL)
 // ใช้ dynamic import() หลัง validateEnv เพราะ static import ถูก hoist ขึ้นบนสุดเสมอ
-// (Bun โหลด .env ให้อัตโนมัติ จึงไม่ต้อง dotenv)
+// (dev/start script สั่ง `bun --env-file=../../.env` — โหลด .env จาก root ของ repo
+// เดียว ไม่มี apps/api/.env ของตัวเองแล้ว จึงไม่ต้องใช้ dotenv)
 validateEnv();
 
 const { app } = await import("./app");

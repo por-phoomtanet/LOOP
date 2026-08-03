@@ -5,8 +5,8 @@
   "module": "src/index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "start": "bun run src/index.ts",
+    "dev": "bun --env-file=../../.env --watch src/index.ts",
+    "start": "bun --env-file=../../.env run src/index.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "bun test",
     "lint": "eslint src --ext .ts"
