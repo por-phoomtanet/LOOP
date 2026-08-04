@@ -8,6 +8,7 @@ import { authRoutes } from "./routes/auth.routes";
 import { categoryRoutes } from "./routes/category.routes";
 import { healthRoutes } from "./routes/health.routes";
 import { meRoutes } from "./routes/me.routes";
+import { ocrRoutes } from "./routes/ocr.routes";
 import { productRoutes } from "./routes/product.routes";
 import { rentalRoutes } from "./routes/rental.routes";
 import { roleRoutes } from "./routes/role.routes";
@@ -36,6 +37,7 @@ export const app = new Elysia()
   .use(healthRoutes)
   .use(authRoutes)
   .use(categoryRoutes)
+  .use(ocrRoutes)
   .use(userRoutes)
   .use(adminRoutes)
   .use(roleRoutes)

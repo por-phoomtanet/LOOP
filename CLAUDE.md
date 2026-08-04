@@ -667,10 +667,19 @@ function resolveRentPrice(
 ### 23. AI Slip Verification (เฉพาะ LOOP — ตรวจสลิปโอนเงินผ่าน OpenRouter Vision, ดู Phase 10)
 ใช้ vision-capable LLM ผ่าน OpenRouter (ไม่ใช่ dedicated slip-verification API เช่น EasySlip/SlipOK) อ่านรูปสลิปแล้วคืน JSON — pattern เดียวกับที่เคยใช้ได้ผลจริงในโปรเจกต์ `telegrom-bot-group` (ดู `apps/bot/src/services/ai.ts` ของโปรเจกต์นั้นเป็นต้นแบบ):
 - **API key อยู่ฝั่ง server เท่านั้น** (`OPENROUTER_API_KEY` ใน root `.env`) อ่านแบบ lazy เหมือน Dev Standard #22
+- **ทุก request ไป OpenRouter ต้องส่ง `provider: { data_collection: "deny" }`** ใน body เสมอ — บังคับให้ OpenRouter route ไปเฉพาะ provider ที่ไม่เก็บ/ไม่ train ข้อมูลจาก request (สลิปมีชื่อ-นามสกุลจริงของผู้ใช้ ถือเป็น PII)
 - **ห้าม trust ค่าที่ AI อ่านได้เพียงอย่างเดียว** — ต้อง cross-check `amount` ที่ AI อ่านกับ `Rental.totalAmount` ที่ snapshot ไว้จริงในระบบเสมอ (ไม่ใช่แค่โชว์ค่าที่ AI อ่านมาเฉยๆ แล้วเชื่อ) และต้องมี unique constraint บน `reference` (เลขอ้างอิงสลิป) กัน slip เดิมถูกใช้ซ้ำ (replay) ข้ามหลาย rental
 - **นี่คือ OCR อ่านตัวอักษรในรูป ไม่ใช่การเช็คกับธนาคารจริง** ต่างจาก EasySlip/SlipOK ที่ verify ผ่าน QR payload กับธนาคารโดยตรง — มีช่องโหว่ต่อสลิปปลอม (fake slip generator) มากกว่า ถ้าเจอปัญหาสลิปปลอมเยอะขึ้นค่อยพิจารณาสลับ provider ทีหลัง (ออกแบบ `analyzeSlip()` แยกเป็น pure function เดียว สลับ implementation ได้โดยไม่กระทบส่วนอื่น)
 - **Test ห้ามยิง OpenRouter จริง** — mock `fetch` เสมอใน `bun test`
 - prompt ต้องบังคับให้ AI ตอบ JSON เท่านั้น (ห้ามมีข้อความอื่นปน) แล้ว parse ด้วย regex ดึงเฉพาะส่วน `{...}` ก่อน `JSON.parse` เผื่อ AI แถมข้อความมาด้วย
+
+### 24. AI ID Card OCR (เฉพาะ LOOP — OCR บัตรประชาชนตอนสมัครสมาชิกผ่าน OpenRouter Vision, ดู Phase 11)
+ใช้ pattern เดียวกับ Dev Standard #23 (OpenRouter vision + prompt บังคับ JSON + regex ดึง `{...}` ก่อน parse + `provider: { data_collection: "deny" }` เสมอ — รูปบัตรมี PII เต็มใบ เลขบัตร/ชื่อ/ที่อยู่/วันเกิด/รูปหน้า เข้มกว่าสลิปอีก) แต่มีจุดต่างสำคัญเพราะรันตอน **ก่อน** มีบัญชีผู้ใช้:
+- **endpoint OCR เอง (`POST /api/ocr/id-card`) ไม่ต้อง auth** — รันได้ทันทีหลังผู้ใช้ครอปรูปบัตรเสร็จระหว่างกรอกฟอร์มสมัคร (ยังไม่มี user จริงให้ auth) แค่คืนผล OCR กลับไปเฉยๆ **ไม่บันทึกอะไรลง DB ที่ endpoint นี้** — ข้อมูลจะถูกบันทึกจริงพร้อมกับตอนสร้างบัญชี (`POST /api/auth/register`) เท่านั้น เพื่อกัน orphan data จากคนที่ OCR แล้วไม่กดสมัครต่อ
+- **ผู้ใช้ต้องยืนยัน/แก้ไขข้อมูลได้ก่อนส่ง** — ค่าที่ AI อ่านมาเป็นแค่ค่าเริ่มต้นในฟอร์ม (editable fields) ไม่ auto-submit ตรงๆ เพราะ vision OCR อ่านผิดได้ (ตัวเลขติดกัน, ลายมือ, แสงสะท้อน)
+- **กันเลขบัตรซ้ำตอน register** — `User.idCardNumber` unique, ถ้าเลขซ้ำกับ user อื่นที่มีอยู่แล้ว → 409 ตอนสมัคร (กันสมัครหลายบัญชีด้วยบัตรใบเดียว)
+- **ไม่ block การสมัครถ้า OCR ล้มเหลว/รูปไม่ชัด** — แค่ไม่มีค่าให้ auto-fill ผู้ใช้กรอกเองได้ (เหมือน Dev Standard #17 ทั่วไป — error ไม่ทำให้ flow ตัน)
+- ไม่รวม face liveness ใน Phase นี้ (ดู Phase 9 ที่พับไว้ ถ้าจะทำภายหลัง)
 
 ---
 
@@ -853,6 +862,11 @@ function resolveRentPrice(
   - หมายเหตุการออกแบบ: ปุ่ม OCR/face-verify ระหว่างกรอกฟอร์ม (ก่อนมี user จริง) เป็น mock แบบ client-only ตาม prototype เดิม — พอกด "สร้างบัญชี" ถึงเรียก `POST /api/auth/register` แล้ว `setAuth()` เข้า authStore ทันที ตามด้วยอัปโหลดไฟล์บัตร/ยิง face-verify จริงถ้าผู้ใช้กดไว้ (ไม่ block flow ถ้าล้มเหลว ให้แก้ทีหลังได้)
   - 🧪 test: เปิด `/signup` → ตรงกับภาพอ้างอิง ✅ | กรอกครบ + กด OCR/face-verify mock + submit → เรียก `/api/auth/register` สำเร็จ → ไปขั้นตอน OTP ✅ (ตรวจผ่าน Playwright end-to-end, `console --errors` ว่าง)
   - 📝 commit: `feat(web): signup form matching reference design`
+
+  - [x] FIX #1 (เพิ่มทีหลัง — บังคับยอมรับ PDPA ก่อนสมัคร): พอ Phase 10/11 เริ่มเก็บข้อมูลส่วนบุคคลจริง (เลขบัตรประชาชน, ที่อยู่, วันเกิด, ชื่อ-นามสกุลจริงของผู้ปล่อยเช่า, สลิปโอนเงิน) checkbox ยอมรับ PDPA ที่ควรมีตั้งแต่แรกยังไม่มีเลย — เพิ่ม `User.pdpaConsentedAt DateTime?` (เก็บเป็นหลักฐานยินยอมจริง ไม่ใช่แค่ state ฝั่ง UI ที่ตรวจสอบไม่ได้), `registerSchema` เพิ่ม `pdpaConsent: z.literal(true, {message:'...'})` (บังคับ ห้ามสมัครถ้าไม่ส่งมาเป็น `true` เป๊ะ), `auth.service.ts::register` set `pdpaConsentedAt: new Date()` ตอนสร้าง user เสมอ
+    - Web: เพิ่ม checkbox ในหน้า `/signup` (ต้องติ๊กก่อนปุ่ม "สร้างบัญชี" ถึงจะกดได้ — รวมอยู่ใน `canSubmit`) + `PdpaModal.tsx` ใหม่ (ปุ่ม "นโยบายความเป็นส่วนตัว (PDPA)" ใน label เปิด modal) เขียนเนื้อหาเองให้ตรงกับข้อมูลจริงที่ระบบเก็บ (ไม่ใช่ template ทั่วไป) ครอบคลุม: ข้อมูลที่เก็บ, วัตถุประสงค์, การส่งรูปไปประมวลผลผ่าน OpenRouter (บุคคลภายนอก), นโยบาย mask เลขบัตรตอนแสดงผล, สิทธิเจ้าของข้อมูล
+    - 🧪 test: สมัครไม่ติ๊ก PDPA → 400 (ปุ่ม submit ก็ disabled อยู่แล้วฝั่ง UI ด้วย) ✅ | ติ๊กแล้วสมัคร → 201, `pdpaConsentedAt` ถูกตั้งค่า ✅ | `bun test` **114/114 ผ่าน** (เพิ่ม 1 เคสใหม่ + อัปเดต `registerUser()` helper ให้ทุก test เดิมยังผ่าน) ✅ | `npx tsc`/`eslint`/`next build` ผ่านทั้ง api/web (17/17 pages) ✅
+    - 📝 commit: `feat: require pdpa consent checkbox before registration`
 
 - [x] 3.7 Web: ขั้นตอน OTP + หน้าสำเร็จ (`modules/auth/components/OtpStep.tsx`, `SignupPage.tsx`)
   - เลือกช่องทาง (อีเมล/เบอร์โทร) พร้อม mask ปลายทาง, กรอกรหัส 6 หลัก, ปุ่ม "ยืนยันและสร้างบัญชี" → หน้าสำเร็จ "สร้างบัญชีสำเร็จ!" + ปุ่ม "กลับหน้าแรก"
@@ -1258,4 +1272,52 @@ function resolveRentPrice(
   - 📝 commit: รวมอยู่ในแต่ละ commit ของ 10.4/10.6
 
 ---
+
+### Phase 11 — OCR บัตรประชาชนตอนสมัครสมาชิก (OpenRouter Vision)
+
+> **ที่มา:** ต่อยอดจากช่องอัปโหลด+ครอปรูปบัตรประชาชนที่มีอยู่แล้วใน `SignupForm.tsx` (antd Upload + ImgCrop) — พอผู้ใช้ครอปรูปเสร็จ ให้ระบบ OCR อ่านข้อมูลจากรูปทันที (เลขบัตร, ชื่อ-นามสกุล, ที่อยู่, วันเกิด) แสดงผลใต้รูปให้ผู้ใช้ตรวจสอบ/แก้ไข แล้วเก็บลงระบบตอนกดสร้างบัญชี — ใช้ **OpenRouter vision** (provider เดียวกับ Phase 10 slip verification, มี `OPENROUTER_API_KEY` พร้อมใช้อยู่แล้วใน `.env`) แทน iApp Technology ที่ Phase 9 เคยเลือกไว้ (ต้องสมัครบัญชีแยกต่างหาก ยังพับไว้) — ดูกฎเต็มใน [Dev Standard #24](#24-ai-id-card-ocr-เฉพาะ-loop--ocr-บัตรประชาชนตอนสมัครสมาชิกผ่าน-openrouter-vision-ดู-phase-11)
+>
+> **หมายเหตุขอบเขต:** ทำเฉพาะ OCR เท่านั้น **ไม่รวม face liveness** (ส่วนนั้นยังอยู่ใน Phase 9 ที่พับไว้ก่อน) — และต่างจาก Phase 9 เดิมตรงที่ OCR รันได้ **ก่อน** สร้างบัญชี (ไม่ต้อง auth) เพราะใช้ endpoint แยกที่ไม่ผูกกับ user คนใดคนหนึ่ง แก้ปัญหาเดิมที่ Phase 9 ต้องย้าย OCR ไปไว้หลังสมัครเพราะ endpoint เดิมเป็น owner-only
+
+- [x] 11.1 DB: เพิ่มฟิลด์ผล OCR บน `User` + migration
+  - `idCardNumber String? @unique` (กันสมัครซ้ำด้วยบัตรใบเดียว), `idCardNameTh String?`, `idCardNameEn String?`, `idCardAddress String?`, `idCardDob DateTime?`
+  - 🧪 test: migration `20260804161704_add_id_card_ocr_fields_to_user` apply สำเร็จ ✅ (ใช้ `prisma migrate diff` + `migrate deploy` แทน `migrate dev` เพราะ unique constraint warning ติด non-interactive prompt เหมือน Phase 10)
+  - 📝 commit: `feat(db): add id card ocr fields to user`
+
+- [x] 11.2 API: `apps/api/src/services/kyc/idCardAi.ts` — OpenRouter vision analyzer สำหรับบัตรประชาชน
+  - เหมือน `slipAi.ts` (Phase 10) เป๊ะ แค่เปลี่ยน prompt ให้คืน `{idNumber, nameTh, nameEn, address, dob, valid}` แทน — สั่งให้ AI แปลงวันเกิดจาก พ.ศ. เป็น ค.ศ. ในตัว prompt เลย (ไม่ต้องเขียน logic แปลงปีเอง)
+  - อ่าน `OPENROUTER_API_KEY`/`OPENROUTER_MODEL` แบบ lazy เหมือน Dev Standard #23/#24
+  - 🧪 test: `bun test tests/idCardAi.test.ts` → **5/5 ผ่าน** happy path + JSON ปนข้อความอื่น + AI ไม่ตอบ JSON เลย + non-2xx + `OPENROUTER_API_KEY` ไม่ถูกตั้ง ✅
+  - 📝 commit: `feat(api): add openrouter vision id card ocr analyzer`
+
+- [x] 11.3 API: `POST /api/ocr/id-card` — endpoint OCR สาธารณะ (ไม่ auth)
+  - รับ multipart `file` → เรียก `analyzeIdCard()` → คืนผลตรงๆ **ไม่บันทึกอะไรลง DB** (ดู Dev Standard #24 — กัน orphan data จากคนที่ OCR แล้วไม่สมัครต่อ)
+  - 🧪 test: OCR สำเร็จ → คืนฟิลด์ครบ ✅ | ไม่มีไฟล์แนบ → 400 ✅ | ไม่ต้อง auth (เรียกได้โดยไม่มี token) ✅ | ยืนยันไม่ persist จริงด้วยการ register ตามด้วยเลขบัตรเดียวกัน → 201 ไม่ชนซ้ำ ✅
+  - 📝 commit: `feat(api): add public id card ocr endpoint`
+
+- [x] 11.4 API: ขยาย `POST /api/auth/register` ให้รับ+เก็บฟิลด์ OCR
+  - เพิ่ม `idCardNumber`/`idCardNameTh`/`idCardNameEn`/`idCardAddress`/`idCardDob` เป็น optional ใน `registerSchema` — เก็บลง `User` พร้อมตอนสร้างบัญชีเลย
+  - เช็ค `idCardNumber` ซ้ำกับ user อื่น (ถ้ามีส่งมา) → 409 `ConflictError('บัตรประชาชนนี้ถูกใช้สมัครสมาชิกไปแล้ว')` ก่อน create
+  - 🧪 test: สมัครพร้อมข้อมูล OCR → เก็บครบถูกต้อง ✅ | สมัครไม่มีข้อมูล OCR (เดิม) → ยังทำงานปกติ ไม่ error ✅ | เลขบัตรซ้ำ → 409 ✅
+  - 📝 commit: `feat(api): store confirmed id card ocr fields on registration`
+
+- [x] 11.5 Web: `authApi.ts` เพิ่ม `ocrIdCard(file)`
+  - เรียก `POST /api/ocr/id-card` (ไม่ต้องส่ง token — endpoint public)
+  - 🧪 test: `npx tsc -p apps/web/tsconfig.json --noEmit` ผ่าน ✅
+  - 📝 commit: `feat(web): add id card ocr api call`
+
+- [x] 11.6 Web: `SignupForm.tsx` — เรียก OCR อัตโนมัติหลังครอปรูปเสร็จ + แสดงผล/ให้แก้ไขใต้รูป
+  - `useEffect` ดัก `idCardFileList[0]?.originFileObj` เปลี่ยน → เรียก `ocrIdCard()` อัตโนมัติ, แสดง loading text สั้นๆ ระหว่างรอ
+  - แสดงผลลัพธ์เป็นฟอร์มแก้ไขได้ใต้รูป (component ใหม่ `OcrField`) — เลขบัตร, ชื่อ-นามสกุล (ไทย/อังกฤษ), ที่อยู่, วันเกิด — ให้ผู้ใช้ตรวจ/แก้ก่อนกดสร้างบัญชี ตามที่ขอ ("ให้ผู้ใช้ยืนยันข้อมูล")
+  - OCR ล้มเหลว/รูปไม่ชัด → ไม่ block การสมัคร แค่แสดง banner เตือนแล้วปล่อยช่องว่างให้กรอกเอง (Dev Standard #24)
+  - ตอนกด "สร้างบัญชี" → ส่งค่าที่ผู้ใช้ยืนยัน/แก้ไขแล้วไปพร้อม `register()` (เฉพาะ field ที่มีค่า)
+  - ลบปุ่ม "ดึงข้อมูลจากรูปภาพ (จำลอง)" เดิมออกทั้งหมด (OCR รันอัตโนมัติแทน ไม่ต้องกดเอง) — คงปุ่ม face-verify mock ไว้ตามเดิม (นอกขอบเขต Phase นี้)
+  - error handling ตาม Dev Standard #17
+  - 🧪 test: `npx tsc`/`eslint`/`next build` ผ่านทั้งหมด (17/17 pages) ✅ (ยังไม่ได้รัน Playwright จริงรอบนี้ — ตรวจแค่ typecheck/build)
+  - 📝 commit: `feat(web): show editable ocr results under id card photo during signup`
+
+- [x] 11.7 Auto test: ครอบคลุมทุก endpoint ใหม่โดยไม่ยิง OpenRouter จริง
+  - Mock `global.fetch` ใน `bun test` เหมือน pattern ของ `slipAi.test.ts`/`rental.test.ts`
+  - 🧪 test: `bun test` (ทั้ง apps/api) → **113/113 ผ่าน** (เพิ่มจากเดิม 102 → 113 คือ 11 เคสใหม่: 5 idCardAi + 6 register/ocr) รวมเคส idCardNumber ซ้ำ, ไม่มี OCR ก็สมัครได้ปกติ, ไม่ persist ที่ endpoint OCR, ไม่ต้อง auth ✅ | `npx tsc --noEmit` ทั้ง api/web ผ่าน ✅ | `eslint` ทั้ง api/web ผ่าน ✅
+  - 📝 commit: รวมอยู่ในแต่ละ commit ของ 11.2/11.3/11.4
 

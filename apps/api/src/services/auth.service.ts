@@ -31,9 +31,20 @@ export async function register(input: {
   email: string;
   phone: string;
   password: string;
+  idCardNumber?: string;
+  idCardNameTh?: string;
+  idCardNameEn?: string;
+  idCardAddress?: string;
+  idCardDob?: string;
+  pdpaConsent: true;
 }) {
   const existing = await userRepository.findByEmail(input.email);
   if (existing) throw new ConflictError("อีเมลนี้ถูกใช้แล้ว");
+
+  if (input.idCardNumber) {
+    const existingIdCard = await userRepository.findByIdCardNumber(input.idCardNumber);
+    if (existingIdCard) throw new ConflictError("บัตรประชาชนนี้ถูกใช้สมัครสมาชิกไปแล้ว");
+  }
 
   const passwordHash = await hashPassword(input.password);
   const user = await userRepository.create({
@@ -42,6 +53,12 @@ export async function register(input: {
     phone: input.phone,
     accountType: input.accountType,
     passwordHash,
+    ...(input.idCardNumber ? { idCardNumber: input.idCardNumber } : {}),
+    ...(input.idCardNameTh ? { idCardNameTh: input.idCardNameTh } : {}),
+    ...(input.idCardNameEn ? { idCardNameEn: input.idCardNameEn } : {}),
+    ...(input.idCardAddress ? { idCardAddress: input.idCardAddress } : {}),
+    ...(input.idCardDob ? { idCardDob: new Date(input.idCardDob) } : {}),
+    pdpaConsentedAt: new Date(),
   });
 
   const token = signToken({ userId: user.id, role: user.role });

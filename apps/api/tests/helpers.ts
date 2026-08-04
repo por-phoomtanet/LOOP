@@ -13,6 +13,7 @@ export async function registerUser(prefix: string) {
     email,
     phone: "0812345678",
     password: "password123",
+    pdpaConsent: true,
   });
   return { email, token: res.body.data.token as string, userId: res.body.data.user.id as number };
 }

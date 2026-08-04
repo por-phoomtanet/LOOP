@@ -1,18 +1,17 @@
 "use client";
 
+// ต้อง import ก่อน antd/antd-img-crop เพื่อให้ crop modal ใช้ createRoot ของ React 19
+import "@ant-design/v5-patch-for-react-19";
+import { Upload } from "antd";
+import type { UploadFile } from "antd";
+import ImgCrop from "antd-img-crop";
 import axios from "axios";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { EyeIcon } from "@/shared/components/EyeIcon";
 import { authApi } from "../services/authApi";
-import type { AccountType, OcrMockResult, RegisterResult } from "../types";
-
-const MOCK_OCR_RESULT: OcrMockResult = {
-  name: "SOMCHAI JAIDEE",
-  idNumber: "1-2345-67890-12-3",
-  dob: "1995-05-12",
-  expiry: "2030-05-12",
-};
+import type { AccountType, RegisterResult } from "../types";
+import { PdpaModal } from "./PdpaModal";
 
 type Props = {
   onRegistered: (
@@ -28,14 +27,55 @@ export function SignupForm({ onRegistered }: Props) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [idCardFile, setIdCardFile] = useState<File | null>(null);
-  const [ocrShown, setOcrShown] = useState(false);
+  const [idCardFileList, setIdCardFileList] = useState<UploadFile[]>([]);
   const [faceVerifiedMock, setFaceVerifiedMock] = useState(false);
   const [faceModalOpen, setFaceModalOpen] = useState(false);
+  const [pdpaAccepted, setPdpaAccepted] = useState(false);
+  const [pdpaModalOpen, setPdpaModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const canSubmit = name.trim() && email.trim() && phone.trim() && password.length >= 8;
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrError, setOcrError] = useState<string | null>(null);
+  const [idCardNumber, setIdCardNumber] = useState("");
+  const [idCardNameTh, setIdCardNameTh] = useState("");
+  const [idCardNameEn, setIdCardNameEn] = useState("");
+  const [idCardAddress, setIdCardAddress] = useState("");
+  const [idCardDob, setIdCardDob] = useState("");
+
+  const canSubmit =
+    name.trim() && email.trim() && phone.trim() && password.length >= 8 && pdpaAccepted;
+
+  // พอครอปรูปบัตรเสร็จ (originFileObj เปลี่ยน) ให้ OCR อัตโนมัติทันที — ไม่ต้องรอผู้ใช้กดปุ่ม
+  const idCardOriginFile = idCardFileList[0]?.originFileObj as File | undefined;
+  useEffect(() => {
+    if (!idCardOriginFile) return;
+    let cancelled = false;
+    setOcrLoading(true);
+    setOcrError(null);
+    authApi
+      .ocrIdCard(idCardOriginFile)
+      .then((res) => {
+        if (cancelled) return;
+        const data = res.data.data;
+        setIdCardNumber(data.idNumber ?? "");
+        setIdCardNameTh(data.nameTh ?? "");
+        setIdCardNameEn(data.nameEn ?? "");
+        setIdCardAddress(data.address ?? "");
+        setIdCardDob(data.dob ?? "");
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        const msg = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
+        setOcrError(typeof msg === "string" ? msg : "อ่านข้อมูลจากบัตรไม่สำเร็จ กรุณากรอกเอง");
+      })
+      .finally(() => {
+        if (!cancelled) setOcrLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [idCardOriginFile]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,7 +84,21 @@ export function SignupForm({ onRegistered }: Props) {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await authApi.register({ accountType, name, email, phone, password });
+      const res = await authApi.register({
+        accountType,
+        name,
+        email,
+        phone,
+        password,
+        pdpaConsent: true,
+        ...(idCardNumber.trim() ? { idCardNumber: idCardNumber.trim() } : {}),
+        ...(idCardNameTh.trim() ? { idCardNameTh: idCardNameTh.trim() } : {}),
+        ...(idCardNameEn.trim() ? { idCardNameEn: idCardNameEn.trim() } : {}),
+        ...(idCardAddress.trim() ? { idCardAddress: idCardAddress.trim() } : {}),
+        ...(idCardDob.trim() ? { idCardDob: idCardDob.trim() } : {}),
+      });
+      // ไฟล์ที่ครอปแล้วอยู่ใน originFileObj (antd-img-crop แทนที่ให้หลังครอป)
+      const idCardFile = idCardOriginFile ?? null;
       onRegistered(res.data.data, idCardFile, faceVerifiedMock);
     } catch (err) {
       const msg = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
@@ -123,37 +177,81 @@ export function SignupForm({ onRegistered }: Props) {
           ใช้เพื่อยืนยันตัวตนสำหรับการเช่าที่ปลอดภัย ไม่เปิดเผยต่อผู้ใช้อื่น
         </p>
 
-        <label className="flex h-[140px] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-black/20 bg-black/[.02] text-black/40 transition-colors hover:border-black/35">
-          <input
-            type="file"
+        <ImgCrop
+          rotationSlider
+          aspect={1.586}
+          modalTitle="ครอปรูปบัตรประชาชน"
+          modalOk="ตกลง"
+          modalCancel="ยกเลิก"
+        >
+          <Upload
+            listType="picture-card"
+            fileList={idCardFileList}
+            onChange={({ fileList: fl }) => {
+              // antd cache thumbUrl ตาม uid เดิม ไม่รู้ว่า antd-img-crop แทนที่ originFileObj
+              // ด้วยรูปที่ครอป/หมุนแล้ว (lib ไม่ set thumbUrl ใหม่ให้เอง) — gen เองจาก
+              // originFileObj ล่าสุดเสมอ ไม่งั้น preview จะค้างเป็นรูปก่อนครอป
+              const withFreshThumb = fl.map((f) =>
+                f.originFileObj
+                  ? { ...f, thumbUrl: URL.createObjectURL(f.originFileObj as File) }
+                  : f,
+              );
+              setIdCardFileList(withFreshThumb);
+            }}
+            // antd-img-crop มีบั๊กเก่า (เปิดมาตั้งแต่ปี 2021 ยังไม่แก้): ถ้า beforeUpload คืนค่า
+            // false ตรงๆ ตัว runBeforeUpload ภายในจะทิ้งไฟล์ที่ครอปแล้วไปเลย ใช้ไฟล์เดิมก่อนครอปแทน
+            // (github.com/nanxiaobei/antd-img-crop/issues/123) — ห้ามใช้ beforeUpload={() => false}
+            // แก้ด้วยการกันอัปโหลดจริงผ่าน customRequest แบบ no-op แทน
+            customRequest={({ onSuccess }) => onSuccess?.("ok")}
             accept="image/png,image/jpeg,image/jpg"
-            className="hidden"
-            onChange={(e) => setIdCardFile(e.target.files?.[0] ?? null)}
-          />
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
+            maxCount={1}
+            onPreview={async (file) => {
+              const src = file.url ?? URL.createObjectURL(file.originFileObj as File);
+              window.open(src);
+            }}
           >
-            <rect x="3" y="5" width="18" height="14" rx="2" />
-            <circle cx="9" cy="11" r="2" />
-            <path d="M21 16l-4.5-4.5a2 2 0 0 0-2.8 0L7 18" />
-          </svg>
-          <span className="text-[13px]">{idCardFile ? idCardFile.name : "ID card photo"}</span>
-        </label>
+            {idCardFileList.length >= 1 ? null : (
+              <div className="text-black/55">
+                <div className="text-[20px] leading-none">+</div>
+                <div className="mt-1.5 text-[13px]">อัปโหลด</div>
+              </div>
+            )}
+          </Upload>
+        </ImgCrop>
       </div>
 
+      {ocrLoading && (
+        <div className="mb-6 rounded-xl border border-black/10 bg-black/[.02] p-4 text-center text-[13px] text-black/50">
+          กำลังอ่านข้อมูลจากบัตรประชาชน…
+        </div>
+      )}
+
+      {ocrError && (
+        <div className="mb-6 rounded-lg bg-amber-50 px-4 py-3 text-[13px] text-amber-700">
+          {ocrError}
+        </div>
+      )}
+
+      {!ocrLoading &&
+        (idCardNumber || idCardNameTh || idCardNameEn || idCardAddress || idCardDob) && (
+          <div className="mb-6 rounded-xl border border-black/10 bg-black/[.02] p-4 text-[13px]">
+            <div className="mb-3 font-semibold text-black/70">ตรวจสอบข้อมูลจากบัตรประชาชน</div>
+            <OcrField label="เลขบัตรประชาชน" value={idCardNumber} onChange={setIdCardNumber} />
+            <OcrField label="ชื่อ-นามสกุล (ไทย)" value={idCardNameTh} onChange={setIdCardNameTh} />
+            <OcrField
+              label="ชื่อ-นามสกุล (อังกฤษ)"
+              value={idCardNameEn}
+              onChange={setIdCardNameEn}
+            />
+            <OcrField label="ที่อยู่" value={idCardAddress} onChange={setIdCardAddress} />
+            <OcrField label="วันเกิด" value={idCardDob} onChange={setIdCardDob} type="date" last />
+            <p className="mt-3 text-[11.5px] text-black/40">
+              ระบบอ่านข้อมูลอัตโนมัติ กรุณาตรวจสอบและแก้ไขให้ถูกต้องก่อนสร้างบัญชี
+            </p>
+          </div>
+        )}
+
       <div className="mb-6 flex flex-wrap gap-2.5">
-        <button
-          type="button"
-          onClick={() => setOcrShown(true)}
-          className="rounded-full border border-black/[.16] px-4 py-2 text-[12.5px] font-semibold text-black/70 hover:border-black/35"
-        >
-          ดึงข้อมูลจากรูปภาพ (จำลอง)
-        </button>
         <button
           type="button"
           onClick={() => setFaceModalOpen(true)}
@@ -162,22 +260,6 @@ export function SignupForm({ onRegistered }: Props) {
           📱 ยืนยันใบหน้าผ่านโทรศัพท์{faceVerifiedMock ? " ✓" : ""}
         </button>
       </div>
-
-      {ocrShown && (
-        <div className="mb-6 rounded-xl border border-black/10 bg-black/[.02] p-4 text-[13px]">
-          <div className="mb-2 font-semibold text-black/70">ผลลัพธ์จากรูปภาพ (จำลอง)</div>
-          <dl className="grid grid-cols-2 gap-y-1.5 text-black/60">
-            <dt>ชื่อ</dt>
-            <dd className="text-right text-black">{MOCK_OCR_RESULT.name}</dd>
-            <dt>เลขบัตรประชาชน</dt>
-            <dd className="text-right text-black">{MOCK_OCR_RESULT.idNumber}</dd>
-            <dt>วันเกิด</dt>
-            <dd className="text-right text-black">{MOCK_OCR_RESULT.dob}</dd>
-            <dt>วันหมดอายุ</dt>
-            <dd className="text-right text-black">{MOCK_OCR_RESULT.expiry}</dd>
-          </dl>
-        </div>
-      )}
 
       {faceModalOpen && (
         <div className="mb-6 rounded-xl border border-black/10 bg-black/[.02] p-4 text-center text-[13px]">
@@ -198,6 +280,29 @@ export function SignupForm({ onRegistered }: Props) {
         </div>
       )}
 
+      <label className="mb-6 flex items-start gap-2.5 text-[13px] text-black/70">
+        <input
+          type="checkbox"
+          checked={pdpaAccepted}
+          onChange={(e) => setPdpaAccepted(e.target.checked)}
+          className="mt-0.5 h-4 w-4 flex-none accent-[#2D5DA8]"
+        />
+        <span>
+          ฉันยอมรับ{" "}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              setPdpaModalOpen(true);
+            }}
+            className="text-brand-600 underline underline-offset-2"
+          >
+            นโยบายความเป็นส่วนตัว (PDPA)
+          </button>{" "}
+          เกี่ยวกับการเก็บและใช้ข้อมูลส่วนบุคคลของฉันในระบบ
+        </span>
+      </label>
+
       <button
         type="submit"
         disabled={!canSubmit || submitting}
@@ -205,7 +310,35 @@ export function SignupForm({ onRegistered }: Props) {
       >
         {submitting ? "กำลังสร้างบัญชี…" : "สร้างบัญชี"}
       </button>
+
+      <PdpaModal open={pdpaModalOpen} onClose={() => setPdpaModalOpen(false)} />
     </form>
+  );
+}
+
+function OcrField({
+  label,
+  value,
+  onChange,
+  type = "text",
+  last = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+  last?: boolean;
+}) {
+  return (
+    <div className={last ? "" : "mb-3"}>
+      <label className="mb-1 block text-[12px] text-black/50">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="focus:border-brand-400 w-full rounded-lg border border-black/[.14] px-3 py-2 text-[13.5px] outline-none transition-colors"
+      />
+    </div>
   );
 }
 

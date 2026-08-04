@@ -15,6 +15,14 @@ const registerSchema = z.object({
   email: z.string().email(),
   phone: z.string().min(1),
   password: z.string().min(8, "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร"),
+  // ผลจาก OCR ที่ผู้ใช้ตรวจ/แก้ไขแล้ว (Phase 11) — ไม่บังคับ ผู้ใช้อาจข้ามการอัปโหลดบัตรได้
+  idCardNumber: z.string().min(1).optional(),
+  idCardNameTh: z.string().min(1).optional(),
+  idCardNameEn: z.string().min(1).optional(),
+  idCardAddress: z.string().min(1).optional(),
+  idCardDob: z.string().min(1).optional(),
+  // บังคับต้องเป็น true เท่านั้น — ห้ามสมัครโดยไม่ติ๊กยอมรับ PDPA
+  pdpaConsent: z.literal(true, { message: "กรุณายอมรับเงื่อนไข PDPA ก่อนสมัครสมาชิก" }),
 });
 
 const otpRequestSchema = z.object({

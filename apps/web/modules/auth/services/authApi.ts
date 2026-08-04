@@ -1,6 +1,6 @@
 import { api } from "@/shared/services/api";
 import type { ApiResponse, User } from "@/types";
-import type { RegisterInput, RegisterResult } from "../types";
+import type { IdCardOcrResult, RegisterInput, RegisterResult } from "../types";
 
 export const authApi = {
   login(email: string, password: string) {
@@ -12,6 +12,13 @@ export const authApi = {
 
   register(input: RegisterInput) {
     return api.post<ApiResponse<RegisterResult>>("/auth/register", input);
+  },
+
+  ocrIdCard(file: File) {
+    const form = new FormData();
+    form.append("file", file);
+    // endpoint public — ไม่ต้องมี token, รันได้ก่อนสร้างบัญชี (ดู Dev Standard #24)
+    return api.post<ApiResponse<IdCardOcrResult>>("/ocr/id-card", form);
   },
 
   requestOtp(method: "email" | "phone") {

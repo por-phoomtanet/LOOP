@@ -59,6 +59,12 @@ model User {
   faceVerified       Boolean            @default(false)
   legalName          String? // ชื่อ-นามสกุลจริงตามบัญชีธนาคาร ใช้เทียบกับชื่อผู้รับในสลิป (Phase 10) — คนละฟิลด์กับ name ที่เป็นชื่อแสดงในระบบ
   promptPayQrUrl     String? // รูป QR พร้อมเพย์ที่เจ้าของอัปโหลดเอง (Phase 10)
+  idCardNumber       String?            @unique // OCR ตอนสมัคร (Phase 11) — กันสมัครซ้ำด้วยบัตรใบเดียว
+  idCardNameTh       String?
+  idCardNameEn       String?
+  idCardAddress      String?
+  idCardDob          DateTime?
+  pdpaConsentedAt    DateTime? // ยอมรับนโยบาย PDPA ตอนสมัคร — เก็บไว้เป็นหลักฐานยินยอม ไม่ใช่แค่ checkbox ฝั่ง UI
   isActive           Boolean            @default(true)
   createdAt          DateTime           @default(now())
   deletedAt          DateTime?

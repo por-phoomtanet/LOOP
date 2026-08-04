@@ -58,6 +58,9 @@ export async function analyzeSlip(file: File): Promise<SlipAnalysis> {
     },
     body: JSON.stringify({
       model,
+      // จำกัดให้ route ไปเฉพาะ provider ที่ไม่เก็บ/ไม่ train ข้อมูล — สลิปมีชื่อ-นามสกุลจริงของผู้ใช้
+      // ดู CLAUDE.md Dev Standard #23
+      provider: { data_collection: "deny" },
       messages: [
         {
           role: "user",

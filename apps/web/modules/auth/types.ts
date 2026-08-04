@@ -6,6 +6,12 @@ export type RegisterInput = {
   email: string;
   phone: string;
   password: string;
+  pdpaConsent: true;
+  idCardNumber?: string;
+  idCardNameTh?: string;
+  idCardNameEn?: string;
+  idCardAddress?: string;
+  idCardDob?: string;
 };
 
 export type RegisterResult = {
@@ -19,9 +25,11 @@ export type RegisterResult = {
   };
 };
 
-export type OcrMockResult = {
-  name: string;
-  idNumber: string;
-  dob: string;
-  expiry: string;
+export type IdCardOcrResult = {
+  idNumber: string | null;
+  nameTh: string | null;
+  nameEn: string | null;
+  address: string | null;
+  dob: string | null;
+  valid: boolean;
 };

@@ -288,8 +288,22 @@ export function ListItemForm({ listing, onSaved }: Props) {
           <Upload
             listType="picture-card"
             fileList={fileList}
-            onChange={({ fileList: fl }) => setFileList(fl)}
-            beforeUpload={() => false}
+            onChange={({ fileList: fl }) => {
+              // antd cache thumbUrl ตาม uid เดิม ไม่รู้ว่า antd-img-crop แทนที่ originFileObj
+              // ด้วยรูปที่ครอป/หมุนแล้ว (lib ไม่ set thumbUrl ใหม่ให้เอง) — gen เองจาก
+              // originFileObj ล่าสุดเสมอ ไม่งั้น preview จะค้างเป็นรูปก่อนครอป
+              const withFreshThumb = fl.map((f) =>
+                f.originFileObj
+                  ? { ...f, thumbUrl: URL.createObjectURL(f.originFileObj as File) }
+                  : f,
+              );
+              setFileList(withFreshThumb);
+            }}
+            // antd-img-crop มีบั๊กเก่า (เปิดมาตั้งแต่ปี 2021 ยังไม่แก้): ถ้า beforeUpload คืนค่า
+            // false ตรงๆ ตัว runBeforeUpload ภายในจะทิ้งไฟล์ที่ครอปแล้วไปเลย ใช้ไฟล์เดิมก่อนครอปแทน
+            // (github.com/nanxiaobei/antd-img-crop/issues/123) — ห้ามใช้ beforeUpload={() => false}
+            // แก้ด้วยการกันอัปโหลดจริงผ่าน customRequest แบบ no-op แทน
+            customRequest={({ onSuccess }) => onSuccess?.("ok")}
             accept="image/png,image/jpeg,image/jpg"
             maxCount={MAX_IMAGES}
             onPreview={async (file) => {

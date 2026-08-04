@@ -21,12 +21,22 @@ export const userRepository = {
     });
   },
 
+  findByIdCardNumber(idCardNumber: string) {
+    return prisma.user.findFirst({ where: { idCardNumber, deletedAt: null } });
+  },
+
   async create(data: {
     name: string;
     email: string;
     phone: string;
     passwordHash: string;
     accountType: AccountType;
+    idCardNumber?: string;
+    idCardNameTh?: string;
+    idCardNameEn?: string;
+    idCardAddress?: string;
+    idCardDob?: Date;
+    pdpaConsentedAt: Date;
   }) {
     const userRole = await prisma.role.findUnique({ where: { name: "user" } });
     if (!userRole) throw new Error("Missing seed: role 'user' not found");
