@@ -139,6 +139,16 @@ export function MyListingsTable() {
                     <p className="mt-[3px] text-[13px] text-black/55">
                       ฿{listing.pricePerDay} / วัน
                     </p>
+                    {(listing.price3Day || listing.price7Day) && (
+                      <p className="mt-0.5 text-[11.5px] text-black/40">
+                        {[
+                          listing.price3Day && `3 วัน ฿${listing.price3Day}`,
+                          listing.price7Day && `7 วัน ฿${listing.price7Day}`,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
                   </div>
                   <span
                     className="flex-none whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-semibold"

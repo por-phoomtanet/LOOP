@@ -57,6 +57,8 @@ model User {
   verificationStatus VerificationStatus @default(PENDING) // PENDING = ระหว่างรอยืนยัน OTP เท่านั้น, APPROVED ตั้งอัตโนมัติทันทีที่ OTP ผ่าน (ดู Phase 3)
   idCardImageUrl     String? // อัปโหลดตอน signup KYC
   faceVerified       Boolean            @default(false)
+  legalName          String? // ชื่อ-นามสกุลจริงตามบัญชีธนาคาร ใช้เทียบกับชื่อผู้รับในสลิป (Phase 10) — คนละฟิลด์กับ name ที่เป็นชื่อแสดงในระบบ
+  promptPayQrUrl     String? // รูป QR พร้อมเพย์ที่เจ้าของอัปโหลดเอง (Phase 10)
   isActive           Boolean            @default(true)
   createdAt          DateTime           @default(now())
   deletedAt          DateTime?
@@ -72,6 +74,8 @@ model User {
   updatedCategories Category[]     @relation("CategoryUpdatedBy")
   createdProducts   Product[]      @relation("ProductCreatedBy")
   updatedProducts   Product[]      @relation("ProductUpdatedBy")
+  rentalsAsRenter   Rental[]       @relation("RentalRenter")
+  rentalsAsOwner    Rental[]       @relation("RentalOwner")
 }
 
 // สถานที่นัดรับที่ผู้ใช้บันทึกไว้ (ปักหมุดบนแผนที่ครั้งเดียว เลือกซ้ำได้ตอนลงประกาศใหม่)
@@ -117,6 +121,8 @@ model Product {
   ownerId     Int
   owner       User          @relation("ProductOwner", fields: [ownerId], references: [id])
   pricePerDay Decimal
+  price3Day   Decimal? // ราคาขั้นบันได optional — ดู Dev Standard #21 (resolveRentPrice, ปัดขึ้น tier ถัดไปเสมอ)
+  price7Day   Decimal?
   location    String
   lat         Float? // พิกัดจากแผนที่ (optional — ประกาศเดิมก่อนมี map ยังไม่มีค่า)
   lng         Float?
@@ -133,6 +139,7 @@ model Product {
 
   images        ProductImage[]
   pickupOptions PickupOption[]
+  rentals       Rental[]
 }
 
 model ProductImage {
@@ -157,4 +164,50 @@ model PickupOption {
   type      PickupMethod @default(MEETUP)
   label     String
   createdAt DateTime     @default(now())
+}
+
+// Phase 10 — เวอร์ชันขั้นต่ำ แค่พอให้มี "คำขอเช่า + ราคารวม + สถานะจ่ายเงิน" ให้หน้าจ่ายเงินอ้างอิงได้
+// ยังไม่ใช่ full lifecycle (pending→approved→shipped→completed) ตาม Scope ต้นเอกสาร
+enum RentalStatus {
+  PENDING_PAYMENT
+  PAID
+  REJECTED
+}
+
+model Rental {
+  id              Int          @id @default(autoincrement())
+  productId       Int
+  product         Product      @relation(fields: [productId], references: [id])
+  renterId        Int
+  renter          User         @relation("RentalRenter", fields: [renterId], references: [id])
+  ownerId         Int // denormalize จาก product.ownerId ตอนสร้าง (Dev Standard #19 pattern)
+  owner           User         @relation("RentalOwner", fields: [ownerId], references: [id])
+  startDate       DateTime
+  endDate         DateTime
+  nights          Int
+  pricePerDaySnap Decimal
+  totalAmount     Decimal
+  status          RentalStatus @default(PENDING_PAYMENT)
+  createdAt       DateTime     @default(now())
+
+  paymentSlips PaymentSlip[]
+}
+
+// เก็บทุกครั้งที่อัปโหลดสลิป (ผ่าน/ไม่ผ่านก็เก็บ) เป็น audit log — rentalId ไม่ unique เพราะอัปโหลดใหม่ได้ถ้าครั้งก่อนไม่ผ่าน
+// reference unique (global) คือตัวกัน replay จริง — ห้ามใช้สลิปใบเดิมซ้ำข้าม rental
+model PaymentSlip {
+  id             Int      @id @default(autoincrement())
+  rentalId       Int
+  rental         Rental   @relation(fields: [rentalId], references: [id])
+  imageUrl       String
+  amount         Decimal
+  transferredAt  DateTime
+  reference      String   @unique
+  senderName     String?
+  receiverName   String?
+  bank           String?
+  verified       Boolean  @default(false)
+  rejectedReason String?
+  rawAnalysis    String // JSON.stringify ของผลดิบจาก AI เก็บไว้ debug/audit
+  createdAt      DateTime @default(now())
 }

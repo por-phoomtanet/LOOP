@@ -62,6 +62,14 @@ export const userRepository = {
     return prisma.user.update({ where: { id }, data: { faceVerified: true } });
   },
 
+  setLegalName(id: number, legalName: string) {
+    return prisma.user.update({ where: { id }, data: { legalName } });
+  },
+
+  setPromptPayQr(id: number, promptPayQrUrl: string) {
+    return prisma.user.update({ where: { id }, data: { promptPayQrUrl } });
+  },
+
   async findAll(pagination: { page: number; pageSize: number }) {
     const where = { deletedAt: null };
     const [users, total] = await Promise.all([

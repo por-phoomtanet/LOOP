@@ -10,6 +10,8 @@ const createSchema = z.object({
   description: z.string().min(1),
   categoryId: z.number().int().positive(),
   pricePerDay: z.number().positive(),
+  price3Day: z.number().positive().optional(),
+  price7Day: z.number().positive().optional(),
   location: z.string().min(1),
   lat: z.number().optional(),
   lng: z.number().optional(),

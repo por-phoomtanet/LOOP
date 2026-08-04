@@ -24,6 +24,27 @@ export async function faceVerify(actingUserId: number, targetUserId: number) {
   return { data: result, message: "ok" };
 }
 
+export async function updatePaymentProfile(
+  actingUserId: number,
+  targetUserId: number,
+  body: unknown,
+) {
+  const { legalName } = body as { legalName: string };
+  const result = await userService.updatePaymentProfile(actingUserId, targetUserId, legalName);
+  return { data: result, message: "ok" };
+}
+
+export async function uploadPromptPayQr(
+  actingUserId: number,
+  targetUserId: number,
+  file: File | undefined,
+) {
+  if (!file) throw new BadRequestError("กรุณาอัปโหลดรูป QR พร้อมเพย์");
+  const filename = await saveImage("promptpay-qr", file);
+  const result = await userService.uploadPromptPayQr(actingUserId, targetUserId, filename);
+  return { data: result, message: "ok" };
+}
+
 export async function adminListUsers(query: unknown) {
   const { page, pageSize } = paginationSchema.parse(query);
   const { data, total } = await userService.listUsers({ page, pageSize });

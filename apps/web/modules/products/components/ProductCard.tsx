@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { formatShortLocation, resolveUploadUrl } from "@/shared/lib/utils";
+import { RentalRequestModal } from "@/modules/rentals/components/RentalRequestModal";
 import type { ProductCardData } from "../types";
 
 const SHOP_COLORS = ["#2D5DA8", "#6FA3D8", "#c96442", "#178a5a", "#a8752f"];
 
 export function ProductCard({ product }: { product: ProductCardData }) {
+  const [rentModalOpen, setRentModalOpen] = useState(false);
   const shopColor = SHOP_COLORS[product.id % SHOP_COLORS.length];
   const shopInitial = product.ownerName.trim()[0]?.toUpperCase() ?? "?";
   const priceText = Number(product.pricePerDay).toLocaleString("th-TH");
@@ -69,7 +72,35 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           </span>
           <span className="text-[13px] text-black/50">/ วัน</span>
         </div>
+        {(product.price3Day || product.price7Day) && (
+          <div className="mt-1 text-[11.5px] text-black/45">
+            {[
+              product.price3Day && `3 วัน ฿${Number(product.price3Day).toLocaleString("th-TH")}`,
+              product.price7Day && `7 วัน ฿${Number(product.price7Day).toLocaleString("th-TH")}`,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setRentModalOpen(true);
+          }}
+          className="bg-brand-600 mt-2.5 w-full rounded-full py-2 text-[12.5px] font-semibold text-white"
+        >
+          เช่าสินค้านี้
+        </button>
       </div>
+
+      {rentModalOpen && (
+        <RentalRequestModal
+          productId={product.id}
+          productTitle={product.title}
+          onClose={() => setRentModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

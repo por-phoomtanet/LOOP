@@ -90,6 +90,49 @@ describe("PUT /api/products/:id", () => {
   });
 });
 
+describe("price3Day / price7Day tiers", () => {
+  it("persists optional tier prices on create and returns them via /api/me/listings", async () => {
+    const { token } = await registerUser("tiercreate");
+    const categoryId = await activeCategoryId();
+
+    const created = await createProduct(token, categoryId, { price3Day: 250, price7Day: 500 });
+    expect(created.status).toBe(201);
+    expect(Number(created.body.data.price3Day)).toBe(250);
+    expect(Number(created.body.data.price7Day)).toBe(500);
+
+    const listings = await request(baseUrl)
+      .get("/api/me/listings")
+      .set("Authorization", `Bearer ${token}`);
+    const listing = listings.body.data.find((p: { id: number }) => p.id === created.body.data.id);
+    expect(Number(listing.price3Day)).toBe(250);
+    expect(Number(listing.price7Day)).toBe(500);
+  });
+
+  it("leaves tiers null when not provided, without breaking existing listings", async () => {
+    const { token } = await registerUser("tiernone");
+    const categoryId = await activeCategoryId();
+
+    const created = await createProduct(token, categoryId);
+    expect(created.body.data.price3Day).toBeNull();
+    expect(created.body.data.price7Day).toBeNull();
+  });
+
+  it("lets the owner set tiers via update", async () => {
+    const { token } = await registerUser("tierupdate");
+    const categoryId = await activeCategoryId();
+    const created = await createProduct(token, categoryId);
+
+    const res = await request(baseUrl)
+      .put(`/api/products/${created.body.data.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ price3Day: 250, price7Day: 500 });
+
+    expect(res.status).toBe(200);
+    expect(Number(res.body.data.price3Day)).toBe(250);
+    expect(Number(res.body.data.price7Day)).toBe(500);
+  });
+});
+
 describe("PATCH /api/products/:id/status", () => {
   it("blocks pause/resume for a listing still UNDER_REVIEW", async () => {
     const { token } = await registerUser("pauseunreviewed");

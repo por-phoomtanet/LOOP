@@ -14,6 +14,8 @@ type ProductInput = {
   description: string;
   categoryId: number;
   pricePerDay: number;
+  price3Day?: number;
+  price7Day?: number;
   location: string;
   lat?: number;
   lng?: number;
@@ -41,6 +43,8 @@ export async function listProductsForAdmin() {
     categoryName: p.category.name,
     ownerName: p.owner.name,
     pricePerDay: p.pricePerDay,
+    price3Day: p.price3Day,
+    price7Day: p.price7Day,
     status: p.status,
     ratingAvg: p.ratingAvg,
     location: p.location,
@@ -61,6 +65,8 @@ export async function getProductForAdmin(id: number) {
     ownerEmail: p.owner.email,
     ownerPhone: p.owner.phone,
     pricePerDay: p.pricePerDay,
+    price3Day: p.price3Day,
+    price7Day: p.price7Day,
     location: p.location,
     status: p.status,
     ratingAvg: p.ratingAvg,
@@ -83,6 +89,8 @@ export async function listPublicProducts(
     categorySlug: p.category.slug,
     ownerName: p.owner.name,
     pricePerDay: p.pricePerDay,
+    price3Day: p.price3Day,
+    price7Day: p.price7Day,
     location: p.location,
     ratingAvg: p.ratingAvg,
     reviewCount: p.reviewCount,
@@ -98,6 +106,8 @@ export async function createProduct(input: ProductInput, userId: number) {
     description: input.description,
     categoryId: input.categoryId,
     pricePerDay: input.pricePerDay,
+    price3Day: input.price3Day ?? null,
+    price7Day: input.price7Day ?? null,
     location: input.location,
     lat: input.lat ?? null,
     lng: input.lng ?? null,
@@ -173,6 +183,8 @@ export async function listMyListings(userId: number) {
     categoryId: p.categoryId,
     categoryName: p.category.name,
     pricePerDay: p.pricePerDay,
+    price3Day: p.price3Day,
+    price7Day: p.price7Day,
     location: p.location,
     lat: p.lat,
     lng: p.lng,

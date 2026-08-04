@@ -19,6 +19,7 @@ const dict = {
     listItem: "ลงประกาศให้เช่า",
     myRentals: "รายการเช่าของฉัน",
     myListings: "จัดการข้อมูลให้เช่า",
+    paymentProfile: "ตั้งค่าการรับเงิน",
     howItWorks: "วิธีใช้งาน",
     helpCenter: "ศูนย์ช่วยเหลือ",
     signup: "สมัครสมาชิก",
@@ -34,6 +35,7 @@ const dict = {
     listItem: "List your item",
     myRentals: "My rentals",
     myListings: "My listings",
+    paymentProfile: "Payment settings",
     howItWorks: "How it works",
     helpCenter: "Help center",
     signup: "Sign up",
@@ -81,6 +83,11 @@ export function Header() {
   function goToMyListings() {
     setMenuOpen(false);
     router.push(ROUTES.myListings);
+  }
+
+  function goToPaymentProfile() {
+    setMenuOpen(false);
+    router.push(ROUTES.paymentProfile);
   }
 
   function handleLogout() {
@@ -266,6 +273,12 @@ export function Header() {
                           className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5"
                         >
                           {t.myListings}
+                        </button>
+                        <button
+                          onClick={goToPaymentProfile}
+                          className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#0a0a0a] hover:bg-black/5"
+                        >
+                          {t.paymentProfile}
                         </button>
                       </>
                     )}

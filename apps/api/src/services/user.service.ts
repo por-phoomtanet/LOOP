@@ -33,6 +33,27 @@ export async function verifyFace(actingUserId: number, targetUserId: number) {
   return { faceVerified: true };
 }
 
+export async function updatePaymentProfile(
+  actingUserId: number,
+  targetUserId: number,
+  legalName: string,
+) {
+  assertOwner(actingUserId, targetUserId);
+  const updated = await userRepository.setLegalName(targetUserId, legalName);
+  return { legalName: updated.legalName };
+}
+
+export async function uploadPromptPayQr(
+  actingUserId: number,
+  targetUserId: number,
+  filename: string,
+) {
+  assertOwner(actingUserId, targetUserId);
+  const url = publicUrlFor("promptpay-qr", filename);
+  await userRepository.setPromptPayQr(targetUserId, url);
+  return { promptPayQrUrl: url };
+}
+
 export async function listUsers(pagination: { page: number; pageSize: number }) {
   const { rows, total } = await userRepository.findAll(pagination);
   const data = rows.map((u) => ({

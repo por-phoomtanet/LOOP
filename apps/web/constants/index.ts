@@ -12,6 +12,7 @@ export const ROUTES = {
   listItem: "/list-item",
   myListings: "/my-listings",
   myRentals: "/my-rentals",
+  paymentProfile: "/payment-profile",
   admin: "/dashboard",
   adminUsers: "/users",
 } as const;

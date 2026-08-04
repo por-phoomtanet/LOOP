@@ -616,9 +616,10 @@ const auditInclude = {
 const nights = diffInDays(startDate, endDate)
 const pricePerDaySnap = product.pricePerDay
 const serviceFeePct = settings.serviceFeePct   // อ่านจาก DB ตอนนี้ครั้งเดียว ไม่ hardcode
-const serviceFee = pricePerDaySnap * nights * (serviceFeePct / 100)
+const rentAmount = resolveRentPrice(nights, product)   // ราคาขั้นบันได — ดูสูตรเต็มใน Dev Standard #21 (แทน pricePerDaySnap * nights แบบ linear)
+const serviceFee = rentAmount * (serviceFeePct / 100)
 const deposit = pricePerDaySnap * 2
-const totalAmount = pricePerDaySnap * nights + serviceFee + deposit
+const totalAmount = rentAmount + serviceFee + deposit
 ```
 
 ### 20. Cancel Window (เฉพาะ LOOP — ยกเลิกคำขอเช่าฟรีภายใน 10 นาที)
@@ -630,6 +631,46 @@ const canCancel = rental.status === 'PENDING' &&
 if (!canCancel) throw new BadRequestError('ไม่สามารถยกเลิกได้ เกินเวลาที่กำหนดแล้ว')
 ```
 Frontend: countdown ใช้ `setInterval` ทุก 1 วินาที เริ่มใน `useEffect`/mount และ clear ตอน unmount เสมอ (กัน memory leak ตามที่เจอใน prototype เดิม)
+
+### 21. Tiered Pricing (เฉพาะ LOOP — ราคาขั้นบันไดตามจำนวนวัน, ปัดขึ้น tier ถัดไปเสมอ)
+`Product` มีราคาได้สูงสุด 3 ระดับ: `pricePerDay` (บังคับ, ฐานราคา 1 วัน), `price3Day`/`price7Day` (optional — เจ้าของเลือกตั้งหรือไม่ก็ได้) ตัดสินใจใช้ **แบบ A: ปัดขึ้น tier ถัดไปเสมอ** (ไม่ผสม tier แบบ greedy) เพราะ deterministic และปลอดภัยต่อการ snapshot ราคาตอนสร้าง Rental (Dev Standard #19):
+```ts
+// utils/pricing.ts — pure function, ไม่รู้จัก Prisma/req/res
+function resolveRentPrice(
+  nights: number,
+  tiers: { pricePerDay: number; price3Day?: number | null; price7Day?: number | null },
+) {
+  const table = [
+    { days: 1, price: tiers.pricePerDay },
+    ...(tiers.price3Day != null ? [{ days: 3, price: tiers.price3Day }] : []),
+    ...(tiers.price7Day != null ? [{ days: 7, price: tiers.price7Day }] : []),
+  ] // เรียงตาม days อยู่แล้วเพราะ push ตามลำดับ 1→3→7
+
+  const matched = table.find((t) => nights <= t.days)
+  if (matched) return matched.price // ปัดขึ้น tier ที่ใกล้สุดที่ >= nights (แบบ A)
+
+  const highest = table[table.length - 1]
+  return highest.price + (nights - highest.days) * tiers.pricePerDay // เกิน tier สูงสุด → tier + ส่วนเกินคิดรายวันจาก pricePerDay
+}
+```
+ตัวอย่าง (`pricePerDay=150, price3Day=250, price7Day=500`): nights=1→150 · nights=2→250 (ปัดขึ้น tier 3 วัน) · nights=3→250 · nights=4-6→500 (ปัดขึ้น tier 7 วัน) · nights=10→500+3×150=950 (เกิน tier สูงสุด คิดส่วนเกินรายวัน) — ถ้า `price3Day`/`price7Day` เป็น `null` ให้ข้าม tier นั้นไปเลย (เช่น ตั้งแค่ `price7Day` → nights=2..7 ปัดขึ้นตรงไป tier 7 วันทั้งหมด)
+
+`deposit` **ไม่เปลี่ยน** — ยังคงคิดจาก `pricePerDay * 2` เท่าเดิมเสมอ (ไม่ผูกกับ tier เพราะเป็นเงินประกันค่าสินค้า ไม่ใช่ค่าเช่า)
+
+### 22. External eKYC Provider Calls (เฉพาะ LOOP — เรียก iApp Technology API)
+ทุกการเรียก provider ภายนอกสำหรับ OCR บัตรประชาชน/face liveness/face-match (iApp Technology, ดู Phase 9) ต้องผ่านกฎเหล่านี้เสมอ:
+- **API key อยู่ฝั่ง server เท่านั้น** (`IAPP_API_KEY` ใน root `.env`) — ห้าม expose ไปฝั่ง browser เด็ดขาด แม้ web SDK ของ iApp จะรองรับเรียกตรงจาก client ได้ก็ตาม ทุก call ต้อง proxy ผ่าน backend เรา (`apps/api/src/services/ekyc/*`) เท่านั้น
+- **อ่าน env แบบ lazy** ตอนเรียกใช้จริง ไม่ใช่ required ตอน startup ใน `validateEnv()` (Dev Standard #4) — เพราะเป็น feature เปิดทีหลังได้ ไม่ควร block ทั้ง API ถ้ายังไม่ได้สมัคร iApp หรือยังไม่ได้ตั้ง key; throw error ชัดเจนเฉพาะตอนเรียก endpoint ที่ต้องใช้จริง
+- **Test ห้ามยิง API จริง** — mock `fetch` ของ iApp client เสมอใน `bun test` (แต่ละ call มีค่าใช้จ่ายจริงเป็น IC credit)
+- **PDPA — mask เลขบัตรประชาชนเสมอตอนแสดงผล** (เช่น `1-XXXX-XXXXX-XX-3` โชว์แค่ 4 หลักท้าย) ทั้งฝั่ง user เองและ Admin — เก็บเลขเต็มใน DB ได้เพื่อกัน user สมัครซ้ำด้วยบัตรใบเดียว (`idCardNumber` unique) แต่ห้าม log เลขเต็มหรือส่งเลขเต็มกลับใน response ของ endpoint อื่นที่ไม่ใช่เจ้าของบัญชี/แอดมิน
+
+### 23. AI Slip Verification (เฉพาะ LOOP — ตรวจสลิปโอนเงินผ่าน OpenRouter Vision, ดู Phase 10)
+ใช้ vision-capable LLM ผ่าน OpenRouter (ไม่ใช่ dedicated slip-verification API เช่น EasySlip/SlipOK) อ่านรูปสลิปแล้วคืน JSON — pattern เดียวกับที่เคยใช้ได้ผลจริงในโปรเจกต์ `telegrom-bot-group` (ดู `apps/bot/src/services/ai.ts` ของโปรเจกต์นั้นเป็นต้นแบบ):
+- **API key อยู่ฝั่ง server เท่านั้น** (`OPENROUTER_API_KEY` ใน root `.env`) อ่านแบบ lazy เหมือน Dev Standard #22
+- **ห้าม trust ค่าที่ AI อ่านได้เพียงอย่างเดียว** — ต้อง cross-check `amount` ที่ AI อ่านกับ `Rental.totalAmount` ที่ snapshot ไว้จริงในระบบเสมอ (ไม่ใช่แค่โชว์ค่าที่ AI อ่านมาเฉยๆ แล้วเชื่อ) และต้องมี unique constraint บน `reference` (เลขอ้างอิงสลิป) กัน slip เดิมถูกใช้ซ้ำ (replay) ข้ามหลาย rental
+- **นี่คือ OCR อ่านตัวอักษรในรูป ไม่ใช่การเช็คกับธนาคารจริง** ต่างจาก EasySlip/SlipOK ที่ verify ผ่าน QR payload กับธนาคารโดยตรง — มีช่องโหว่ต่อสลิปปลอม (fake slip generator) มากกว่า ถ้าเจอปัญหาสลิปปลอมเยอะขึ้นค่อยพิจารณาสลับ provider ทีหลัง (ออกแบบ `analyzeSlip()` แยกเป็น pure function เดียว สลับ implementation ได้โดยไม่กระทบส่วนอื่น)
+- **Test ห้ามยิง OpenRouter จริง** — mock `fetch` เสมอใน `bun test`
+- prompt ต้องบังคับให้ AI ตอบ JSON เท่านั้น (ห้ามมีข้อความอื่นปน) แล้ว parse ด้วย regex ดึงเฉพาะส่วน `{...}` ก่อน `JSON.parse` เผื่อ AI แถมข้อความมาด้วย
 
 ---
 
@@ -1092,3 +1133,129 @@ Frontend: countdown ใช้ `setInterval` ทุก 1 วินาที เ�
   - Tag last-known-good main image ก่อน cutover (rollback = rebuild+restart ระดับนาที); DB schema ไม่ถูกแตะทั้ง phase → rollback ไม่มี data-migration พันกัน
   - 🧪 test: `docker compose build api` + `up` local stack (Postgres จริง) → login seeded admin จริง + `GET /api/products` มี pagination | load test ซ้ำเทียบ before/after | หลัง deploy: verify health + login + product-list, เฝ้า rollback path ชั่วโมงแรก
   - 📝 commit: `build(api): switch to bun+elysia docker image and cut over`
+
+---
+
+### Phase 8 — ราคาแบบขั้นบันไดตามจำนวนวัน (Tiered Pricing)
+
+> **ที่มา:** ต้องการให้ราคาลดหลั่นตามจำนวนวันเช่า (ตัวอย่าง: 1 วัน ฿150 / 3 วัน ฿250 / 7 วัน ฿500) แทนการคูณเชิงเส้น (`pricePerDay × nights`) เพราะไม่สะท้อนส่วนลดที่เจ้าของสินค้าอยากมอบให้คนเช่านาน — ตัดสินใจใช้ **แบบ A: ปัดขึ้น tier ถัดไปเสมอ** (ยืนยันแล้ว) แทนแบบ B (ผสม tier แบบ greedy) เพราะ deterministic เขียนง่ายกว่า และปลอดภัยต่อการ snapshot ราคา — ดูสูตรเต็มใน [Dev Standard #21](#21-tiered-pricing-เฉพาะ-loop--ราคาขั้นบันไดตามจำนวนวัน-ปัดขึ้น-tier-ถัดไปเสมอ)
+>
+> **หมายเหตุขอบเขต:** ตอนนี้ยังไม่มี `Rental` model/checkout flow ในระบบเลย (Phase "เช่า/checkout" ยังไม่เริ่ม) ดังนั้น scope ของ Phase นี้คือเตรียมฝั่ง **Product** (schema + ราคาที่เจ้าของตั้งตอนลงประกาศ + แสดงผล) และ **pricing utility function ที่ testable แยกอิสระจาก Rental** ไว้ก่อน ส่วนการนำ `resolveRentPrice()` ไปใช้จริงตอนคำนวณ checkout จะผูกเข้าตอน Phase เช่า/checkout ในอนาคต (Dev Standard #19 ก็ปรับสูตรรอไว้ล่วงหน้าแล้ว)
+
+- [x] 8.1 DB: เพิ่ม `price3Day`/`price7Day` (`Decimal?` nullable — optional) บน `Product` + migration
+  - ไม่แตะ `pricePerDay` (ยังคงบังคับเหมือนเดิม เป็นฐานของ tier 1 วันเสมอ)
+  - 🧪 test: `npm run migrate -- --name add_product_price_tiers` → migration `20260804043713_add_product_price_tiers` apply สำเร็จ ✅
+  - 📝 commit: `feat(db): add optional 3-day and 7-day price tiers to product`
+
+- [x] 8.2 API: `apps/api/src/utils/pricing.ts` — pure function `resolveRentPrice(nights, tiers)` ตามสูตร Dev Standard #21
+  - pure function ไม่พึ่ง DB/Elysia — unit test ตรงๆ ได้เลย
+  - 🧪 test: `bun test tests/pricing.test.ts` → **9/9 ผ่าน** ครอบคลุม nights=1,2,3,4,5,6,7,8,10 + กรณีไม่มี tier เลย + กรณีขาด tier ใดตัวหนึ่ง (`price3Day`/`price7Day` เป็น `null`) ✅
+  - 📝 commit: `feat(api): add tiered rent price resolver util`
+
+- [x] 8.3 API: เปิดรับ/แก้ไข/แสดงผล `price3Day`/`price7Day` ผ่าน endpoint สินค้าที่มีอยู่แล้ว (ไม่เพิ่ม endpoint ใหม่)
+  - `product.routes.ts::createSchema`/`updateSchema` — เพิ่ม `price3Day`/`price7Day` เป็น `z.number().positive().optional()`
+  - `product.service.ts`/`product.repository.ts` — ส่งผ่านฟิลด์ใหม่ใน `createProduct`/`updateProduct`/`listMyListings`/`listPublicProducts`/`listProductsForAdmin`/`getProductForAdmin`
+  - ไม่บังคับ validate ความสัมพันธ์ระหว่าง tier (เช่น `price3Day < pricePerDay*3`) — ปล่อยให้เจ้าของตั้งราคาเองอย่างอิสระ ไม่ gate business logic ที่ไม่ได้ขอ
+  - 🧪 test: เพิ่ม describe `price3Day / price7Day tiers` ใน `product.test.ts` (3 เคสใหม่) → สร้าง/แก้ไขประกาศพร้อม tier แล้วอ่านคืนถูกต้อง ✅ | ไม่ส่งมา → เป็น `null` ตามเดิม ✅ | `npx tsc --noEmit` ผ่าน ✅
+  - 📝 commit: `feat(api): expose optional price tiers on product endpoints`
+
+- [x] 8.4 Web: `ListItemForm.tsx` — เพิ่มช่องราคา "3 วัน" / "7 วัน" (ไม่บังคับ) ต่อจากช่อง "ราคาต่อวัน" เดิม
+  - ใส่ helper text สั้นๆ ว่าเป็นช่องไม่บังคับ เว้นว่างได้
+  - `types.ts` (`MyListing`, `ProductInput`, `ProductCardData`), ส่งผ่าน `productsApi.ts` (generic ตาม `ProductInput` อยู่แล้ว ไม่ต้องแก้)
+  - 🧪 test: `npx tsc -p apps/web/tsconfig.json --noEmit` ผ่าน ✅ (ยังไม่ได้รัน Playwright จริงรอบนี้ — ตรวจแค่ typecheck/build)
+  - 📝 commit: `feat(web): add optional 3-day/7-day price inputs to listing form`
+
+- [x] 8.5 Web: แสดงราคาขั้นบันไดบน `ProductCard.tsx` และ `MyListingsTable.tsx` (เฉพาะ tier ที่ตั้งไว้)
+  - เช่น badge เล็กใต้ราคา/วัน: "3 วัน ฿250 · 7 วัน ฿500" — แสดงเฉพาะ tier ที่มีค่า ไม่ hardcode ทั้งสอง
+  - 🧪 test: `npm run build --workspace=apps/web` ผ่าน (16/16 static pages) ✅ | `eslint` ผ่านทั้ง api/web ✅
+  - 📝 commit: `feat(web): display price tiers on product card and listing table`
+
+---
+
+### Phase 9 — KYC จริง: OCR บัตรประชาชน + Face Active Liveness (iApp Technology) — 📦 พับไว้ก่อน
+
+> **สถานะ:** พับไว้ก่อนตามคำขอ (ยังไม่ทำต่อตอนนี้ — โฟกัส Phase 10 ก่อน) — เคย implement เต็มรูปแบบไปแล้วครั้งหนึ่ง (schema/API/frontend/test ครบ, ยืนยัน endpoint จริงจาก docs ของ iApp Technology, `bun test` ผ่าน 94/94) แต่ถอดโค้ดออกทั้งหมดเพราะยังไม่มี `IAPP_API_KEY` จริงทดสอบ end-to-end — provider ที่เลือกไว้: **iApp Technology** (`iapp.co.th`) ดูกฎการเรียก provider ใน [Dev Standard #22](#22-external-ekyc-provider-calls-เฉพาะ-loop--เรียก-iapp-technology-api)
+>
+> **ข้อค้นพบสำคัญที่ต้องรู้ก่อนเริ่มใหม่:** `IappEkyc.startActiveLiveness()` ของ SDK จริง (`@iapp-technology/ekyc-sdk`) รวม capture+submit ไว้ในฟังก์ชันเดียว แยก "capture อย่างเดียว" ออกจาก "ส่งไป iApp" ไม่ได้ — ต้องออกแบบเป็น reverse-proxy (`apiKey:''` + `baseUrl` ชี้มา backend เราเอง) + in-memory session-verdict store แทนการรับ raw challenge log ตรงๆ จาก client, ต้องตั้ง webpack fallback (`fs`/`path`/`crypto`→`false`) เพราะ SDK พึ่ง `@techstark/opencv-js`, ต้อง `next/dynamic`+`ssr:false` กัน bundle บวม, และต้องย้ายปุ่ม OCR/face-verify ไปเป็น step หลังสร้างบัญชี (endpoint ต้อง auth+มีรูปบัตรอัปโหลดแล้ว ทำก่อนสมัครไม่ได้)
+
+- [ ] 9.x งานทั้งหมดของ Phase นี้ — เมื่อพร้อมเริ่มใหม่ให้ขอ Claude ช่วย re-plan รายละเอียด task breakdown (DB fields, endpoints, SDK integration) จากบริบทด้านบนนี้อีกครั้ง
+
+---
+
+### Phase 10 — ชำระเงินผ่าน PromptPay + ตรวจสลิปอัตโนมัติด้วย AI (Vision)
+
+> **ที่มา:** ต้องการให้ผู้เช่าโอนเงินตรงเข้า PromptPay ของเจ้าของสินค้า (C2C ไม่ผ่าน payment gateway) แล้วอัปโหลดสลิปให้ระบบตรวจอัตโนมัติว่า (1) ชื่อผู้รับในสลิปตรงกับชื่อ-นามสกุลจริงของเจ้าของบัญชีไหม (2) ยอดเงินตรงกับราคาเช่าไหม — อ้างอิง pattern จากโปรเจกต์ `telegrom-bot-group` (`C:\my-project\LOOP\telegrom-bot-group-main`) ที่เคยทำระบบตรวจสลิปสำหรับ Telegram bot ไว้แล้วใช้งานได้จริง (ดู `apps/bot/src/services/ai.ts`, `slip.ts`, `validate.ts`, `packages/db/src/models/slip.ts` ของโปรเจกต์นั้น) — ใช้ **OpenRouter API + vision-capable LLM** วิเคราะห์รูปสลิปตรงๆ แทน dedicated slip-verification API (EasySlip/SlipOK) เพราะ integrate ง่ายกว่า จ่ายตาม token ไม่ใช่ subscription รายเดือน และมี prompt/parsing logic ที่พิสูจน์แล้วจากโปรเจกต์เดิม ดูกฎเต็มใน [Dev Standard #23](#23-ai-slip-verification-เฉพาะ-loop--ตรวจสลิปโอนเงินผ่าน-openrouter-vision-ดู-phase-10)
+>
+> **สิ่งที่ยกมาปรับใช้จากโปรเจกต์ต้นแบบ (mapping):**
+> | โปรเจกต์ต้นแบบ (`telegrom-bot-group`) | renty (Phase นี้) |
+> |---|---|
+> | `apps/bot/src/services/ai.ts::analyzeSlip()` — เรียก OpenRouter vision, prompt คืน JSON (amount/date/time/reference/senderName/receiverName/bank/valid) | ย้าย logic เดิมมาเป็น `apps/api/src/services/payment/slipAi.ts` แทบทั้งดุ้น (เปลี่ยนแค่ import/error class ให้เข้ากับ Elysia) |
+> | `apps/bot/src/services/slip.ts::parseSlipData()` — validate ฟิลด์ครบ + เช็คชื่อผู้รับ (`EXPECTED_RECEIVER` hardcode คนเดียว) | ปรับเป็น dynamic เทียบกับ `owner.legalName` ต่อ rental (ไม่ hardcode เพราะมีเจ้าของหลายคน) |
+> | `apps/bot/src/services/validate.ts` — กันสลิปซ้ำ (`reference` unique), กันสลิปเก่าเกิน 3 วัน, ยอดขั้นต่ำ | เอาแนวคิดกันสลิปซ้ำ + สลิปเก่ามาใช้ตรงๆ, เปลี่ยน "ยอดขั้นต่ำคงที่" เป็น "ต้องตรงกับ `Rental.totalAmount` เป๊ะ" |
+> | `packages/db/src/models/slip.ts` (Mongoose) — `verified`, `verifiedAt`, `rejectedReason`, `raw` | ย้ายเป็น Prisma model `PaymentSlip` (Postgres) ฟิลด์เดียวกัน แปลง schema Mongo→Prisma |
+>
+> **หมายเหตุขอบเขต:** ยังไม่มี `Rental`/checkout ในระบบเลย (ตามที่ Phase 8 เคยตั้งข้อสังเกตไว้) — Phase นี้เลยรวมสร้าง **Rental model แบบขั้นต่ำ** เข้าไปด้วย (แค่พอให้มี "คำขอเช่า + ราคารวม (ผ่าน `resolveRentPrice` จาก Dev Standard #21) + สถานะรอ/จ่ายแล้ว" ให้หน้าจ่ายเงินอ้างอิงได้) **ไม่ใช่** full lifecycle ที่ระบุไว้ในตาราง Scope ต้นเอกสาร (pending→approved→shipped→completed, cancel window, review) — ส่วนนั้นทำ Phase ถัดไปได้ต่อยอดจาก model นี้
+>
+> **⚠️ Prerequisite ที่ต้องทำเองก่อนเริ่ม 10.4:** สมัครบัญชี OpenRouter (`openrouter.ai`) รับ API key แล้วเพิ่ม `OPENROUTER_API_KEY=...` + `OPENROUTER_MODEL=...` (ต้องเป็นโมเดลที่รองรับ vision เช่น `anthropic/claude-3.5-sonnet` หรือ `openai/gpt-4o`) ลง root `.env` จริง
+
+- [x] 10.1 DB: เพิ่ม `legalName`/`promptPayQrUrl` บน `User` + migration
+  - `legalName String?` (ชื่อ-นามสกุลจริงตามบัญชีธนาคาร ใช้เทียบกับชื่อผู้รับในสลิป — คนละฟิลด์กับ `name` เดิมที่เป็นชื่อแสดงในระบบ/ชื่อร้าน)
+  - `promptPayQrUrl String?` (รูป QR พร้อมเพย์ที่เจ้าของอัปโหลดเอง — ไม่ generate เอง ผู้ใช้ export QR จากแอปธนาคารตัวเองมาอัปโหลด)
+  - 🧪 test: migration `20260804101842_add_legal_name_and_promptpay_qr_to_user` apply สำเร็จ ✅
+  - 📝 commit: `feat(db): add legal name and promptpay qr fields to user`
+
+- [x] 10.2 DB: เพิ่ม `Rental` + `PaymentSlip` model + migration
+  - `Rental`: `id, productId, renterId, ownerId, startDate, endDate, nights, pricePerDaySnap, totalAmount, status (PENDING_PAYMENT|PAID|REJECTED), createdAt` — `ownerId` denormalize จาก `product.ownerId` ตอนสร้าง
+  - `PaymentSlip`: `id, rentalId, imageUrl, amount, transferredAt, reference (unique), senderName, receiverName, bank, verified Boolean, rejectedReason String?, rawAnalysis String, createdAt`
+  - 🧪 test: migration `20260804102001_add_minimal_rental_and_payment_slip` apply สำเร็จ ✅
+  - 📝 commit: `feat(db): add minimal rental and payment slip models`
+
+  - [x] FIX #1 (ปรับจากแผนเดิม): แผนเดิมกำหนด `PaymentSlip.rentalId` เป็น unique ("1 rental มีสลิปที่ verified ได้ใบเดียว") แต่ตัดสินใจไม่ใส่ unique ตอน implement จริง เพราะ endpoint 10.6 ต้องบันทึกทุกครั้งที่อัปโหลด (รวมครั้งที่ไม่ผ่าน) เป็น audit log แล้วให้ลองอัปโหลดใหม่ได้ — ถ้า `rentalId` unique จะ insert ซ้ำไม่ได้เลยหลังครั้งแรก (ต้อง upsert ซึ่งซับซ้อนกว่าและเสียประวัติการพยายามครั้งก่อน) | before (แผน): `rentalId Int @unique` → after (จริง): `rentalId Int` (ไม่ unique, indexed ผ่าน relation ปกติ) — ตัวกัน replay จริงคือ `reference` unique (global) เท่านั้น ซึ่งตรงตามเจตนาเดิมอยู่แล้ว
+    - 🧪 test: ครอบคลุมใน `rental.test.ts` — อัปโหลดสลิปที่ยอดผิด/ชื่อผิดได้ 200 พร้อม `verified:false` (ไม่ error จาก constraint) แล้วอัปโหลดใหม่ได้อีกครั้ง ✅
+    - 📝 commit: รวมอยู่ใน `feat(db): add minimal rental and payment slip models`
+
+- [x] 10.3 API: payment profile — อัปเดต `legalName` + อัปโหลด `promptPayQrUrl`
+  - เพิ่ม `PATCH /api/users/:id/payment-profile` (Zod validate `{legalName}`) + `POST /api/users/:id/payment-qr` (multipart, ใช้ `plugins/upload.ts::saveImage` pattern เดิมจาก id-card, subdir `promptpay-qr`)
+  - owner-only (`assertOwner` pattern เดียวกับที่มีอยู่แล้วใน `user.service.ts`)
+  - 🧪 test: อัปเดต legalName สำเร็จ ✅ | อัปโหลด QR สำเร็จ คืน url ✅ | (ทดสอบผ่าน integration ใน `rental.test.ts::setupOwnerWithProduct` ที่เรียกทั้งสอง endpoint จริงเป็น setup ของทุกเทสต์)
+  - 📝 commit: `feat(api): add owner payment profile (legal name + promptpay qr)`
+
+- [x] 10.4 API: `apps/api/src/services/payment/slipAi.ts` — ย้าย `analyzeSlip()` จากโปรเจกต์ต้นแบบ
+  - เรียก OpenRouter vision ด้วย prompt เดิมจาก `telegrom-bot-group/apps/bot/src/services/ai.ts` (ปรับให้รับ `File` จาก multipart → แปลงเป็น base64 เอง แทน Telegram file link) คืน `{amount, date, time, reference, senderName, receiverName, bank, valid}`
+  - อ่าน `OPENROUTER_API_KEY`/`OPENROUTER_MODEL` แบบ lazy เหมือน Dev Standard #22/#23
+  - regex ดึง `{...}` จาก response ก่อน `JSON.parse` (กัน AI แถมข้อความ — ตามที่ต้นแบบทำไว้)
+  - 🧪 test: `bun test tests/slipAi.test.ts` → **5/5 ผ่าน** happy path + JSON ปนข้อความอื่น + AI ไม่ตอบ JSON เลย + non-2xx + `OPENROUTER_API_KEY` ไม่ถูกตั้ง ✅
+  - 📝 commit: `feat(api): add openrouter vision slip analyzer, ported from telegrom-bot-group`
+
+- [x] 10.5 API: `POST /api/products/:id/rentals` — สร้างคำขอเช่าขั้นต่ำ
+  - รับ `{startDate, endDate}` → คำนวณ `nights` ผ่าน `diffInDays()` (util ใหม่ใน `utils/pricing.ts`) + `totalAmount` ผ่าน `resolveRentPrice()` (Dev Standard #21) → สร้าง `Rental` status `PENDING_PAYMENT`
+  - 🧪 test: สร้างสำเร็จ → totalAmount ตรงกับสูตร tiered pricing ✅ | สินค้าไม่ ACTIVE → 400 ✅ | ไม่ login → 401 ✅
+  - 📝 commit: `feat(api): add minimal rental request endpoint`
+
+- [x] 10.6 API: `GET /api/rentals/:id/payment` + `POST /api/rentals/:id/slip`
+  - GET: คืน `totalAmount`, `ownerName`, `promptPayQrUrl` ให้หน้าจ่ายเงินแสดง (renter-only ownership check)
+  - POST (multipart `file`): เรียก `analyzeSlip()` (10.4) → validate ตามลำดับ: (1) `valid`/`amount`/`reference`/`senderName` ต้องอ่านได้ (2) `reference` ไม่ซ้ำกับ `PaymentSlip` อื่น → **throw 409 ทันที** (ไม่บันทึก audit แถวใหม่ เพราะ insert จะชน unique constraint อยู่แล้ว) (3) `amount` ต้องตรงกับ `rental.totalAmount` เป๊ะ → reject พร้อมบอกยอดที่ควรจะเป็น (4) `receiverName` (normalize เว้นวรรค/คำนำหน้าแบบเดียวกับที่เคยออกแบบไว้ใน Phase 9 — เขียนใหม่เป็น local function ใน `rental.service.ts` เพราะ Phase 9 โค้ดถูกถอดออกแล้ว ไม่มีของให้ import ใช้ร่วม) ต้องตรงกับ `owner.legalName` → reject (5) สลิปเก่าเกิน 3 วัน (`MAX_SLIP_AGE_DAYS`) → reject — ผ่านครบ → บันทึก `PaymentSlip(verified:true)` + set `Rental.status = PAID`, ไม่ผ่าน (ยกเว้นกรณี reference ซ้ำ) → บันทึก `PaymentSlip(verified:false, rejectedReason)` ไว้เป็น audit แต่ `Rental` ยังคง `PENDING_PAYMENT`
+  - เพิ่ม guard: ถ้าเจ้าของยังไม่ตั้ง `legalName`/`promptPayQrUrl` → 400 ก่อนเรียก AI เลย (กันเปลืองเงินยิง OpenRouter ทั้งที่ยังไงก็เทียบชื่อไม่ได้)
+  - 🧪 test: สลิปถูกต้องครบ → `PAID` ✅ | ยอดไม่ตรง → reject พร้อมเหตุผล ✅ | ชื่อผู้รับไม่ตรง → reject ✅ | reference ซ้ำ (ข้าม rental) → 409 ✅ | สลิปเก่าเกิน 3 วัน → reject ✅ | เจ้าของยังไม่ตั้งค่าข้อมูลรับเงิน → 400 ✅ | ownership 403 ✅
+  - 📝 commit: `feat(api): add promptpay payment page endpoint and ai slip verification`
+
+- [x] 10.7 Web: หน้าจ่ายเงิน (`app/(marketplace)/rentals/[id]/payment/page.tsx` — เลือก route นี้แทน `checkout/[productId]` เพราะต้องอ้างอิง `rentalId` ที่สร้างไปแล้ว ไม่ใช่ `productId` ตรงๆ)
+  - `modules/rentals/` module ใหม่ (`types.ts`, `services/rentalsApi.ts`, `components/PaymentPage.tsx`, `components/RentalRequestModal.tsx`) — แสดง PromptPay QR ของเจ้าของ + ยอดที่ต้องโอน + ฟอร์มอัปโหลดสลิป, แสดงผลตรวจสอบ (ผ่าน/เหตุผลถ้าไม่ผ่าน ตาม Dev Standard #17), อัปโหลดใหม่ได้ถ้าไม่ผ่าน, สถานะ `PAID` → หน้าสำเร็จ
+  - เพิ่มปุ่ม "เช่าสินค้านี้" บน `ProductCard.tsx` เปิด `RentalRequestModal` (เลือกวันเริ่ม/วันคืน → เรียก create-rental → พาไปหน้าจ่ายเงิน) เพราะยังไม่มีหน้ารายละเอียดสินค้า (`/products/[id]`) ให้วางปุ่มนี้แยกต่างหาก
+  - 🧪 test: `npx tsc -p apps/web/tsconfig.json --noEmit` ผ่าน ✅ | `npm run build --workspace=apps/web` ผ่านครบ 17/17 static/dynamic pages รวม `/rentals/[id]/payment` (ƒ dynamic) ✅ | `eslint` ผ่าน ✅ (ยังไม่ได้รัน Playwright จริงรอบนี้)
+  - 📝 commit: `feat(web): add promptpay payment page with slip upload`
+
+- [x] 10.8 Web: ช่องกรอก `legalName` + อัปโหลด `promptPayQrUrl` ในหน้าตั้งค่าโปรไฟล์เจ้าของ
+  - สร้างหน้าใหม่ `app/(marketplace)/payment-profile/page.tsx` + `modules/auth/components/PaymentProfileForm.tsx` (ยังไม่มีหน้าตั้งค่าโปรไฟล์อื่นอยู่ก่อนแล้ว จึงสร้างใหม่แยก ไม่ใช่ระหว่าง signup เพราะ payment profile เป็นข้อมูลเฉพาะฝั่งเจ้าของสินค้า ไม่ใช่ทุกคนต้องกรอกตอนสมัคร)
+  - เพิ่มเมนู "ตั้งค่าการรับเงิน" ใน `Header.tsx` dropdown (ทั้ง TH/EN dictionary) ให้เข้าถึงหน้านี้ได้จริง
+  - ฟอร์มเป็น write-only (ไม่ fetch ค่าเดิมมาโชว์ก่อน เพราะยังไม่มี endpoint `GET /api/auth/me` คืนข้อมูล User เต็มในระบบ — อยู่นอกขอบเขต Phase นี้)
+  - 🧪 test: `npx tsc`/`eslint`/`next build` ผ่านทั้งหมด ✅ (ยังไม่ได้รัน Playwright จริงรอบนี้)
+  - 📝 commit: `feat(web): add legal name and promptpay qr fields to owner profile`
+
+- [x] 10.9 Auto test: ครอบคลุมทุก endpoint ใหม่โดยไม่ยิง OpenRouter จริง
+  - Mock `global.fetch` ใน `bun test` ให้ตอบเหมือน OpenRouter จริง (`choices[0].message.content` เป็น JSON string ตาม prompt ที่กำหนด) — ทั้งใน `slipAi.test.ts` (unit) และ `rental.test.ts` (integration ผ่าน endpoint จริง)
+  - 🧪 test: `bun test` (ทั้ง apps/api) → **102/102 ผ่าน** (เพิ่มจากเดิม 82 → 102 คือ 20 เคสใหม่ของ Phase นี้: 5 slipAi + 12 rental/payment/slip + 3 diffInDays) รวมเคส amount mismatch, name mismatch, reference ซ้ำ, สลิปเก่า, ไม่มี payment profile, ownership 403 ทุก endpoint, ไม่มี `OPENROUTER_API_KEY` ✅ | `npx tsc --noEmit` ทั้ง api/web ผ่าน ✅ | `eslint` ทั้ง api/web ผ่าน ✅
+  - 📝 commit: รวมอยู่ในแต่ละ commit ของ 10.4/10.6
+
+---
+

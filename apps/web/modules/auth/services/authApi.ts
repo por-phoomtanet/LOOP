@@ -35,6 +35,18 @@ export const authApi = {
     return api.post<ApiResponse<{ faceVerified: boolean }>>(`/users/${userId}/face-verify`, {});
   },
 
+  updatePaymentProfile(userId: number, legalName: string) {
+    return api.patch<ApiResponse<{ legalName: string }>>(`/users/${userId}/payment-profile`, {
+      legalName,
+    });
+  },
+
+  uploadPromptPayQr(userId: number, file: File) {
+    const form = new FormData();
+    form.append("file", file);
+    return api.post<ApiResponse<{ promptPayQrUrl: string }>>(`/users/${userId}/payment-qr`, form);
+  },
+
   getRolePermissions(role: string) {
     return api.get<
       ApiResponse<

@@ -37,6 +37,8 @@ export function ListItemForm({ listing, onSaved }: Props) {
   const [description, setDescription] = useState(listing?.description ?? "");
   const [categoryId, setCategoryId] = useState<number | "">(listing?.categoryId ?? "");
   const [pricePerDay, setPricePerDay] = useState(listing?.pricePerDay ?? "");
+  const [price3Day, setPrice3Day] = useState(listing?.price3Day ?? "");
+  const [price7Day, setPrice7Day] = useState(listing?.price7Day ?? "");
   const [location, setLocation] = useState(listing?.location ?? "");
   const [lat, setLat] = useState<number | null>(listing?.lat ?? null);
   const [lng, setLng] = useState<number | null>(listing?.lng ?? null);
@@ -106,6 +108,8 @@ export function ListItemForm({ listing, onSaved }: Props) {
     setDescription("");
     setCategoryId("");
     setPricePerDay("");
+    setPrice3Day("");
+    setPrice7Day("");
     setLocation("");
     setLat(null);
     setLng(null);
@@ -129,6 +133,8 @@ export function ListItemForm({ listing, onSaved }: Props) {
         description,
         categoryId: Number(categoryId),
         pricePerDay: Number(pricePerDay),
+        ...(price3Day !== "" ? { price3Day: Number(price3Day) } : {}),
+        ...(price7Day !== "" ? { price7Day: Number(price7Day) } : {}),
         location,
         ...(lat != null && lng != null ? { lat, lng } : {}),
       };
@@ -336,6 +342,37 @@ export function ListItemForm({ listing, onSaved }: Props) {
               onChange={(e) => setPricePerDay(e.target.value)}
               className="w-full border-0 py-3 text-[14.5px] text-black outline-none"
             />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-2 block text-[13px] font-semibold text-black/60">
+              ราคา 3 วัน <span className="font-normal text-black/40">(ไม่บังคับ)</span>
+            </label>
+            <div className="focus-within:border-brand-400 flex items-center gap-2 rounded-[10px] border border-black/[.15] px-3.5 transition-colors">
+              <span className="flex-none text-[14.5px] text-black/45">฿</span>
+              <input
+                type="number"
+                value={price3Day}
+                onChange={(e) => setPrice3Day(e.target.value)}
+                className="w-full border-0 py-3 text-[14.5px] text-black outline-none"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="mb-2 block text-[13px] font-semibold text-black/60">
+              ราคา 7 วัน <span className="font-normal text-black/40">(ไม่บังคับ)</span>
+            </label>
+            <div className="focus-within:border-brand-400 flex items-center gap-2 rounded-[10px] border border-black/[.15] px-3.5 transition-colors">
+              <span className="flex-none text-[14.5px] text-black/45">฿</span>
+              <input
+                type="number"
+                value={price7Day}
+                onChange={(e) => setPrice7Day(e.target.value)}
+                className="w-full border-0 py-3 text-[14.5px] text-black outline-none"
+              />
+            </div>
           </div>
         </div>
 
