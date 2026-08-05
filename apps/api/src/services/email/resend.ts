@@ -10,11 +10,13 @@ function getConfig() {
   if (!apiKey) {
     throw new BadRequestError("ยังไม่ได้ตั้งค่า RESEND_KEY — ติดต่อผู้ดูแลระบบ");
   }
-  // ต้อง verify domain ที่ Resend ก่อนถึงจะส่งหาอีเมลผู้ใช้ทั่วไปได้จริง — ถ้ายังไม่ verify
-  // ตั้ง RESEND_FROM_EMAIL เป็น onboarding@resend.dev ได้ (ส่งได้แค่หาอีเมลเจ้าของบัญชี Resend เอง)
+  // ต้อง verify domain ที่ Resend ก่อนถึงจะตั้ง RESEND_FROM_EMAIL เป็น custom domain ได้จริง
+  // (เช่น no-reply@rently.website) — ถ้ายังไม่ verify Resend จะ reject ด้วย 422 ทุกครั้ง
+  // ค่า default นี้ (onboarding@resend.dev) เป็น sandbox address ของ Resend เอง ไม่ต้อง verify
+  // แต่ส่งได้แค่หาอีเมลเจ้าของบัญชี Resend เท่านั้น ใช้ทดสอบตอน dev ได้
   // ใช้ || ไม่ใช่ ?? เพราะ docker-compose ตั้ง env ที่ไม่ได้กำหนดค่าให้เป็น "" (empty string)
   // ไม่ใช่ undefined — ?? จะไม่ fallback ให้ในกรณีนั้น
-  const from = process.env.RESEND_FROM_EMAIL || " <no-reply.system@rently.com>";
+  const from = process.env.RESEND_FROM_EMAIL || "renty <onboarding@resend.dev>";
   return { apiKey, from };
 }
 
@@ -36,6 +38,9 @@ export async function sendOtpEmail(to: string, code: string): Promise<void> {
   });
 
   if (!response.ok) {
-    throw new BadRequestError(`ส่งอีเมล OTP ไม่สำเร็จ (Resend ตอบกลับ ${response.status})`);
+    const detail = await response.text().catch(() => "");
+    throw new BadRequestError(
+      `ส่งอีเมล OTP ไม่สำเร็จ (Resend ตอบกลับ ${response.status}${detail ? `: ${detail}` : ""})`,
+    );
   }
 }

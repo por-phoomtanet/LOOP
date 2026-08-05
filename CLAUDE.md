@@ -689,6 +689,21 @@ function resolveRentPrice(
 - **ส่งไม่สำเร็จต้อง error ชัดเจนกลับไปที่ผู้ใช้** (ไม่ swallow เงียบๆ) เพราะถ้า OTP ไม่ถึงจริง ผู้ใช้จะติดค้างไม่สามารถสมัครสมาชิกต่อได้เลย
 - **Test ห้ามยิง Resend จริง** — mock `fetch` เสมอใน `bun test` (ตรวจ body ที่ "ส่ง" เพื่อดึงรหัส OTP ออกมาทดสอบแทนการ scrape console.log แบบเดิม)
 
+### 26. Test Database แยกจาก Dev Database (บังคับทุก Phase)
+`bun test` (apps/api) **ต้องต่อ database คนละตัวกับที่ dev ใช้จริงเสมอ** — `apps/api/tests/setup-env.ts` บังคับ `DATABASE_URL`/`DIRECT_URL` ให้ชี้ไปที่ database ชื่อ `loop_test` เสมอ (hardcode ตรงๆ ไม่อ่านจาก `process.env.DB_USER`/`DB_PASSWORD` เพราะ `bunfig.toml`'s `[test] preload` รันก่อน `--env-file` inject ค่าเข้า `process.env` เสร็จ อ่านไม่ทันจริง) — เหตุผล: ก่อนแก้ `bun test` ต่อ database `loop` เดียวกับที่เปิดดูผ่าน Prisma Studio ตรงๆ ทำให้ทุกครั้งที่รัน test มี "Test User"/"A" (`@example.com`) เพิ่มเข้าไปถาวร เคยสะสมถึง 3,700+ แถวจนต้องลบมือหลายรอบ
+- **Setup ครั้งแรก** (ต่อเครื่อง dev ใหม่/หลัง reset volume): ต้องสร้าง database และ apply migration + seed เองก่อน `bun test` จะรันผ่าน:
+  ```bash
+  docker exec -i loop-db-1 psql -U loop -d loop -c "CREATE DATABASE loop_test;"
+  DATABASE_URL="postgresql://loop:<password>@localhost:5433/loop_test?schema=public" \
+  DIRECT_URL="postgresql://loop:<password>@localhost:5433/loop_test?schema=public" \
+    npx prisma migrate deploy --schema=packages/db/prisma/schema.prisma
+  DATABASE_URL="postgresql://loop:<password>@localhost:5433/loop_test?schema=public" \
+  DIRECT_URL="postgresql://loop:<password>@localhost:5433/loop_test?schema=public" \
+    npm run seed --workspace=packages/db
+  ```
+- **มี migration ใหม่ทีหลัง**: ต้องรัน `prisma migrate deploy` (ไม่ใช่ `migrate dev`) ซ้ำใส่ `loop_test` ด้วยเสมอ ไม่งั้น schema ของ test database จะตกรุ่นและ test จะพังด้วย error ที่ไม่เกี่ยวกับโค้ดที่แก้จริง
+- ถ้า `DB_PASSWORD` ใน `.env` เปลี่ยน (เช่นตอน rotate credential) ต้องแก้ hardcoded password ใน `setup-env.ts` ให้ตรงกันด้วยมือ (จุดเดียวที่ค่านี้ hardcode ในโปรเจกต์)
+
 ---
 
 ## Task Management Rules (สำหรับ AI)
