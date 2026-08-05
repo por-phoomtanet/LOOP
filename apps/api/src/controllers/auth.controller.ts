@@ -17,9 +17,8 @@ export async function register(body: unknown) {
   return { data: result, message: "ok" };
 }
 
-export async function requestOtp(userId: number, body: unknown) {
-  const { method } = body as { method: "email" | "phone" };
-  const result = await authService.requestOtp(userId, method);
+export async function requestOtp(userId: number) {
+  const result = await authService.requestOtp(userId);
   return { data: result, message: "ok" };
 }
 

@@ -32,6 +32,8 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN}
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       OPENROUTER_MODEL: ${OPENROUTER_MODEL}
+      RESEND_KEY: ${RESEND_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL}
     ports:
       - "${PORT}:${PORT}"
     volumes:

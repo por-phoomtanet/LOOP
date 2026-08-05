@@ -16,7 +16,7 @@
 | Rental (เช่า/checkout) | เลือกวัน, จุดรับ, คำนวณราคา (ค่าเช่า+ค่าธรรมเนียม+เงินประกัน), ยกเลิกได้ใน 10 นาที, pipeline pending→approved→shipped→completed |
 | My Listings / My Rentals | เจ้าของ: อนุมัติ/ปฏิเสธ/ยืนยันจัดส่ง-รับคืน (แนบรูป) · ผู้เช่า: ประวัติการเช่า, คืนสินค้า (แนบรูป) |
 | Favorites | บันทึกสินค้าที่สนใจ, badge นับจำนวน |
-| Signup + KYC | สมัครสมาชิก, OTP (email/phone) → ผ่านแล้ว **ใช้งานได้ทันที** ไม่ต้องรอแอดมิน, อัปโหลดบัตรประชาชน, ยืนยันใบหน้า (เริ่มจาก mock ก่อน ต่อ provider จริงภายหลัง) |
+| Signup + KYC | สมัครสมาชิก, OTP ทางอีเมล (ส่งจริงผ่าน Resend — ดู Phase 12) → ผ่านแล้ว **ใช้งานได้ทันที** ไม่ต้องรอแอดมิน, อัปโหลดบัตรประชาชน, ยืนยันใบหน้า (เริ่มจาก mock ก่อน ต่อ provider จริงภายหลัง) |
 | Admin | Dashboard, Category CRUD, Users (ดูรายชื่อ/ระงับ-ปลดระงับ), Products (read-only), Payments, Settings |
 | Auth | Login/JWT, Role (admin/user), Role Permission ใช้เฉพาะฝั่ง Admin panel |
 
@@ -379,7 +379,7 @@ model Settings {
 | Method | Path | Auth | คำอธิบาย |
 |---|---|---|---|
 | POST | `/api/auth/register` | * | สมัครสมาชิก step กรอกฟอร์ม (สร้าง user status=PENDING) |
-| POST | `/api/auth/register/otp/request` | * | ขอ OTP (email/phone) |
+| POST | `/api/auth/register/otp/request` | * | ขอ OTP ทางอีเมล (ส่งจริงผ่าน Resend) |
 | POST | `/api/auth/register/otp/verify` | * | ยืนยัน OTP → สร้างบัญชีสำเร็จ |
 | POST | `/api/auth/login` | * | Login รับ JWT |
 | GET | `/api/auth/me` | auth | ดูข้อมูลตัวเอง |
@@ -681,6 +681,14 @@ function resolveRentPrice(
 - **ไม่ block การสมัครถ้า OCR ล้มเหลว/รูปไม่ชัด** — แค่ไม่มีค่าให้ auto-fill ผู้ใช้กรอกเองได้ (เหมือน Dev Standard #17 ทั่วไป — error ไม่ทำให้ flow ตัน)
 - ไม่รวม face liveness ใน Phase นี้ (ดู Phase 9 ที่พับไว้ ถ้าจะทำภายหลัง)
 
+### 25. Email OTP ผ่าน Resend (เฉพาะ LOOP — ส่งรหัสยืนยันตัวตนจริงตอนสมัครสมาชิก, ดู Phase 12)
+เรียก Resend REST API ตรงๆ (ไม่ลง SDK) — pattern เดียวกับ `services/payment/slipAi.ts`/`services/kyc/idCardAi.ts` (Dev Standard #23/#24):
+- **API key อยู่ฝั่ง server เท่านั้น** (`RESEND_KEY` ใน root `.env`) อ่านแบบ lazy — ไม่ required ตอน startup (`validateEnv()`) เพราะยัง block ทั้ง API ไม่ได้ถ้าลืมตั้งตอน dev/deploy รอบแรก
+- **`RESEND_FROM_EMAIL` ต้อง verify domain ที่ Resend ก่อนถึงจะส่งหาอีเมลผู้ใช้ทั่วไปได้จริง** — ถ้ายังไม่ verify (เช่นตอนเริ่มโปรเจกต์) ค่า default `onboarding@resend.dev` ส่งได้แค่หาอีเมลเจ้าของบัญชี Resend เอง ไม่ใช่ผู้ใช้จริงทุกคน — ต้อง verify `rently.website` ที่ Resend (เพิ่ม DNS record ตามที่ Resend กำหนด) ก่อนเปิดใช้งานจริงกับผู้ใช้ทั่วไป
+- **OTP เป็น email เท่านั้น** — ตัดสินใจแล้วว่าตัดช่องทาง SMS/เบอร์โทรออกทั้งหมด ไม่ใช่แค่ mock ต่อไป (`requestOtp()` ไม่รับ `method` อีกต่อไป, endpoint ไม่ต้องส่ง body)
+- **ส่งไม่สำเร็จต้อง error ชัดเจนกลับไปที่ผู้ใช้** (ไม่ swallow เงียบๆ) เพราะถ้า OTP ไม่ถึงจริง ผู้ใช้จะติดค้างไม่สามารถสมัครสมาชิกต่อได้เลย
+- **Test ห้ามยิง Resend จริง** — mock `fetch` เสมอใน `bun test` (ตรวจ body ที่ "ส่ง" เพื่อดึงรหัส OTP ออกมาทดสอบแทนการ scrape console.log แบบเดิม)
+
 ---
 
 ## Task Management Rules (สำหรับ AI)
@@ -842,6 +850,10 @@ function resolveRentPrice(
   - [x] FIX #1: body spec เดิมตั้งใจรับ `userId` ผ่าน body ซึ่งเป็นช่องโหว่ (ใครก็ขอ/ยืนยัน OTP แทนบัญชีคนอื่นได้ถ้ารู้ id) | before: `{ userId, method }` ไม่ auth → after: endpoint ต้อง `authenticate` เสมอ, ดึง `userId` จาก `req.user.userId` (JWT) เท่านั้น
     - 🧪 test: เรียกโดยไม่มี Bearer token → 401 ✅
     - 📝 commit: รวมอยู่ใน `feat(api): otp request and verify auto-activates account`
+
+  - [x] FIX #2 (Phase 12 — ก่อนขึ้น production จริง): OTP ยัง mock ล้วน (`console.log` เท่านั้น) — ผู้ใช้จริงสมัครสมาชิกไม่ได้เลยเพราะไม่มีทางเห็นรหัส และตัดสินใจตัด method `"phone"` (SMS) ออกจากระบบทั้งหมดไปพร้อมกัน (ไม่ใช่แค่คงเป็น mock) เหลือ email อย่างเดียว | before: `request` รับ `{ method: 'email'|'phone' }`, ทั้งคู่ mock ผ่าน `console.log` → after: `request` ไม่รับ body อีกต่อไป (`POST /api/auth/register/otp/request` เปล่า), ส่งอีเมลจริงผ่าน Resend เสมอ (ดู Dev Standard #25) — `otpMethod` ใน DB ยังเก็บเป็น `"email"` คงที่ (ไม่ได้ลบ field เพราะไม่คุ้มกับ migration ที่ต้องทำ)
+    - 🧪 test: `bun test` ทั้ง apps/api → 116/116 ผ่าน | `npx tsc`/`eslint` ทั้ง api/web ผ่าน | `next build` ผ่านครบ 17/17 pages ✅
+    - 📝 commit: `feat(api): send real otp emails via resend, remove phone/sms otp entirely`
 
 - [x] 3.4 API: อัปโหลดบัตรประชาชน + OCR จำลอง
   - `POST /api/users/:id/id-card` (auth + multer, จำกัด PNG/JPEG/WEBP ≤5MB, เก็บ `idCardImageUrl`) | `POST /api/users/:id/id-card/ocr-mock` (auth) — คืนค่าจำลองคงที่ (`SOMCHAI JAIDEE`, `1-2345-67890-12-3`, `1995-05-12`, `2030-05-12`) ตาม prototype ปุ่ม "ดึงข้อมูลจากรูปภาพ (จำลอง)" — ยังไม่ต่อ OCR provider จริง (ดู requirement.md Phase ถัดไป) — ทั้งสอง endpoint บังคับ `:id === req.user.userId` เท่านั้น (403 ถ้าไม่ใช่เจ้าของ)
@@ -1320,4 +1332,22 @@ function resolveRentPrice(
   - Mock `global.fetch` ใน `bun test` เหมือน pattern ของ `slipAi.test.ts`/`rental.test.ts`
   - 🧪 test: `bun test` (ทั้ง apps/api) → **113/113 ผ่าน** (เพิ่มจากเดิม 102 → 113 คือ 11 เคสใหม่: 5 idCardAi + 6 register/ocr) รวมเคส idCardNumber ซ้ำ, ไม่มี OCR ก็สมัครได้ปกติ, ไม่ persist ที่ endpoint OCR, ไม่ต้อง auth ✅ | `npx tsc --noEmit` ทั้ง api/web ผ่าน ✅ | `eslint` ทั้ง api/web ผ่าน ✅
   - 📝 commit: รวมอยู่ในแต่ละ commit ของ 11.2/11.3/11.4
+
+---
+
+### Phase 12 — Email OTP จริงผ่าน Resend (แทน mock, ตัด SMS/เบอร์โทรออกทั้งหมด)
+
+> **ที่มา:** OTP ตอนสมัครสมาชิก (Phase 3.3) เดิมเป็น mock ล้วน — `requestOtp()` แค่ `console.log()` รหัสลง server log ไม่ได้ส่ง email/SMS จริงเลย พอจะขึ้น production จริง ผู้ใช้ทั่วไปสมัครสมาชิกไม่ได้เลยเพราะไม่มีทางเห็นรหัส OTP — แก้โดยต่อ **Resend** (`RESEND_KEY` ใน root `.env`) **และตัดสินใจตัดช่องทาง SMS/เบอร์โทรออกจากระบบทั้งหมด** (ไม่ใช่แค่คงเป็น mock ต่อไป) เหลือแค่ email เป็นช่องทาง OTP เดียว ลด scope/ความซับซ้อนของ flow สมัครสมาชิกลง ดูกฎเต็มใน [Dev Standard #25](#25-email-otp-ผ่าน-resend-เฉพาะ-loop--ส่งรหัสยืนยันตัวตนจริงตอนสมัครสมาชิก-ดู-phase-12)
+
+- [x] 12.1 API: `apps/api/src/services/email/resend.ts` — `sendOtpEmail(to, code)` เรียก Resend REST API ตรงๆ
+  - อ่าน `RESEND_KEY`/`RESEND_FROM_EMAIL` แบบ lazy (`RESEND_FROM_EMAIL` default เป็น `onboarding@resend.dev` — ใช้ได้ชั่วคราวจนกว่าจะ verify domain `rently.website` ที่ Resend จริง)
+  - ส่งไม่สำเร็จ (non-2xx) → throw `BadRequestError` ชัดเจน ไม่ swallow เงียบๆ (ดู Dev Standard #25)
+  - 🧪 test: ครอบคลุมผ่าน `auth.test.ts` (mock `fetch` ผ่าน `mockResend()` helper) ✅
+  - 📝 commit: `feat(api): send real otp emails via resend, remove phone/sms otp entirely`
+
+- [x] 12.2 API + Web: `requestOtp()` เหลือ email อย่างเดียว — ตัด `method`/`"phone"` ออกทั้งระบบ
+  - `POST /api/auth/register/otp/request` ไม่รับ body อีกต่อไป (เดิมรับ `{method}`) — เรียก `sendOtpEmail()` จริงเสมอ
+  - Web: `OtpStep.tsx` ตัด toggle ช่องทาง (อีเมล/เบอร์โทร) ออก เหลือแค่หน้ากรอกรหัสจากอีเมลอย่างเดียว, `authApi.ts::requestOtp()` ไม่รับ argument แล้ว
+  - 🧪 test: `bun test` (ทั้ง apps/api) → **116/116 ผ่าน** | `npx tsc`/`eslint` ทั้ง api/web ผ่าน ✅ | `next build` ผ่านครบ 17/17 pages ✅
+  - 📝 commit: รวมอยู่ใน `feat(api): send real otp emails via resend, remove phone/sms otp entirely`
 

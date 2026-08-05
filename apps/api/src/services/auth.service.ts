@@ -4,6 +4,7 @@ import { BadRequestError, ConflictError, UnauthorizedError } from "../utils/erro
 import { signToken } from "../utils/jwt";
 import { generateOtpCode, OTP_TTL_MINUTES } from "../utils/otp";
 import { hashPassword, verifyPassword } from "../utils/password";
+import { sendOtpEmail } from "./email/resend";
 
 export async function login(email: string, password: string) {
   const user = await userRepository.findByEmail(email);
@@ -74,7 +75,7 @@ export async function register(input: {
   };
 }
 
-export async function requestOtp(userId: number, method: "email" | "phone") {
+export async function requestOtp(userId: number) {
   const user = await userRepository.findById(userId);
   if (!user) throw new UnauthorizedError();
 
@@ -82,13 +83,10 @@ export async function requestOtp(userId: number, method: "email" | "phone") {
   const otpCodeHash = await hashPassword(code);
   const otpExpiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
 
-  await userRepository.setOtp(userId, { otpCodeHash, otpExpiresAt, otpMethod: method });
+  await userRepository.setOtp(userId, { otpCodeHash, otpExpiresAt, otpMethod: "email" });
+  await sendOtpEmail(user.email, code);
 
-  const destination = method === "email" ? user.email : user.phone;
-  // โหมด mock: log รหัสแทนการส่งจริง — ไว้ต่อ SMS/Email provider ทีหลัง
-  console.log(`[MOCK OTP] ส่งรหัส ${code} ไปยัง ${method} (${destination})`);
-
-  return { method, destination };
+  return { method: "email" as const, destination: user.email };
 }
 
 export async function verifyOtp(userId: number, code: string) {

@@ -25,10 +25,6 @@ const registerSchema = z.object({
   pdpaConsent: z.literal(true, { message: "กรุณายอมรับเงื่อนไข PDPA ก่อนสมัครสมาชิก" }),
 });
 
-const otpRequestSchema = z.object({
-  method: z.enum(["email", "phone"]),
-});
-
 const otpVerifySchema = z.object({
   code: z.string().length(6),
 });
@@ -44,8 +40,7 @@ export const authRoutes = new Elysia({ prefix: "/api/auth" })
     },
     validate({ body: registerSchema }),
   )
-  .post("/register/otp/request", ({ user, body }) => authController.requestOtp(user.userId, body), {
-    ...validate({ body: otpRequestSchema }),
+  .post("/register/otp/request", ({ user }) => authController.requestOtp(user.userId), {
     auth: true,
   })
   .post("/register/otp/verify", ({ user, body }) => authController.verifyOtp(user.userId, body), {

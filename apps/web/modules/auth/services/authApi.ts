@@ -21,10 +21,9 @@ export const authApi = {
     return api.post<ApiResponse<IdCardOcrResult>>("/ocr/id-card", form);
   },
 
-  requestOtp(method: "email" | "phone") {
+  requestOtp() {
     return api.post<ApiResponse<{ method: string; destination: string }>>(
       "/auth/register/otp/request",
-      { method },
     );
   },
 

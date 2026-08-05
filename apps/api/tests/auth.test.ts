@@ -1,4 +1,4 @@
-import { describe, it, expect, spyOn, afterEach } from "bun:test";
+import { describe, it, expect, afterEach } from "bun:test";
 import request from "supertest";
 import { baseUrl } from "./testApp";
 import { registerUser, uniqueEmail } from "./helpers";
@@ -9,6 +9,7 @@ afterEach(() => {
   globalThis.fetch = originalFetch;
   delete process.env.OPENROUTER_API_KEY;
   delete process.env.OPENROUTER_MODEL;
+  delete process.env.RESEND_KEY;
 });
 
 function mockOpenRouter(content: Record<string, unknown>) {
@@ -18,6 +19,17 @@ function mockOpenRouter(content: Record<string, unknown>) {
     new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(content) } }] }), {
       status: 200,
     })) as unknown as typeof fetch;
+}
+
+// mock Resend — เก็บ body ของทุก request ไว้ให้ test ดึงรหัส OTP ออกมาจาก html ที่ "ส่ง" ได้
+function mockResend() {
+  process.env.RESEND_KEY = "test-resend-key";
+  const calls: Record<string, unknown>[] = [];
+  globalThis.fetch = (async (_url: unknown, init: RequestInit) => {
+    calls.push(JSON.parse(init.body as string));
+    return new Response(JSON.stringify({ id: "test-email-id" }), { status: 200 });
+  }) as unknown as typeof fetch;
+  return calls;
 }
 
 const TINY_PNG = Buffer.from(
@@ -214,25 +226,22 @@ describe("POST /api/ocr/id-card", () => {
 
 describe("OTP request/verify", () => {
   it("requires authentication", async () => {
-    const res = await request(baseUrl)
-      .post("/api/auth/register/otp/request")
-      .send({ method: "email" });
+    const res = await request(baseUrl).post("/api/auth/register/otp/request");
     expect(res.status).toBe(401);
   });
 
   it("auto-activates the account once the correct code is verified", async () => {
     const { token } = await registerUser("otp");
 
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const sentEmails = mockResend();
     const otpRes = await request(baseUrl)
       .post("/api/auth/register/otp/request")
-      .set("Authorization", `Bearer ${token}`)
-      .send({ method: "email" });
+      .set("Authorization", `Bearer ${token}`);
     expect(otpRes.status).toBe(200);
 
-    const logged = logSpy.mock.calls.map((c) => c.join(" ")).find((l) => l.includes("[MOCK OTP]"));
-    logSpy.mockRestore();
-    const code = logged?.match(/รหัส (\d{6})/)?.[1];
+    expect(sentEmails).toHaveLength(1);
+    const html = sentEmails[0].html as string;
+    const code = html.match(/>(\d{6})</)?.[1];
     expect(code).toBeDefined();
 
     const wrongRes = await request(baseUrl)
@@ -247,6 +256,30 @@ describe("OTP request/verify", () => {
       .send({ code });
     expect(verifyRes.status).toBe(200);
     expect(verifyRes.body.data.verified).toBe(true);
+  });
+
+  it("rejects email otp request with 400 when RESEND_KEY is not configured", async () => {
+    const { token } = await registerUser("otpnokey");
+
+    const res = await request(baseUrl)
+      .post("/api/auth/register/otp/request")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects email otp request with 400 when resend fails", async () => {
+    const { token } = await registerUser("otpfail");
+
+    process.env.RESEND_KEY = "test-resend-key";
+    globalThis.fetch = (async () =>
+      new Response("Unauthorized", { status: 401 })) as unknown as typeof fetch;
+
+    const res = await request(baseUrl)
+      .post("/api/auth/register/otp/request")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
   });
 });
 
