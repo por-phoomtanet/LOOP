@@ -3,8 +3,8 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: loop
-      POSTGRES_PASSWORD: loop
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: loop
     ports:
       - "5433:5432"
@@ -25,12 +25,15 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://loop:loop@db:5432/loop?schema=public
-      DIRECT_URL: postgresql://loop:loop@db:5432/loop?schema=public
-      JWT_SECRET: change-me
-      PORT: 4000
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/loop?schema=public
+      DIRECT_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/loop?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: ${PORT}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL}
     ports:
-      - "4001:4000"
+      - "${PORT}:${PORT}"
     volumes:
       # เก็บไฟล์ที่อัปโหลด (product images, id-cards) ไว้นอก container
       # ไม่ให้หายเวลา rebuild/recreate
@@ -41,12 +44,12 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
-        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:4001/api}
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
     restart: unless-stopped
     depends_on:
       - api
     environment:
-      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:4001/api}
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
     ports:
       - "3001:3001"
 

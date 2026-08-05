@@ -17,7 +17,7 @@ import { userRoutes } from "./routes/user.routes";
 
 export const app = new Elysia()
   .onError(({ code, error, set }) => handleError(code, error, set))
-  .use(cors())
+  .use(cors({ origin: process.env.CORS_ORIGIN }))
   // เสิร์ฟไฟล์อัปโหลดแบบอ่านจาก disk ต่อ request (แทน @elysiajs/static ที่ scan โฟลเดอร์ตอน startup
   // ครั้งเดียว ทำให้ไฟล์ที่อัปโหลดหลัง server รันแล้วโดน 404) + กัน path traversal
   .get("/uploads/*", async ({ params, set }) => {
