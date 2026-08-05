@@ -1,4 +1,5 @@
 import type { AccountType } from "@loop/db";
+import { signupOtpRepository } from "../repositories/signupOtp.repository";
 import { userRepository } from "../repositories/user.repository";
 import { BadRequestError, ConflictError, UnauthorizedError } from "../utils/errors";
 import { signToken } from "../utils/jwt";
@@ -42,6 +43,11 @@ export async function register(input: {
   const existing = await userRepository.findByEmail(input.email);
   if (existing) throw new ConflictError("อีเมลนี้ถูกใช้แล้ว");
 
+  const signupOtp = await signupOtpRepository.findByEmail(input.email);
+  if (!signupOtp?.verifiedAt) {
+    throw new BadRequestError("กรุณายืนยันอีเมลก่อนสร้างบัญชี");
+  }
+
   if (input.idCardNumber) {
     const existingIdCard = await userRepository.findByIdCardNumber(input.idCardNumber);
     if (existingIdCard) throw new ConflictError("บัตรประชาชนนี้ถูกใช้สมัครสมาชิกไปแล้ว");
@@ -60,7 +66,10 @@ export async function register(input: {
     ...(input.idCardAddress ? { idCardAddress: input.idCardAddress } : {}),
     ...(input.idCardDob ? { idCardDob: new Date(input.idCardDob) } : {}),
     pdpaConsentedAt: new Date(),
+    // อีเมลยืนยันไปแล้วก่อนสร้างบัญชี (signup-otp) ไม่ต้องรอ OTP หลัง register อีกรอบ
+    verificationStatus: "APPROVED",
   });
+  await signupOtpRepository.deleteByEmail(input.email);
 
   const token = signToken({ userId: user.id, role: user.role });
   return {
@@ -73,6 +82,34 @@ export async function register(input: {
       accountType: user.accountType,
     },
   };
+}
+
+export async function requestSignupOtp(email: string) {
+  const existing = await userRepository.findByEmail(email);
+  if (existing) throw new ConflictError("อีเมลนี้ถูกใช้แล้ว");
+
+  const code = generateOtpCode();
+  const codeHash = await hashPassword(code);
+  const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
+
+  await signupOtpRepository.upsert(email, { codeHash, expiresAt });
+  await sendOtpEmail(email, code);
+
+  return { destination: email };
+}
+
+export async function verifySignupOtp(email: string, code: string) {
+  const record = await signupOtpRepository.findByEmail(email);
+  if (!record) throw new BadRequestError("ไม่พบคำขอ OTP กรุณาขอรหัสใหม่");
+  if (record.expiresAt.getTime() < Date.now()) {
+    throw new BadRequestError("รหัสหมดอายุ กรุณาขอรหัสใหม่");
+  }
+
+  const valid = await verifyPassword(code, record.codeHash);
+  if (!valid) throw new BadRequestError("รหัส OTP ไม่ถูกต้อง");
+
+  await signupOtpRepository.markVerified(email);
+  return { verified: true };
 }
 
 export async function requestOtp(userId: number) {

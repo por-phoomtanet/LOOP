@@ -1366,3 +1366,34 @@ function resolveRentPrice(
   - 🧪 test: `bun test` (ทั้ง apps/api) → **116/116 ผ่าน** | `npx tsc`/`eslint` ทั้ง api/web ผ่าน ✅ | `next build` ผ่านครบ 17/17 pages ✅
   - 📝 commit: รวมอยู่ใน `feat(api): send real otp emails via resend, remove phone/sms otp entirely`
 
+---
+
+### Phase 13 — ยืนยันอีเมลก่อนสร้างบัญชี (Inline Signup OTP)
+
+> **ที่มา:** Phase 12 ทำให้ OTP ส่งอีเมลจริงแล้ว แต่ verify ยังเกิด**หลัง**สร้างบัญชี (flow แยกหน้า signup → otp → done) — เปลี่ยนมาให้ยืนยันอีเมล**ก่อน**สร้างบัญชีเลย ในฟอร์มสมัครหน้าเดียว: ปุ่ม "ส่ง OTP" ท้าย input อีเมล → กรอกรหัส 6 หลักตรงนั้น → ปุ่ม "สร้างบัญชี" จะกดไม่ได้จนกว่าจะยืนยันผ่าน — ตัดปัญหาบัญชีค้างสถานะยังไม่ verify (เคยเจอจริงตอนทดสอบ production) เพราะตอนนี้ verify สำเร็จก่อนถึงจะมี User row เกิดขึ้นเลย
+
+- [x] 13.1 DB: `SignupOtp` model ใหม่ + migration — เก็บ OTP ผูกกับอีเมลเฉยๆ (ไม่มี User ผูกอยู่ตอนขอ/ยืนยันรหัส เพราะยังไม่มีบัญชี)
+  - `email String @unique`, `codeHash`, `expiresAt`, `verifiedAt DateTime?`
+  - 🧪 test: migration `20260805144027_add_signup_otp` apply สำเร็จทั้ง dev db (`loop`) และ test db (`loop_test`, ดู Dev Standard #26) ✅
+  - 📝 commit: `feat: verify email before account creation via inline signup otp`
+
+- [x] 13.2 API: `POST /api/auth/signup-otp/request` + `/verify` (public, ไม่ auth — ยังไม่มี user ให้ auth ด้วย)
+  - request: รับ `{ email }` เช็คซ้ำกับ `User.email` ที่มีอยู่แล้ว → 409 ถ้าซ้ำ, generate รหัส 6 หลัก → `signupOtpRepository.upsert()` (upsert ทับของเก่าถ้าขอซ้ำ) → ส่งจริงผ่าน `sendOtpEmail()` (Phase 12)
+  - verify: รับ `{ email, code }` → compare hash + เช็คไม่หมดอายุ → ตั้ง `verifiedAt`
+  - 🧪 test: ส่งรหัส+ยืนยันถูกต้อง → register ต่อได้ ✅ | อีเมลซ้ำกับ user ที่มีอยู่ → 409 ✅ | verify โดยไม่เคย request มาก่อน → 400 ✅
+  - 📝 commit: รวมอยู่ใน `feat: verify email before account creation via inline signup otp`
+
+- [x] 13.3 API: `POST /api/auth/register` บังคับเช็คอีเมลยืนยันแล้วก่อนสร้างบัญชี
+  - ไม่มี `SignupOtp.verifiedAt` ของอีเมลนั้น → 400 `กรุณายืนยันอีเมลก่อนสร้างบัญชี`
+  - สร้างสำเร็จ → `verificationStatus: "APPROVED"` ทันที (ไม่ต้องรอ OTP หลัง register อีกรอบ) แล้วลบ `SignupOtp` row ทิ้ง (กัน orphan data ตาม pattern เดียวกับ Dev Standard #24)
+  - `userRepository.create()` เพิ่ม param `verificationStatus` ที่เลือกได้ (เดิม hardcode ผ่าน Prisma default เป็น `PENDING` เสมอ)
+  - 🧪 test: สมัครโดยไม่เคยยืนยันอีเมล → 400 ✅ | สมัครหลังยืนยันแล้ว → 201 ✅ | `registerUser()` test helper อัปเดตให้ auto-verify ผ่าน Prisma ตรงๆ (เร็วกว่ายิง request+verify OTP จริงทุกครั้งที่เทสอื่นเรียก helper นี้) ✅
+  - 📝 commit: รวมอยู่ใน `feat: verify email before account creation via inline signup otp`
+
+- [x] 13.4 Web: `SignupForm.tsx` — ปุ่ม "ส่ง OTP" ในช่องอีเมล + กรอกรหัสยืนยันในฟอร์มเดียวกัน
+  - แก้อีเมลหลังยืนยันแล้ว → รีเซ็ต verified state ต้องขอรหัสใหม่ (กันกรณี submit ด้วยอีเมลที่ไม่ตรงกับที่ verify ไว้)
+  - `canSubmit` เพิ่มเงื่อนไข `emailVerified`
+  - `SignupPage.tsx` ตัด stage `"otp"` ออก (register เสร็จ = verified แล้ว ไปหน้า "done" ตรงๆ) — `OtpStep.tsx` เดิม (Phase 12) ไม่ได้ลบ แค่ไม่มีใครเรียกใช้แล้ว เผื่อ endpoint post-registration OTP เดิม (`/register/otp/request`/`verify`, ยังทำงานอยู่ไม่ได้ถูกลบ) ถูกใช้ใหม่ในอนาคต
+  - 🧪 test: `npx tsc`/`eslint` ทั้ง api/web ผ่าน ✅ | `bun test` (apps/api) → **120/120 ผ่าน** ✅ | `next build` ผ่านครบ 17/17 pages ✅
+  - 📝 commit: รวมอยู่ใน `feat: verify email before account creation via inline signup otp`
+

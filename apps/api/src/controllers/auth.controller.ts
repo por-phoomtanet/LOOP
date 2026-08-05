@@ -27,3 +27,15 @@ export async function verifyOtp(userId: number, body: unknown) {
   const result = await authService.verifyOtp(userId, code);
   return { data: result, message: "ok" };
 }
+
+export async function requestSignupOtp(body: unknown) {
+  const { email } = body as { email: string };
+  const result = await authService.requestSignupOtp(email);
+  return { data: result, message: "ok" };
+}
+
+export async function verifySignupOtp(body: unknown) {
+  const { email, code } = body as { email: string; code: string };
+  const result = await authService.verifySignupOtp(email, code);
+  return { data: result, message: "ok" };
+}

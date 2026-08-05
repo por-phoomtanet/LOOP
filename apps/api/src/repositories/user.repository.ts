@@ -37,6 +37,7 @@ export const userRepository = {
     idCardAddress?: string;
     idCardDob?: Date;
     pdpaConsentedAt: Date;
+    verificationStatus?: "PENDING" | "APPROVED" | "REJECTED";
   }) {
     const userRole = await prisma.role.findUnique({ where: { name: "user" } });
     if (!userRole) throw new Error("Missing seed: role 'user' not found");

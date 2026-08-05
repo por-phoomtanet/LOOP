@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from "bun:test";
 import request from "supertest";
 import { baseUrl } from "./testApp";
-import { registerUser, uniqueEmail } from "./helpers";
+import { markEmailVerified, registerUser, uniqueEmail } from "./helpers";
 
 const originalFetch = globalThis.fetch;
 
@@ -40,6 +40,7 @@ const TINY_PNG = Buffer.from(
 describe("POST /api/auth/register", () => {
   it("creates a new user and returns a token", async () => {
     const email = uniqueEmail("reg");
+    await markEmailVerified(email);
     const res = await request(baseUrl).post("/api/auth/register").send({
       accountType: "INDIVIDUAL",
       name: "Test User",
@@ -55,22 +56,39 @@ describe("POST /api/auth/register", () => {
     expect(res.body.data.user.role).toBe("user");
   });
 
-  it("rejects registration without pdpa consent with 400", async () => {
+  it("rejects registration when the email hasn't been verified via signup-otp", async () => {
     const res = await request(baseUrl)
       .post("/api/auth/register")
       .send({
         accountType: "INDIVIDUAL",
         name: "Test User",
-        email: uniqueEmail("nopdpa"),
+        email: uniqueEmail("noverify"),
         phone: "0812345678",
         password: "password123",
+        pdpaConsent: true,
       });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe("กรุณายืนยันอีเมลก่อนสร้างบัญชี");
+  });
+
+  it("rejects registration without pdpa consent with 400", async () => {
+    const email = uniqueEmail("nopdpa");
+    await markEmailVerified(email);
+    const res = await request(baseUrl).post("/api/auth/register").send({
+      accountType: "INDIVIDUAL",
+      name: "Test User",
+      email,
+      phone: "0812345678",
+      password: "password123",
+    });
 
     expect(res.status).toBe(400);
   });
 
   it("rejects duplicate email with 409", async () => {
     const email = uniqueEmail("dup");
+    await markEmailVerified(email);
     await request(baseUrl).post("/api/auth/register").send({
       accountType: "INDIVIDUAL",
       name: "A",
@@ -107,6 +125,7 @@ describe("POST /api/auth/register", () => {
 
   it("stores confirmed id card ocr fields when provided", async () => {
     const email = uniqueEmail("regocr");
+    await markEmailVerified(email);
     const res = await request(baseUrl)
       .post("/api/auth/register")
       .send({
@@ -129,6 +148,7 @@ describe("POST /api/auth/register", () => {
 
   it("registers fine without any id card ocr fields (backward compatible)", async () => {
     const email = uniqueEmail("regnoocr");
+    await markEmailVerified(email);
     const res = await request(baseUrl).post("/api/auth/register").send({
       accountType: "INDIVIDUAL",
       name: "Test User",
@@ -143,34 +163,86 @@ describe("POST /api/auth/register", () => {
 
   it("rejects a duplicate id card number with 409", async () => {
     const sharedIdCardNumber = `1111111111${Date.now() % 1000}`;
+    const email1 = uniqueEmail("iddup1");
+    const email2 = uniqueEmail("iddup2");
+    await markEmailVerified(email1);
+    await markEmailVerified(email2);
 
-    const first = await request(baseUrl)
-      .post("/api/auth/register")
-      .send({
-        accountType: "INDIVIDUAL",
-        name: "A",
-        email: uniqueEmail("iddup1"),
-        phone: "0812345678",
-        password: "password123",
-        pdpaConsent: true,
-        idCardNumber: sharedIdCardNumber,
-      });
+    const first = await request(baseUrl).post("/api/auth/register").send({
+      accountType: "INDIVIDUAL",
+      name: "A",
+      email: email1,
+      phone: "0812345678",
+      password: "password123",
+      pdpaConsent: true,
+      idCardNumber: sharedIdCardNumber,
+    });
     expect(first.status).toBe(201);
 
-    const second = await request(baseUrl)
-      .post("/api/auth/register")
-      .send({
-        accountType: "INDIVIDUAL",
-        name: "B",
-        email: uniqueEmail("iddup2"),
-        phone: "0899999999",
-        password: "password123",
-        pdpaConsent: true,
-        idCardNumber: sharedIdCardNumber,
-      });
+    const second = await request(baseUrl).post("/api/auth/register").send({
+      accountType: "INDIVIDUAL",
+      name: "B",
+      email: email2,
+      phone: "0899999999",
+      password: "password123",
+      pdpaConsent: true,
+      idCardNumber: sharedIdCardNumber,
+    });
 
     expect(second.status).toBe(409);
     expect(second.body.error).toBe("บัตรประชาชนนี้ถูกใช้สมัครสมาชิกไปแล้ว");
+  });
+});
+
+describe("POST /api/auth/signup-otp/request + verify", () => {
+  it("sends a code and allows verifying it, then register succeeds", async () => {
+    const email = uniqueEmail("signupotp");
+    const sentEmails = mockResend();
+
+    const reqRes = await request(baseUrl).post("/api/auth/signup-otp/request").send({ email });
+    expect(reqRes.status).toBe(200);
+    expect(reqRes.body.data.destination).toBe(email);
+
+    expect(sentEmails).toHaveLength(1);
+    const html = sentEmails[0].html as string;
+    const code = html.match(/>(\d{6})</)?.[1];
+    expect(code).toBeDefined();
+
+    const wrongRes = await request(baseUrl)
+      .post("/api/auth/signup-otp/verify")
+      .send({ email, code: "000000" });
+    expect(wrongRes.status).toBe(400);
+
+    const verifyRes = await request(baseUrl)
+      .post("/api/auth/signup-otp/verify")
+      .send({ email, code });
+    expect(verifyRes.status).toBe(200);
+    expect(verifyRes.body.data.verified).toBe(true);
+
+    const registerRes = await request(baseUrl).post("/api/auth/register").send({
+      accountType: "INDIVIDUAL",
+      name: "Test User",
+      email,
+      phone: "0812345678",
+      password: "password123",
+      pdpaConsent: true,
+    });
+    expect(registerRes.status).toBe(201);
+    expect(registerRes.body.data.user.email).toBe(email);
+  });
+
+  it("rejects requesting a code for an email that's already registered", async () => {
+    const { email } = await registerUser("signupotpdup");
+
+    const res = await request(baseUrl).post("/api/auth/signup-otp/request").send({ email });
+    expect(res.status).toBe(409);
+  });
+
+  it("rejects verifying with no prior request", async () => {
+    const res = await request(baseUrl)
+      .post("/api/auth/signup-otp/verify")
+      .send({ email: uniqueEmail("neverrequested"), code: "123456" });
+    expect(res.status).toBe(400);
   });
 });
 
@@ -209,17 +281,17 @@ describe("POST /api/ocr/id-card", () => {
 
     expect(res.status).toBe(200);
     // ถ้า endpoint นี้ persist โดยไม่ตั้งใจ เลขบัตรนี้จะชนกับ unique constraint ตอน register จริง
-    const followUp = await request(baseUrl)
-      .post("/api/auth/register")
-      .send({
-        accountType: "INDIVIDUAL",
-        name: "Test User",
-        email: uniqueEmail("ocrnopersist"),
-        phone: "0812345678",
-        password: "password123",
-        pdpaConsent: true,
-        idCardNumber,
-      });
+    const ocrNoPersistEmail = uniqueEmail("ocrnopersist");
+    await markEmailVerified(ocrNoPersistEmail);
+    const followUp = await request(baseUrl).post("/api/auth/register").send({
+      accountType: "INDIVIDUAL",
+      name: "Test User",
+      email: ocrNoPersistEmail,
+      phone: "0812345678",
+      password: "password123",
+      pdpaConsent: true,
+      idCardNumber,
+    });
     expect(followUp.status).toBe(201);
   });
 });

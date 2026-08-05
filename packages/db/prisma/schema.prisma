@@ -44,6 +44,17 @@ enum VerificationStatus {
   REJECTED
 }
 
+// ยืนยันความเป็นเจ้าของอีเมลก่อนสมัครสมาชิก (ไม่มี User ผูกอยู่ตอนขอ/ยืนยันรหัส)
+// verifiedAt ต้องถูกตั้งค่าก่อน POST /api/auth/register ถึงจะสร้างบัญชีได้ — ลบทิ้งหลังสร้างบัญชีสำเร็จ
+model SignupOtp {
+  id         Int       @id @default(autoincrement())
+  email      String    @unique
+  codeHash   String
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+}
+
 model User {
   id                 Int                @id @default(autoincrement())
   name               String

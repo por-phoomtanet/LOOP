@@ -29,6 +29,15 @@ const otpVerifySchema = z.object({
   code: z.string().length(6),
 });
 
+const signupOtpRequestSchema = z.object({
+  email: z.string().email(),
+});
+
+const signupOtpVerifySchema = z.object({
+  email: z.string().email(),
+  code: z.string().length(6),
+});
+
 export const authRoutes = new Elysia({ prefix: "/api/auth" })
   .use(authMacro)
   .post("/login", ({ body }) => authController.login(body), validate({ body: loginSchema }))
@@ -46,4 +55,15 @@ export const authRoutes = new Elysia({ prefix: "/api/auth" })
   .post("/register/otp/verify", ({ user, body }) => authController.verifyOtp(user.userId, body), {
     ...validate({ body: otpVerifySchema }),
     auth: true,
-  });
+  })
+  // ยืนยันอีเมลก่อนสร้างบัญชี — ยังไม่มี user จริงตอนนี้ จึงไม่ auth ผูกด้วย email แทน userId
+  .post(
+    "/signup-otp/request",
+    ({ body }) => authController.requestSignupOtp(body),
+    validate({ body: signupOtpRequestSchema }),
+  )
+  .post(
+    "/signup-otp/verify",
+    ({ body }) => authController.verifySignupOtp(body),
+    validate({ body: signupOtpVerifySchema }),
+  );

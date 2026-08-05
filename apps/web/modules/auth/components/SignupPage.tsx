@@ -5,10 +5,9 @@ import { useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import { authApi } from "../services/authApi";
 import type { RegisterResult } from "../types";
-import { OtpStep } from "./OtpStep";
 import { SignupForm } from "./SignupForm";
 
-type Stage = "form" | "otp" | "done";
+type Stage = "form" | "done";
 
 export function SignupPage() {
   const [stage, setStage] = useState<Stage>("form");
@@ -19,7 +18,7 @@ export function SignupPage() {
     idCardFile: File | null,
     faceVerifiedMock: boolean,
   ) {
-    // login เข้า authStore ทันที (ยังไม่ APPROVED จนกว่าจะผ่าน OTP) เพื่อให้ request ถัดไปแนบ token อัตโนมัติ
+    // login เข้า authStore ทันที — อีเมลยืนยันผ่าน signup-otp มาก่อนหน้าแล้ว บัญชีนี้ APPROVED ทันที
     setAuth(result.user, result.token);
 
     if (idCardFile) {
@@ -37,7 +36,7 @@ export function SignupPage() {
       }
     }
 
-    setStage("otp");
+    setStage("done");
   }
 
   if (stage === "done") {
@@ -58,10 +57,6 @@ export function SignupPage() {
         </Link>
       </div>
     );
-  }
-
-  if (stage === "otp") {
-    return <OtpStep onVerified={() => setStage("done")} />;
   }
 
   return <SignupForm onRegistered={handleRegistered} />;

@@ -21,6 +21,18 @@ export const authApi = {
     return api.post<ApiResponse<IdCardOcrResult>>("/ocr/id-card", form);
   },
 
+  requestSignupOtp(email: string) {
+    // endpoint public — ยืนยันอีเมลก่อนสร้างบัญชี ยังไม่มี user/token ให้ auth
+    return api.post<ApiResponse<{ destination: string }>>("/auth/signup-otp/request", { email });
+  },
+
+  verifySignupOtp(email: string, code: string) {
+    return api.post<ApiResponse<{ verified: boolean }>>("/auth/signup-otp/verify", {
+      email,
+      code,
+    });
+  },
+
   requestOtp() {
     return api.post<ApiResponse<{ method: string; destination: string }>>(
       "/auth/register/otp/request",

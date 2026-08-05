@@ -35,6 +35,13 @@ export function SignupForm({ onRegistered }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [emailOtpSending, setEmailOtpSending] = useState(false);
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [emailOtpCode, setEmailOtpCode] = useState("");
+  const [emailOtpVerifying, setEmailOtpVerifying] = useState(false);
+  const [emailOtpError, setEmailOtpError] = useState<string | null>(null);
+
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
   const [idCardNumber, setIdCardNumber] = useState("");
@@ -44,7 +51,43 @@ export function SignupForm({ onRegistered }: Props) {
   const [idCardDob, setIdCardDob] = useState("");
 
   const canSubmit =
-    name.trim() && email.trim() && phone.trim() && password.length >= 8 && pdpaAccepted;
+    name.trim() &&
+    email.trim() &&
+    emailVerified &&
+    phone.trim() &&
+    password.length >= 8 &&
+    pdpaAccepted;
+
+  async function handleSendEmailOtp() {
+    if (!email.trim() || emailOtpSending) return;
+    setEmailOtpSending(true);
+    setEmailOtpError(null);
+    try {
+      await authApi.requestSignupOtp(email.trim());
+      setEmailOtpSent(true);
+      setEmailOtpCode("");
+    } catch (err) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
+      setEmailOtpError(typeof msg === "string" ? msg : "ส่งรหัสยืนยันไม่สำเร็จ กรุณาลองใหม่");
+    } finally {
+      setEmailOtpSending(false);
+    }
+  }
+
+  async function handleVerifyEmailOtp() {
+    if (emailOtpCode.length !== 6 || emailOtpVerifying) return;
+    setEmailOtpVerifying(true);
+    setEmailOtpError(null);
+    try {
+      await authApi.verifySignupOtp(email.trim(), emailOtpCode);
+      setEmailVerified(true);
+    } catch (err) {
+      const msg = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
+      setEmailOtpError(typeof msg === "string" ? msg : "ยืนยันรหัสไม่สำเร็จ");
+    } finally {
+      setEmailOtpVerifying(false);
+    }
+  }
 
   // พอครอปรูปบัตรเสร็จ (originFileObj เปลี่ยน) ให้ OCR อัตโนมัติทันที — ไม่ต้องรอผู้ใช้กดปุ่ม
   const idCardOriginFile = idCardFileList[0]?.originFileObj as File | undefined;
@@ -167,7 +210,60 @@ export function SignupForm({ onRegistered }: Props) {
       </div>
 
       <Field label="ชื่อผู้ใช้" value={name} onChange={setName} placeholder="" />
-      <Field label="อีเมล" value={email} onChange={setEmail} type="email" />
+
+      <div className="mb-5">
+        <label className="mb-2 block text-[13px] font-medium text-black/70">อีเมล</label>
+        <div className="focus-within:border-brand-400 flex items-center rounded-lg border border-black/[.14] transition-colors">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setEmailVerified(false);
+              setEmailOtpSent(false);
+              setEmailOtpError(null);
+            }}
+            disabled={emailVerified}
+            className="w-full border-0 px-3.5 py-2.5 text-[14px] outline-none disabled:bg-black/[.02] disabled:text-black/50"
+          />
+          <button
+            type="button"
+            onClick={handleSendEmailOtp}
+            disabled={!email.trim() || emailOtpSending || emailVerified}
+            className="text-brand-600 flex-none whitespace-nowrap border-0 bg-transparent px-3.5 text-[12.5px] font-semibold disabled:text-black/30"
+          >
+            {emailVerified
+              ? "ยืนยันแล้ว ✓"
+              : emailOtpSending
+                ? "กำลังส่ง…"
+                : emailOtpSent
+                  ? "ส่งอีกครั้ง"
+                  : "ส่ง OTP"}
+          </button>
+        </div>
+
+        {emailOtpSent && !emailVerified && (
+          <div className="mt-2.5 flex items-center gap-2">
+            <input
+              value={emailOtpCode}
+              onChange={(e) => setEmailOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              inputMode="numeric"
+              placeholder="รหัส 6 หลักจากอีเมล"
+              className="focus:border-brand-400 w-full rounded-lg border border-black/[.14] px-3.5 py-2 text-[14px] tracking-[.2em] outline-none"
+            />
+            <button
+              type="button"
+              onClick={handleVerifyEmailOtp}
+              disabled={emailOtpCode.length !== 6 || emailOtpVerifying}
+              className="flex-none rounded-lg bg-black px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40"
+            >
+              {emailOtpVerifying ? "กำลังยืนยัน…" : "ยืนยัน"}
+            </button>
+          </div>
+        )}
+        {emailOtpError && <p className="mt-1.5 text-[12px] text-red-600">{emailOtpError}</p>}
+      </div>
+
       <Field label="เบอร์โทร" value={phone} onChange={setPhone} type="tel" />
       <Field label="รหัสผ่าน" value={password} onChange={setPassword} type="password" />
 
