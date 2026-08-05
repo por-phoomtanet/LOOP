@@ -53,27 +53,6 @@ services:
     ports:
       - "3001:3001"
 
-  # Reverse proxy — ออก TLS cert อัตโนมัติจาก Let's Encrypt ให้ rently.website (→ web)
-  # และ api.rently.website (→ api) ต้องมี DNS A record ทั้งสอง subdomain ชี้มาเซิร์ฟเวอร์นี้ก่อน
-  # ถึงจะออก cert สำเร็จ — ใช้เฉพาะตอน deploy จริงเท่านั้น (local dev ใช้ localhost:3001/4001 ตรงๆ ตามเดิม)
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    depends_on:
-      - api
-      - web
-    environment:
-      PORT: ${PORT}
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-
 volumes:
   loop_pgdata:
   loop_uploads:
-  caddy_data:
-  caddy_config:
