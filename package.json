@@ -14,6 +14,7 @@
     "prisma": "dotenv -e .env -- prisma --schema=packages/db/prisma/schema.prisma",
     "generate": "dotenv -e .env -- prisma generate --schema=packages/db/prisma/schema.prisma",
     "migrate": "dotenv -e .env -- prisma migrate dev --schema=packages/db/prisma/schema.prisma",
+    "migrate:deploy": "dotenv -e .env -- prisma migrate deploy --schema=packages/db/prisma/schema.prisma",
     "db:push": "dotenv -e .env -- prisma db push --schema=packages/db/prisma/schema.prisma",
     "db:pull": "dotenv -e .env -- prisma db pull --schema=packages/db/prisma/schema.prisma",
     "test": "npm run test --workspace=apps/api",

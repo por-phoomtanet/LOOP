@@ -1,0 +1,12 @@
+rently.website {
+	reverse_proxy web:3001
+}
+
+# www เป็นแค่ alias — redirect ไปหา domain หลักเสมอ กัน CORS/origin ซ้อนกัน 2 ค่า
+www.rently.website {
+	redir https://rently.website{uri} permanent
+}
+
+api.rently.website {
+	reverse_proxy api:{$PORT}
+}
