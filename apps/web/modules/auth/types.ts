@@ -22,6 +22,7 @@ export type RegisterResult = {
     email: string;
     role: string;
     accountType: AccountType;
+    profileImageUrl?: string | null;
   };
 };
 
@@ -32,4 +33,6 @@ export type IdCardOcrResult = {
   address: string | null;
   dob: string | null;
   valid: boolean;
+  // ฟิลด์ที่ OCR อ่านไม่ได้ — ถ้ามีแปลว่ารูปไม่ชัดพอ ควรให้ผู้ใช้ถ่าย/อัปโหลดใหม่
+  missingFields: string[];
 };

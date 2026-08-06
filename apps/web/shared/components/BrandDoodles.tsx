@@ -1,5 +1,5 @@
 /**
- * Hand-drawn brand elements จาก CI ของ renty (LOVE / FREEDOM / TOGETHER / FUN / HAPPY)
+ * Hand-drawn brand elements จาก CI ของ rently (LOVE / FREEDOM / TOGETHER / FUN / HAPPY)
  * ใช้ currentColor เพื่อ tint ได้ตามที่วาง
  */
 import type { CSSProperties } from "react";

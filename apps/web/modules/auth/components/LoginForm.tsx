@@ -11,7 +11,7 @@ import { authApi } from "../services/authApi";
 type Props = {
   /** เมื่อกำหนดไว้ (เช่น เรียกจาก modal) — เรียกแทนการ redirect ไปหน้าแรก (ไม่พาไปแอดมินอัตโนมัติ ไม่ว่า role ใดก็ตาม — สลับไปแอดมินทีหลังผ่านปุ่มใน header เอง) */
   onSuccess?: () => void;
-  /** ซ่อนหัวข้อ "เข้าสู่ระบบ renty" และปรับ padding ให้พอดีเมื่ออยู่ใน modal */
+  /** ซ่อนหัวข้อ "เข้าสู่ระบบ rently" และปรับ padding ให้พอดีเมื่ออยู่ใน modal */
   compact?: boolean;
 };
 
@@ -62,7 +62,7 @@ export function LoginForm({ onSuccess, compact = false }: Props) {
     >
       {!compact && (
         <h1 className="font-arch mb-6 text-[26px] font-extrabold tracking-[-.02em]">
-          เข้าสู่ระบบ renty
+          เข้าสู่ระบบ rently
         </h1>
       )}
 

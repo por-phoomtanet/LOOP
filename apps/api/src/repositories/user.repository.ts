@@ -65,6 +65,10 @@ export const userRepository = {
     });
   },
 
+  setProfileImage(id: number, profileImageUrl: string) {
+    return prisma.user.update({ where: { id }, data: { profileImageUrl } });
+  },
+
   setIdCardImage(id: number, idCardImageUrl: string) {
     return prisma.user.update({ where: { id }, data: { idCardImageUrl } });
   },

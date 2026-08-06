@@ -7,7 +7,6 @@ import type { UploadFile } from "antd";
 import ImgCrop from "antd-img-crop";
 import axios from "axios";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { resolveUploadUrl } from "@/shared/lib/utils";
 import { LocationField } from "./LocationField";
@@ -17,6 +16,9 @@ import type { Category, MyListing, PickupMethod } from "../types";
 type Props = {
   listing?: MyListing;
   onSaved?: () => void;
+  // true = ฝังอยู่ในหน้าอื่น (แท็บใน /my-listings) — ตัดคอลัมน์กลาง/ระยะขอบของหน้าเดี่ยวออก
+  // และไม่แสดง kicker ซ้ำ เพราะหัวข้อหน้ากับชื่อแท็บบอกอยู่แล้วว่ากำลังลงประกาศ
+  embedded?: boolean;
 };
 
 type PendingPickupOption = { id?: number; type: PickupMethod; label: string };
@@ -28,8 +30,7 @@ const FIXED_PICKUP_LABELS: Record<"GRAB" | "POST", string> = {
 
 const MAX_IMAGES = 10; // ตรงกับ limit ฝั่ง API (.array("files", 10))
 
-export function ListItemForm({ listing, onSaved }: Props) {
-  const router = useRouter();
+export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
   const isEdit = !!listing;
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -39,6 +40,8 @@ export function ListItemForm({ listing, onSaved }: Props) {
   const [pricePerDay, setPricePerDay] = useState(listing?.pricePerDay ?? "");
   const [price3Day, setPrice3Day] = useState(listing?.price3Day ?? "");
   const [price7Day, setPrice7Day] = useState(listing?.price7Day ?? "");
+  const [price15Day, setPrice15Day] = useState(listing?.price15Day ?? "");
+  const [price30Day, setPrice30Day] = useState(listing?.price30Day ?? "");
   const [location, setLocation] = useState(listing?.location ?? "");
   const [lat, setLat] = useState<number | null>(listing?.lat ?? null);
   const [lng, setLng] = useState<number | null>(listing?.lng ?? null);
@@ -135,6 +138,8 @@ export function ListItemForm({ listing, onSaved }: Props) {
         pricePerDay: Number(pricePerDay),
         ...(price3Day !== "" ? { price3Day: Number(price3Day) } : {}),
         ...(price7Day !== "" ? { price7Day: Number(price7Day) } : {}),
+        ...(price15Day !== "" ? { price15Day: Number(price15Day) } : {}),
+        ...(price30Day !== "" ? { price30Day: Number(price30Day) } : {}),
         location,
         ...(lat != null && lng != null ? { lat, lng } : {}),
       };
@@ -199,7 +204,7 @@ export function ListItemForm({ listing, onSaved }: Props) {
           ลงประกาศสำเร็จ!
         </h2>
         <p className="mx-auto mb-7 max-w-[420px] text-[14.5px] leading-relaxed text-black/60">
-          สินค้าของคุณขึ้นแสดงบน renty แล้ว พร้อมให้คนอื่นเช่าได้ทันที
+          สินค้าของคุณขึ้นแสดงบน rently แล้ว พร้อมให้คนอื่นเช่าได้ทันที
         </p>
         <div className="flex items-center justify-center gap-2.5">
           <Link
@@ -221,37 +226,16 @@ export function ListItemForm({ listing, onSaved }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mx-auto w-full max-w-[640px] px-8 py-12">
-      {!isEdit && (
-        <button
-          type="button"
-          onClick={() => router.back()}
-          aria-label="ย้อนกลับ"
-          className="mb-5 flex h-9 w-9 items-center justify-center rounded-full border border-black/[.15] bg-white text-black/60 transition-colors hover:border-black/30 hover:text-black"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M19 12H5" />
-            <path d="M12 19l-7-7 7-7" />
-          </svg>
-        </button>
-      )}
-      <div className="mb-2.5 font-mono text-[11px] uppercase tracking-[.12em] text-black/40">
-        {isEdit ? "แก้ไขประกาศ" : "ลงประกาศใหม่"}
-      </div>
-      <h1 className="font-arch text-[30px] font-extrabold tracking-[-.025em] text-black">
-        {isEdit ? "แก้ไขประกาศให้เช่า" : "ลงขายสินค้าของคุณ"}
-      </h1>
-      {!isEdit && (
-        <p className="mt-2.5 text-[14.5px] text-black/55">
-          ใส่รายละเอียดสั้นๆ แล้วเริ่มสร้างรายได้จากของที่คุณมีอยู่แล้ว
-        </p>
+    <form
+      onSubmit={handleSubmit}
+      className={embedded ? "w-full px-5 py-6 sm:px-6" : "mx-auto w-full max-w-[640px] px-8 py-12"}
+    >
+      {/* ในแท็บ "ลงประกาศให้เช่า" ไม่ต้องมี kicker ซ้ำ (ชื่อแท็บบอกอยู่แล้ว) แต่ใน modal แก้ไข
+          ยังต้องมี เพราะไม่มีหัวข้ออื่นบอกว่ากำลังแก้ไขประกาศอยู่ */}
+      {(!embedded || isEdit) && (
+        <div className="mb-2.5 font-mono text-[11px] uppercase tracking-[.12em] text-black/40">
+          {isEdit ? "แก้ไขประกาศ" : "ลงประกาศใหม่"}
+        </div>
       )}
 
       {error && (
@@ -384,6 +368,34 @@ export function ListItemForm({ listing, onSaved }: Props) {
                 type="number"
                 value={price7Day}
                 onChange={(e) => setPrice7Day(e.target.value)}
+                className="w-full border-0 py-3 text-[14.5px] text-black outline-none"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="mb-2 block text-[13px] font-semibold text-black/60">
+              ราคา 15 วัน <span className="font-normal text-black/40">(ไม่บังคับ)</span>
+            </label>
+            <div className="focus-within:border-brand-400 flex items-center gap-2 rounded-[10px] border border-black/[.15] px-3.5 transition-colors">
+              <span className="flex-none text-[14.5px] text-black/45">฿</span>
+              <input
+                type="number"
+                value={price15Day}
+                onChange={(e) => setPrice15Day(e.target.value)}
+                className="w-full border-0 py-3 text-[14.5px] text-black outline-none"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="mb-2 block text-[13px] font-semibold text-black/60">
+              ราคา 30 วัน <span className="font-normal text-black/40">(ไม่บังคับ)</span>
+            </label>
+            <div className="focus-within:border-brand-400 flex items-center gap-2 rounded-[10px] border border-black/[.15] px-3.5 transition-colors">
+              <span className="flex-none text-[14.5px] text-black/45">฿</span>
+              <input
+                type="number"
+                value={price30Day}
+                onChange={(e) => setPrice30Day(e.target.value)}
                 className="w-full border-0 py-3 text-[14.5px] text-black outline-none"
               />
             </div>

@@ -1,8 +1,8 @@
-# renty — Peer-to-Peer Rental Marketplace
+# rently — Peer-to-Peer Rental Marketplace
 
 แพลตฟอร์มให้เช่าสินค้าระหว่างบุคคล (P2P rental marketplace) แบบ C2C — ผู้ใช้นำของที่มีอยู่มาปล่อยเช่าเป็นรายวันแทนการขายขาด ทุกการเช่ามีเงินประกันความเสียหาย (refundable deposit) และผ่านการยืนยันตัวตน (KYC) รองรับ 2 ภาษา (ไทย/อังกฤษ) สกุลเงินบาท (฿) เอกสารนี้อ้างอิง scope จาก [`requirement.md`](./requirement.md) ซึ่งสรุปมาจาก prototype ใน `Prototype เว็บ C2C/`
 
-> **หมายเหตุ:** ชื่อโปรเจกต์เดิม "LOOP" ถูกเปลี่ยนเป็น "renty" (Phase 6 — ดูรายละเอียด CI ด้านล่าง) — ชื่อ npm package (`@loop/*`) และชื่อโฟลเดอร์ `LOOP/` ยังคงเดิมโดยตั้งใจ เพราะเป็นรายละเอียด internal ไม่ใช่สิ่งที่ผู้ใช้ปลายทางเห็น
+> **หมายเหตุ:** ชื่อโปรเจกต์เดิม "LOOP" ถูกเปลี่ยนเป็น "rently" (Phase 6 — ดูรายละเอียด CI ด้านล่าง) — ชื่อ npm package (`@loop/*`) และชื่อโฟลเดอร์ `LOOP/` ยังคงเดิมโดยตั้งใจ เพราะเป็นรายละเอียด internal ไม่ใช่สิ่งที่ผู้ใช้ปลายทางเห็น
 
 ---
 
@@ -633,18 +633,17 @@ if (!canCancel) throw new BadRequestError('ไม่สามารถยกเ�
 Frontend: countdown ใช้ `setInterval` ทุก 1 วินาที เริ่มใน `useEffect`/mount และ clear ตอน unmount เสมอ (กัน memory leak ตามที่เจอใน prototype เดิม)
 
 ### 21. Tiered Pricing (เฉพาะ LOOP — ราคาขั้นบันไดตามจำนวนวัน, ปัดขึ้น tier ถัดไปเสมอ)
-`Product` มีราคาได้สูงสุด 3 ระดับ: `pricePerDay` (บังคับ, ฐานราคา 1 วัน), `price3Day`/`price7Day` (optional — เจ้าของเลือกตั้งหรือไม่ก็ได้) ตัดสินใจใช้ **แบบ A: ปัดขึ้น tier ถัดไปเสมอ** (ไม่ผสม tier แบบ greedy) เพราะ deterministic และปลอดภัยต่อการ snapshot ราคาตอนสร้าง Rental (Dev Standard #19):
+`Product` มีราคาได้สูงสุด 5 ระดับ: `pricePerDay` (บังคับ, ฐานราคา 1 วัน), `price3Day`/`price7Day`/`price15Day`/`price30Day` (optional ทั้งหมด — เจ้าของเลือกตั้งกี่ระดับก็ได้) ตัดสินใจใช้ **แบบ A: ปัดขึ้น tier ถัดไปเสมอ** (ไม่ผสม tier แบบ greedy) เพราะ deterministic และปลอดภัยต่อการ snapshot ราคาตอนสร้าง Rental (Dev Standard #19):
 ```ts
 // utils/pricing.ts — pure function, ไม่รู้จัก Prisma/req/res
-function resolveRentPrice(
-  nights: number,
-  tiers: { pricePerDay: number; price3Day?: number | null; price7Day?: number | null },
-) {
+function resolveRentPrice(nights: number, tiers: RentPriceTiers) {
   const table = [
     { days: 1, price: tiers.pricePerDay },
     ...(tiers.price3Day != null ? [{ days: 3, price: tiers.price3Day }] : []),
     ...(tiers.price7Day != null ? [{ days: 7, price: tiers.price7Day }] : []),
-  ] // เรียงตาม days อยู่แล้วเพราะ push ตามลำดับ 1→3→7
+    ...(tiers.price15Day != null ? [{ days: 15, price: tiers.price15Day }] : []),
+    ...(tiers.price30Day != null ? [{ days: 30, price: tiers.price30Day }] : []),
+  ] // เรียงตาม days อยู่แล้วเพราะ push ตามลำดับ 1→3→7→15→30
 
   const matched = table.find((t) => nights <= t.days)
   if (matched) return matched.price // ปัดขึ้น tier ที่ใกล้สุดที่ >= nights (แบบ A)
@@ -653,7 +652,9 @@ function resolveRentPrice(
   return highest.price + (nights - highest.days) * tiers.pricePerDay // เกิน tier สูงสุด → tier + ส่วนเกินคิดรายวันจาก pricePerDay
 }
 ```
-ตัวอย่าง (`pricePerDay=150, price3Day=250, price7Day=500`): nights=1→150 · nights=2→250 (ปัดขึ้น tier 3 วัน) · nights=3→250 · nights=4-6→500 (ปัดขึ้น tier 7 วัน) · nights=10→500+3×150=950 (เกิน tier สูงสุด คิดส่วนเกินรายวัน) — ถ้า `price3Day`/`price7Day` เป็น `null` ให้ข้าม tier นั้นไปเลย (เช่น ตั้งแค่ `price7Day` → nights=2..7 ปัดขึ้นตรงไป tier 7 วันทั้งหมด)
+ตัวอย่าง (`pricePerDay=150, price3Day=250, price7Day=500, price15Day=900, price30Day=1600`): nights=1→150 · nights=2→250 (ปัดขึ้น tier 3 วัน) · nights=3→250 · nights=4-6→500 (ปัดขึ้น tier 7 วัน) · nights=8-14→900 (ปัดขึ้น tier 15 วัน) · nights=16-29→1600 (ปัดขึ้น tier 30 วัน) · nights=31→1600+1×150=1750 (เกิน tier สูงสุด คิดส่วนเกินรายวัน) — tier ไหนเป็น `null` ให้ข้ามไปเลย (เช่น ตั้งแค่ `price30Day` → nights=2..30 ปัดขึ้นตรงไป tier 30 วันทั้งหมด)
+
+**เพิ่ม tier ใหม่ต้องแก้ให้ครบทุกจุด** ไม่ใช่แค่ `pricing.ts` — `schema.prisma`, `product.routes.ts` (createSchema), `product.service.ts` (input type + ทุก mapper ที่ return ราคา), `product.repository.ts`, **`rental.service.ts` ตอนเรียก `resolveRentPrice()`** (ลืมจุดนี้ = tier ใหม่ไม่มีผลกับราคาจริงตอนเช่า), `apps/web/modules/products/types.ts`, `ListItemForm.tsx` (state + payload + input), `ProductCard.tsx`/`MyListingsTable.tsx` (แสดงผล)
 
 `deposit` **ไม่เปลี่ยน** — ยังคงคิดจาก `pricePerDay * 2` เท่าเดิมเสมอ (ไม่ผูกกับ tier เพราะเป็นเงินประกันค่าสินค้า ไม่ใช่ค่าเช่า)
 
@@ -676,9 +677,11 @@ function resolveRentPrice(
 ### 24. AI ID Card OCR (เฉพาะ LOOP — OCR บัตรประชาชนตอนสมัครสมาชิกผ่าน OpenRouter Vision, ดู Phase 11)
 ใช้ pattern เดียวกับ Dev Standard #23 (OpenRouter vision + prompt บังคับ JSON + regex ดึง `{...}` ก่อน parse + `provider: { data_collection: "deny" }` เสมอ — รูปบัตรมี PII เต็มใบ เลขบัตร/ชื่อ/ที่อยู่/วันเกิด/รูปหน้า เข้มกว่าสลิปอีก) แต่มีจุดต่างสำคัญเพราะรันตอน **ก่อน** มีบัญชีผู้ใช้:
 - **endpoint OCR เอง (`POST /api/ocr/id-card`) ไม่ต้อง auth** — รันได้ทันทีหลังผู้ใช้ครอปรูปบัตรเสร็จระหว่างกรอกฟอร์มสมัคร (ยังไม่มี user จริงให้ auth) แค่คืนผล OCR กลับไปเฉยๆ **ไม่บันทึกอะไรลง DB ที่ endpoint นี้** — ข้อมูลจะถูกบันทึกจริงพร้อมกับตอนสร้างบัญชี (`POST /api/auth/register`) เท่านั้น เพื่อกัน orphan data จากคนที่ OCR แล้วไม่กดสมัครต่อ
-- **ผู้ใช้ต้องยืนยัน/แก้ไขข้อมูลได้ก่อนส่ง** — ค่าที่ AI อ่านมาเป็นแค่ค่าเริ่มต้นในฟอร์ม (editable fields) ไม่ auto-submit ตรงๆ เพราะ vision OCR อ่านผิดได้ (ตัวเลขติดกัน, ลายมือ, แสงสะท้อน)
 - **กันเลขบัตรซ้ำตอน register** — `User.idCardNumber` unique, ถ้าเลขซ้ำกับ user อื่นที่มีอยู่แล้ว → 409 ตอนสมัคร (กันสมัครหลายบัญชีด้วยบัตรใบเดียว)
-- **ไม่ block การสมัครถ้า OCR ล้มเหลว/รูปไม่ชัด** — แค่ไม่มีค่าให้ auto-fill ผู้ใช้กรอกเองได้ (เหมือน Dev Standard #17 ทั่วไป — error ไม่ทำให้ flow ตัน)
+- **`temperature: 0` เสมอ** — OCR เป็นงาน extract ตรงๆ ไม่ใช่งานสร้างสรรค์ ค่า default (1.0) ทำให้โมเดล "แต่ง" ที่อยู่/ชื่อที่ดูสมเหตุสมผลขึ้นมาเองตอนอ่านไม่ออก (เจอจริง: ตอบ "จ.ลพบุรี" ทั้งที่บัตรเป็น "จ.สุรินทร์")
+- **prompt ต้องระบุส่วนที่ห้ามอ่านบนบัตรด้วย** ไม่ใช่แค่บอกว่าฟิลด์ไหนอยู่ตรงไหน — บัตรมีชื่อคน 2 คน (เจ้าของบัตรครึ่งบน / เจ้าพนักงานออกบัตรในวงเล็บใต้ลายเซ็นครึ่งล่าง) ถ้าไม่ห้ามชัดๆ โมเดลจะหยิบชื่อเจ้าพนักงานมาใส่เวลาภาพครอปจนไม่เห็นแถวชื่อจริง
+- **normalize ผลลัพธ์ที่ backend เสมอ ห้ามเชื่อค่าดิบจาก AI** — ตัดเว้นวรรค/ขีดออกจากเลขบัตรแล้วบังคับ 13 หลัก, แปลงค่าที่โมเดลตอบแทน null (`"ไม่ชัดเจน"`, `"N/A"`, ค่าที่มี `?` ปน) ให้เป็น `null` จริง แล้วคืน `missingFields` บอกว่าฟิลด์ไหนอ่านไม่ได้
+- **บังคับอัปโหลดใหม่จนกว่า OCR จะอ่านครบ — ไม่มีให้กรอกเอง** (ตัดสินใจใหม่ แทนกฎเดิมที่เคยให้กรอกเองได้และไม่ block flow): ถ้าอัปโหลดบัตรแล้ว `missingFields` ไม่ว่าง → ซ่อนฟอร์ม แสดง banner ให้อัปโหลดรูปใหม่ และปุ่ม "สร้างบัญชี" กดไม่ได้จนกว่าจะผ่าน — เหตุผล: ปล่อยให้พิมพ์เองได้เท่ากับเปิดช่องให้กรอกเลขบัตร/ชื่อที่ไม่ตรงกับบัตรจริง ซึ่งทำให้ KYC ไร้ความหมาย (ยังไม่อัปโหลดบัตรเลยยังสมัครได้ตามเดิม — บัตรไม่ใช่ฟิลด์บังคับ)
 - ไม่รวม face liveness ใน Phase นี้ (ดู Phase 9 ที่พับไว้ ถ้าจะทำภายหลัง)
 
 ### 25. Email OTP ผ่าน Resend (เฉพาะ LOOP — ส่งรหัสยืนยันตัวตนจริงตอนสมัครสมาชิก, ดู Phase 12)
@@ -1040,7 +1043,7 @@ function resolveRentPrice(
     - 🧪 test: Playwright — คลิก "ลงประกาศให้เช่า" ตอนไม่ login (บัญชี admin) → login → landed บน `/list-item` จริง (ไม่ใช่ `/users`) ✅ | login ผ่านปุ่ม "เข้าสู่ระบบ" เฉยๆ ใน dropdown (บัญชี admin) → อยู่หน้าแรกเดิม ไม่ถูกพาไป `/users` ✅
     - 📝 commit: `fix(web): stop auto-redirecting admin logins to admin panel, continue to intended page instead`
 
-  - [x] FIX #3 (พบระหว่างเทียบกับ prototype): `ListItemForm` เขียนขึ้นเองใน 5.5 ตอนแรกไม่ได้ตรงกับ layout/ข้อความจริงใน `Prototype เว็บ C2C/LOOP Home.dc.html` (kicker/title/subtitle ผิด, ไม่มี ฿ prefix ในช่องราคา, ไม่มี fake map preview, pickup option เป็น pill chip แทนที่จะเป็น row list พร้อม toggle icon, หน้าสำเร็จมีปุ่มเดียวและข้อความไม่ตรง) — ผู้ใช้ขอให้ทำ "ตาม design" จริง จึงไปอ่าน markup ต้นฉบับจาก `LOOP Home.dc.html` (บรรทัด 396-494 และ dictionary บรรทัด 2036-2038) แทนการเดาจากภาพอย่างเดียว | before/after: kicker "ลงประกาศ"→"ลงประกาศใหม่", title "ลงประกาศให้เช่าสินค้าใหม่"→"ลงขายสินค้าของคุณ" (คำในเว็บจริงของ prototype เอง แม้จะฟังดูเหมือน "ขาย" ก็ตาม), เพิ่ม subtitle, รูปภาพ label "รูปสินค้า"→"รูปภาพ" + สูง 140px→220px + placeholder "เพิ่มรูปสินค้า"→"Add a photo" (ตรงตาม prototype ที่ hardcode อังกฤษ), ราคา label "ราคา/วัน (บาท)"→"ราคาต่อวัน" พร้อมเพิ่ม ฿ prefix ในกรอบเดียวกับ input, หมวดหมู่ default "เลือกหมวดหมู่"→"—", pickup label "จุดรับสินค้า"→"สถานที่นัดรับ" + เปลี่ยนจาก pill chip เป็น bordered row (ไอคอนถูกสีน้ำเงินแทน checkbox จริงเพราะระบบไม่มี state toggle จริง แค่ add/remove), เพิ่ม fake map preview (CSS dot-grid + pin SVG + badge "ตัวอย่างแผนที่" เหนือช่อง location — เป็นแค่ตกแต่ง CSS ไม่ใช่แผนที่จริง ไม่ผิด Dev Standard ที่เลื่อนแผนที่จริงไป Phase ถัดไป), หน้าสำเร็จ title "ส่งประกาศสำเร็จ! รอตรวจสอบ"→"ส่งประกาศแล้ว!" + body ตรงตาม prototype (สลับ "LOOP"→"renty") + เพิ่มปุ่ม "กลับหน้าแรก" (เดิมมีแค่ "ลงประกาศเพิ่ม")
+  - [x] FIX #3 (พบระหว่างเทียบกับ prototype): `ListItemForm` เขียนขึ้นเองใน 5.5 ตอนแรกไม่ได้ตรงกับ layout/ข้อความจริงใน `Prototype เว็บ C2C/LOOP Home.dc.html` (kicker/title/subtitle ผิด, ไม่มี ฿ prefix ในช่องราคา, ไม่มี fake map preview, pickup option เป็น pill chip แทนที่จะเป็น row list พร้อม toggle icon, หน้าสำเร็จมีปุ่มเดียวและข้อความไม่ตรง) — ผู้ใช้ขอให้ทำ "ตาม design" จริง จึงไปอ่าน markup ต้นฉบับจาก `LOOP Home.dc.html` (บรรทัด 396-494 และ dictionary บรรทัด 2036-2038) แทนการเดาจากภาพอย่างเดียว | before/after: kicker "ลงประกาศ"→"ลงประกาศใหม่", title "ลงประกาศให้เช่าสินค้าใหม่"→"ลงขายสินค้าของคุณ" (คำในเว็บจริงของ prototype เอง แม้จะฟังดูเหมือน "ขาย" ก็ตาม), เพิ่ม subtitle, รูปภาพ label "รูปสินค้า"→"รูปภาพ" + สูง 140px→220px + placeholder "เพิ่มรูปสินค้า"→"Add a photo" (ตรงตาม prototype ที่ hardcode อังกฤษ), ราคา label "ราคา/วัน (บาท)"→"ราคาต่อวัน" พร้อมเพิ่ม ฿ prefix ในกรอบเดียวกับ input, หมวดหมู่ default "เลือกหมวดหมู่"→"—", pickup label "จุดรับสินค้า"→"สถานที่นัดรับ" + เปลี่ยนจาก pill chip เป็น bordered row (ไอคอนถูกสีน้ำเงินแทน checkbox จริงเพราะระบบไม่มี state toggle จริง แค่ add/remove), เพิ่ม fake map preview (CSS dot-grid + pin SVG + badge "ตัวอย่างแผนที่" เหนือช่อง location — เป็นแค่ตกแต่ง CSS ไม่ใช่แผนที่จริง ไม่ผิด Dev Standard ที่เลื่อนแผนที่จริงไป Phase ถัดไป), หน้าสำเร็จ title "ส่งประกาศสำเร็จ! รอตรวจสอบ"→"ส่งประกาศแล้ว!" + body ตรงตาม prototype (สลับ "LOOP"→"rently") + เพิ่มปุ่ม "กลับหน้าแรก" (เดิมมีแค่ "ลงประกาศเพิ่ม")
     - 🧪 test: Playwright screenshot เทียบกับภาพ prototype ทีละจุด (ฟอร์มว่าง, มี pickup row, หน้าสำเร็จ) → ตรงกันทั้ง layout และข้อความ (สีเป็น brand blue ตาม Phase 6 ไม่ใช่สีดำของ prototype ซึ่งถูกต้องแล้ว) ✅ | `npm run build --workspace=apps/web` ผ่าน ✅
     - 📝 commit: `fix(web): match list-item form layout and copy to prototype design`
 
@@ -1059,47 +1062,47 @@ function resolveRentPrice(
 
 ---
 
-### Phase 6 — Rebrand เป็น "renty" (Corporate Identity)
+### Phase 6 — Rebrand เป็น "rently" (Corporate Identity)
 
-> ที่มา: CI board 2 ภาพที่ผู้ใช้ให้มา (`apps/web/public/img/messageImage_1784102757687.jpg` = โลโก้/สี/ฟอนต์/มาสคอต, `messageImage_1784103039520.jpg` = ลายเส้นโซเชียล/พื้นหลัง/ไอคอน) — เป็น **การเปลี่ยนชื่อผลิตภัณฑ์เต็มรูปแบบ** จาก "LOOP" เป็น **"renty"** (ไม่ใช่แค่เปลี่ยนสี) ตามที่ยืนยันกับผู้ใช้แล้ว
+> ที่มา: CI board 2 ภาพที่ผู้ใช้ให้มา (`apps/web/public/img/messageImage_1784102757687.jpg` = โลโก้/สี/ฟอนต์/มาสคอต, `messageImage_1784103039520.jpg` = ลายเส้นโซเชียล/พื้นหลัง/ไอคอน) — เป็น **การเปลี่ยนชื่อผลิตภัณฑ์เต็มรูปแบบ** จาก "LOOP" เป็น **"rently"** (ไม่ใช่แค่เปลี่ยนสี) ตามที่ยืนยันกับผู้ใช้แล้ว
 >
 > **ขอบเขต:** ใช้เฉพาะฝั่ง **Marketplace** เท่านั้น (Header, Home, Signup/Login modal, List Item, My Listings) — **Admin panel ไม่แตะ** ยังคงธีม Ant Design เข้ม/sidebar เดิมตามที่ผู้ใช้เลือกไว้ (ยกเว้นฟอนต์ body ที่เป็น global infra ใน `app/layout.tsx` เลยได้ผลไปทั้งแอปด้วย — ไม่ใช่การเปลี่ยนสี/โลโก้ จึงไม่ผิดขอบเขตที่ตกลงไว้)
 >
 > **บล็อกเกอร์ที่แก้แล้ว:** ภาพ 2 ไฟล์ที่มีอยู่เป็น "CI presentation board" ไม่ใช่ไฟล์โลโก้พร้อมใช้ — แก้โดย **crop เองจากภาพ presentation ด้วย `sharp`** (primary logo, app icon, favicon mark) แล้วลบพื้นหลังด้วยการทำ near-white pixel ให้โปร่งใส — คุณภาพเป็น raster ไม่ใช่ vector (เป็น placeholder ตามที่แจ้งไว้ ถ้ามีไฟล์ต้นฉบับจริงควรเปลี่ยนทีหลัง)
 >
-> **ฟอนต์:** ใช้ **Prompt** (secondary font ในภาพ, Google Font รองรับไทย) แทน Noto Sans Thai เดิมทั่วทั้งแอป — "Renty Rounded" เป็นแค่ font ที่ใช้ทำ wordmark ในภาพโลโก้ (บาก็ฝังเป็นภาพนิ่งอยู่แล้ว ไม่ต้อง source แยก) ส่วน Archivo (headline) คงไว้เหมือนเดิม
+> **ฟอนต์:** ใช้ **Prompt** (secondary font ในภาพ, Google Font รองรับไทย) แทน Noto Sans Thai เดิมทั่วทั้งแอป — "Rently Rounded" เป็นแค่ font ที่ใช้ทำ wordmark ในภาพโลโก้ (บาก็ฝังเป็นภาพนิ่งอยู่แล้ว ไม่ต้อง source แยก) ส่วน Archivo (headline) คงไว้เหมือนเดิม
 
 - [x] 6.1 เตรียม brand assets
   - Crop จาก CI board ด้วย `sharp` (ตัดพื้นหลังด้วย near-white→transparent pixel processing): primary logo (icon+wordmark, ไม่มี tagline สำหรับ header), primary logo แบบเต็ม (มี tagline), favicon mark (หัวหมา 2 ตัว)
-  - เพิ่ม `apps/web/public/brand/renty-logo.png`, `renty-logo-full.png` + `apps/web/app/icon.png`, `apps/web/app/apple-icon.png` (ใช้ Next.js App Router convention แทน `favicon.ico` แบบ manual — auto-wire เข้า metadata ให้เอง)
+  - เพิ่ม `apps/web/public/brand/rently-logo.png`, `rently-logo-full.png` + `apps/web/app/icon.png`, `apps/web/app/apple-icon.png` (ใช้ Next.js App Router convention แทน `favicon.ico` แบบ manual — auto-wire เข้า metadata ให้เอง)
   - 🧪 test: `npm run build --workspace=apps/web` → เห็น route `/icon.png`, `/apple-icon.png` ถูกสร้างอัตโนมัติ ✅ | เปิดเว็บจริงผ่าน Playwright → favicon/logo ขึ้นในแท็บและ header จริง ✅
-  - 📝 commit: `feat(web): implement phase 6 renty rebrand (assets, tokens, header, forms)`
+  - 📝 commit: `feat(web): implement phase 6 rently rebrand (assets, tokens, header, forms)`
 
 - [x] 6.2 Design tokens: สี + ฟอนต์
   - เพิ่ม `theme.extend.colors.brand` ใน `tailwind.config.ts`: `{ 50: "#FFF7EB", 100: "#F2F7FD", 200: "#DAE8F7", 400: "#6FA3D8", 600: "#2D5DA8" }`
   - เปลี่ยน `next/font/google` ใน `app/layout.tsx`: `Noto_Sans_Thai` → `Prompt` (คง `Archivo` ไว้สำหรับ headline) — เปลี่ยนชื่อ CSS variable `--font-noto-thai` → `--font-prompt` ใน `globals.css` ให้ตรงกับของจริง (ไม่ใช่แค่เปลี่ยน font แต่ปล่อยชื่อ variable เดิมค้างไว้ให้สับสน)
   - 🧪 test: `npm run build --workspace=apps/web` ผ่าน ✅ | ตรวจผ่าน Playwright screenshot เห็น glyph ไทยเปลี่ยนไปจริง (Prompt แตกต่างจาก Noto Sans Thai ชัดเจนที่ตัว ก/ถ) ✅
-  - 📝 commit: รวมอยู่ใน `feat(web): implement phase 6 renty rebrand (assets, tokens, header, forms)`
+  - 📝 commit: รวมอยู่ใน `feat(web): implement phase 6 rently rebrand (assets, tokens, header, forms)`
 
 - [x] 6.3 เปลี่ยนชื่อผลิตภัณฑ์ในจุดที่ผู้ใช้เห็น (marketplace + เอกสาร)
-  - `app/layout.tsx` metadata title/description → "renty" ✅
+  - `app/layout.tsx` metadata title/description → "rently" ✅
   - หัวเอกสาร CLAUDE.md (บรรทัดแรก + เพิ่มหมายเหตุอธิบายการเปลี่ยนชื่อ) — ไม่ไล่เปลี่ยนทุกจุดที่พิมพ์ "LOOP" ทั้งไฟล์ (เสี่ยง diff บวมไม่จำเป็น) แค่หัวเอกสาร ✅
   - **หมายเหตุ:** ห้ามเปลี่ยนชื่อ npm workspace package (`@loop/db`, `@loop/api`, `@loop/web`) และชื่อโฟลเดอร์ `LOOP/` เพราะเป็นรายละเอียด internal ไม่ใช่สิ่งที่ผู้ใช้ปลายทางเห็น เปลี่ยนแล้วมีแต่ทำให้ import path พังทั้ง repo โดยไม่ได้ประโยชน์
-  - **ปรับจากแผนเดิม:** `Settings.platformName` ยังไม่มีให้แก้ เพราะ `Settings` model ยังไม่ถูกสร้างจริง (รอ Phase 4.10 "รอ Settings model") — ข้ามจุดนี้ไปก่อน แล้วค่อยตั้ง default เป็น "renty" ตอนสร้าง model จริง
-  - 🧪 test: เปิดแท็บเบราว์เซอร์ → title แสดง "renty — Peer-to-Peer Rental Marketplace" ✅
-  - 📝 commit: `chore: rename product to renty in user-facing surfaces`
+  - **ปรับจากแผนเดิม:** `Settings.platformName` ยังไม่มีให้แก้ เพราะ `Settings` model ยังไม่ถูกสร้างจริง (รอ Phase 4.10 "รอ Settings model") — ข้ามจุดนี้ไปก่อน แล้วค่อยตั้ง default เป็น "rently" ตอนสร้าง model จริง
+  - 🧪 test: เปิดแท็บเบราว์เซอร์ → title แสดง "rently — Peer-to-Peer Rental Marketplace" ✅
+  - 📝 commit: `chore: rename product to rently in user-facing surfaces`
 
 - [x] 6.4 Restyle Header/Navbar
-  - แทนที่ wordmark ข้อความ "LOOP." ด้วยภาพโลโก้ renty จาก 6.1 (`next/image`)
+  - แทนที่ wordmark ข้อความ "LOOP." ด้วยภาพโลโก้ rently จาก 6.1 (`next/image`)
   - เปลี่ยนปุ่ม/border/nav-active สีดำ (`#0a0a0a`) เป็นโทนน้ำเงิน brand (`#2D5DA8` primary) ทั่ว Header: announcement bar, nav link สี, EN/TH toggle, ปุ่ม "ลงประกาศให้เช่า", ไอคอน Saved, badge, avatar circle — คงสีดำไว้เฉพาะจุดที่เป็น body text ทั่วไปตาม pattern ที่ CI เองก็ใช้ (บทความ/label ใช้สีดำ, สีน้ำเงินสงวนไว้กับ headline/accent)
   - 🧪 test: Playwright screenshot หน้าแรกจริง → โลโก้/สีตรงกับ CI board, `console --errors` เหลือแค่ 404 ของ `/shop` prefetch (route ที่ยังไม่มีอยู่แล้วตั้งแต่ก่อน Phase นี้ ไม่เกี่ยวกับ rebrand) ✅
-  - 📝 commit: รวมอยู่ใน `feat(web): implement phase 6 renty rebrand (assets, tokens, header, forms)`
+  - 📝 commit: รวมอยู่ใน `feat(web): implement phase 6 rently rebrand (assets, tokens, header, forms)`
 
 - [x] 6.5 Restyle Signup/Login modal/List Item/My Listings
   - สลับปุ่มหลัก/toggle/focus ring สีดำ → `brand-600`/`#2D5DA8` ใน `SignupForm`, `SignupPage` (หน้าสำเร็จ), `LoginForm`, `LoginModal`, `OtpStep`, `ListItemForm` (รวมหน้าสำเร็จ "ส่งประกาศสำเร็จ!" ที่เปลี่ยนจาก emerald เป็น `brand-100`/`brand-600`)
-  - เปลี่ยนข้อความ "LOOP" → "renty" ทุกจุดที่ผู้ใช้เห็นจริงในหน้าเหล่านี้ (หัวข้อฟอร์ม, หน้าสำเร็จ)
-  - 🧪 test: Playwright screenshot หน้า Signup/Login จริง → ปุ่ม/toggle เป็นน้ำเงิน brand, ข้อความแสดง "renty" ✅ | `npm run build --workspace=apps/web` ผ่าน ✅ | Admin panel (`/users`) ตรวจผ่าน Playwright ยืนยันว่าไม่ถูกแตะต้อง ยังเป็น dark sidebar "LOOP. Admin" เดิมตามขอบเขตที่ตกลง ✅
-  - 📝 commit: `feat(web): implement phase 6 renty rebrand (assets, tokens, header, forms)`
+  - เปลี่ยนข้อความ "LOOP" → "rently" ทุกจุดที่ผู้ใช้เห็นจริงในหน้าเหล่านี้ (หัวข้อฟอร์ม, หน้าสำเร็จ)
+  - 🧪 test: Playwright screenshot หน้า Signup/Login จริง → ปุ่ม/toggle เป็นน้ำเงิน brand, ข้อความแสดง "rently" ✅ | `npm run build --workspace=apps/web` ผ่าน ✅ | Admin panel (`/users`) ตรวจผ่าน Playwright ยืนยันว่าไม่ถูกแตะต้อง ยังเป็น dark sidebar "LOOP. Admin" เดิมตามขอบเขตที่ตกลง ✅
+  - 📝 commit: `feat(web): implement phase 6 rently rebrand (assets, tokens, header, forms)`
 
 ---
 
@@ -1228,7 +1231,7 @@ function resolveRentPrice(
 > **ที่มา:** ต้องการให้ผู้เช่าโอนเงินตรงเข้า PromptPay ของเจ้าของสินค้า (C2C ไม่ผ่าน payment gateway) แล้วอัปโหลดสลิปให้ระบบตรวจอัตโนมัติว่า (1) ชื่อผู้รับในสลิปตรงกับชื่อ-นามสกุลจริงของเจ้าของบัญชีไหม (2) ยอดเงินตรงกับราคาเช่าไหม — อ้างอิง pattern จากโปรเจกต์ `telegrom-bot-group` (`C:\my-project\LOOP\telegrom-bot-group-main`) ที่เคยทำระบบตรวจสลิปสำหรับ Telegram bot ไว้แล้วใช้งานได้จริง (ดู `apps/bot/src/services/ai.ts`, `slip.ts`, `validate.ts`, `packages/db/src/models/slip.ts` ของโปรเจกต์นั้น) — ใช้ **OpenRouter API + vision-capable LLM** วิเคราะห์รูปสลิปตรงๆ แทน dedicated slip-verification API (EasySlip/SlipOK) เพราะ integrate ง่ายกว่า จ่ายตาม token ไม่ใช่ subscription รายเดือน และมี prompt/parsing logic ที่พิสูจน์แล้วจากโปรเจกต์เดิม ดูกฎเต็มใน [Dev Standard #23](#23-ai-slip-verification-เฉพาะ-loop--ตรวจสลิปโอนเงินผ่าน-openrouter-vision-ดู-phase-10)
 >
 > **สิ่งที่ยกมาปรับใช้จากโปรเจกต์ต้นแบบ (mapping):**
-> | โปรเจกต์ต้นแบบ (`telegrom-bot-group`) | renty (Phase นี้) |
+> | โปรเจกต์ต้นแบบ (`telegrom-bot-group`) | rently (Phase นี้) |
 > |---|---|
 > | `apps/bot/src/services/ai.ts::analyzeSlip()` — เรียก OpenRouter vision, prompt คืน JSON (amount/date/time/reference/senderName/receiverName/bank/valid) | ย้าย logic เดิมมาเป็น `apps/api/src/services/payment/slipAi.ts` แทบทั้งดุ้น (เปลี่ยนแค่ import/error class ให้เข้ากับ Elysia) |
 > | `apps/bot/src/services/slip.ts::parseSlipData()` — validate ฟิลด์ครบ + เช็คชื่อผู้รับ (`EXPECTED_RECEIVER` hardcode คนเดียว) | ปรับเป็น dynamic เทียบกับ `owner.legalName` ต่อ rental (ไม่ hardcode เพราะมีเจ้าของหลายคน) |

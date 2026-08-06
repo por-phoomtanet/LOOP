@@ -13,11 +13,21 @@ import { authApi } from "../services/authApi";
 import type { AccountType, RegisterResult } from "../types";
 import { PdpaModal } from "./PdpaModal";
 
+// map ชื่อ field ที่ backend คืนมาใน missingFields → ชื่อภาษาไทยที่ผู้ใช้เข้าใจ
+const OCR_FIELD_LABELS: Record<string, string> = {
+  idNumber: "เลขบัตรประชาชน",
+  nameTh: "ชื่อ-นามสกุล (ไทย)",
+  nameEn: "ชื่อ-นามสกุล (อังกฤษ)",
+  address: "ที่อยู่",
+  dob: "วันเกิด",
+};
+
 type Props = {
   onRegistered: (
     result: RegisterResult,
     idCardFile: File | null,
     faceVerifiedMock: boolean,
+    profileFile: File | null,
   ) => void;
 };
 
@@ -27,6 +37,7 @@ export function SignupForm({ onRegistered }: Props) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [profileFileList, setProfileFileList] = useState<UploadFile[]>([]);
   const [idCardFileList, setIdCardFileList] = useState<UploadFile[]>([]);
   const [faceVerifiedMock, setFaceVerifiedMock] = useState(false);
   const [faceModalOpen, setFaceModalOpen] = useState(false);
@@ -44,11 +55,18 @@ export function SignupForm({ onRegistered }: Props) {
 
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
+  const [ocrMissingFields, setOcrMissingFields] = useState<string[]>([]);
+  const [ocrDone, setOcrDone] = useState(false);
   const [idCardNumber, setIdCardNumber] = useState("");
   const [idCardNameTh, setIdCardNameTh] = useState("");
   const [idCardNameEn, setIdCardNameEn] = useState("");
   const [idCardAddress, setIdCardAddress] = useState("");
   const [idCardDob, setIdCardDob] = useState("");
+
+  // อัปโหลดบัตรแล้วต้องให้ OCR อ่านครบทุกฟิลด์ก่อนถึงจะสมัครได้ — ไม่มีให้กรอกเอง
+  // ต้องอัปโหลดรูปใหม่จนกว่าจะผ่าน (ยังไม่อัปโหลดเลยก็สมัครได้ตามเดิม บัตรไม่บังคับ)
+  const idCardChecked =
+    !idCardFileList.length || (ocrDone && !ocrError && ocrMissingFields.length === 0);
 
   const canSubmit =
     name.trim() &&
@@ -56,7 +74,9 @@ export function SignupForm({ onRegistered }: Props) {
     emailVerified &&
     phone.trim() &&
     password.length >= 8 &&
-    pdpaAccepted;
+    pdpaAccepted &&
+    !ocrLoading &&
+    idCardChecked;
 
   async function handleSendEmailOtp() {
     if (!email.trim() || emailOtpSending) return;
@@ -96,6 +116,8 @@ export function SignupForm({ onRegistered }: Props) {
     let cancelled = false;
     setOcrLoading(true);
     setOcrError(null);
+    setOcrMissingFields([]);
+    setOcrDone(false);
     authApi
       .ocrIdCard(idCardOriginFile)
       .then((res) => {
@@ -106,6 +128,8 @@ export function SignupForm({ onRegistered }: Props) {
         setIdCardNameEn(data.nameEn ?? "");
         setIdCardAddress(data.address ?? "");
         setIdCardDob(data.dob ?? "");
+        setOcrMissingFields(data.missingFields ?? []);
+        setOcrDone(true);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -142,7 +166,8 @@ export function SignupForm({ onRegistered }: Props) {
       });
       // ไฟล์ที่ครอปแล้วอยู่ใน originFileObj (antd-img-crop แทนที่ให้หลังครอป)
       const idCardFile = idCardOriginFile ?? null;
-      onRegistered(res.data.data, idCardFile, faceVerifiedMock);
+      const profileFile = (profileFileList[0]?.originFileObj as File | undefined) ?? null;
+      onRegistered(res.data.data, idCardFile, faceVerifiedMock, profileFile);
     } catch (err) {
       const msg = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
       setError(typeof msg === "string" ? msg : "เกิดข้อผิดพลาด กรุณาลองใหม่");
@@ -174,7 +199,7 @@ export function SignupForm({ onRegistered }: Props) {
         สร้างบัญชี
       </div>
       <h1 className="font-arch mb-2 text-[28px] font-extrabold tracking-[-.02em]">
-        สมัครใช้งาน renty
+        สมัครใช้งาน rently
       </h1>
       <p className="mb-8 text-[14px] text-black/60">
         สมัครสมาชิกเพื่อเริ่มเช่าและปล่อยเช่าสินค้าใกล้คุณ
@@ -209,7 +234,51 @@ export function SignupForm({ onRegistered }: Props) {
         </div>
       </div>
 
-      <Field label="ชื่อผู้ใช้" value={name} onChange={setName} placeholder="" />
+      <div className="mb-5">
+        <label className="mb-1 block text-[13px] font-medium text-black/70">
+          รูปโปรไฟล์ <span className="font-normal text-black/40">(ไม่บังคับ)</span>
+        </label>
+        <p className="mb-2.5 text-[12.5px] text-black/50">
+          รูปนี้จะแสดงให้ผู้ใช้อื่นเห็นเวลาเช่า/ปล่อยเช่าสินค้า
+        </p>
+
+        <ImgCrop
+          rotationSlider
+          cropShape="round"
+          aspect={1}
+          modalTitle="ครอปรูปโปรไฟล์"
+          modalOk="ตกลง"
+          modalCancel="ยกเลิก"
+        >
+          <Upload
+            listType="picture-card"
+            fileList={profileFileList}
+            onChange={({ fileList: fl }) => {
+              // gen thumbUrl ใหม่เองทุกครั้ง — เหตุผลเดียวกับช่องรูปบัตรด้านล่าง
+              const withFreshThumb = fl.map((f) =>
+                f.originFileObj
+                  ? { ...f, thumbUrl: URL.createObjectURL(f.originFileObj as File) }
+                  : f,
+              );
+              setProfileFileList(withFreshThumb);
+            }}
+            customRequest={({ onSuccess }) => onSuccess?.("ok")}
+            accept="image/png,image/jpeg,image/jpg"
+            maxCount={1}
+            onPreview={async (file) => {
+              const src = file.url ?? URL.createObjectURL(file.originFileObj as File);
+              window.open(src);
+            }}
+          >
+            {profileFileList.length >= 1 ? null : (
+              <div className="text-black/55">
+                <div className="text-[20px] leading-none">+</div>
+                <div className="mt-1.5 text-[13px]">อัปโหลด</div>
+              </div>
+            )}
+          </Upload>
+        </ImgCrop>
+      </div>
 
       <div className="mb-5">
         <label className="mb-2 block text-[13px] font-medium text-black/70">อีเมล</label>
@@ -230,7 +299,11 @@ export function SignupForm({ onRegistered }: Props) {
             type="button"
             onClick={handleSendEmailOtp}
             disabled={!email.trim() || emailOtpSending || emailVerified}
-            className="text-brand-600 flex-none whitespace-nowrap border-0 bg-transparent px-3.5 text-[12.5px] font-semibold disabled:text-black/30"
+            className={`flex-none whitespace-nowrap border-0 bg-transparent px-3.5 text-[12.5px] font-semibold ${
+              emailVerified
+                ? "text-emerald-600 disabled:text-emerald-600"
+                : "text-brand-600 disabled:text-black/30"
+            }`}
           >
             {emailVerified
               ? "ยืนยันแล้ว ✓"
@@ -264,8 +337,14 @@ export function SignupForm({ onRegistered }: Props) {
         {emailOtpError && <p className="mt-1.5 text-[12px] text-red-600">{emailOtpError}</p>}
       </div>
 
-      <Field label="เบอร์โทร" value={phone} onChange={setPhone} type="tel" />
       <Field label="รหัสผ่าน" value={password} onChange={setPassword} type="password" />
+      <Field
+        label="ชื่อผู้ใช้ (ชื่อที่จะแสดงในระบบ)"
+        value={name}
+        onChange={setName}
+        placeholder=""
+      />
+      <Field label="เบอร์โทร" value={phone} onChange={setPhone} type="tel" />
 
       <div className="mb-5">
         <label className="mb-1 block text-[13px] font-medium text-black/70">รูปบัตรประชาชน</label>
@@ -317,35 +396,36 @@ export function SignupForm({ onRegistered }: Props) {
       </div>
 
       {ocrLoading && (
-        <div className="mb-6 rounded-xl border border-black/10 bg-black/[.02] p-4 text-center text-[13px] text-black/50">
-          กำลังอ่านข้อมูลจากบัตรประชาชน…
+        <div className="mb-6 flex items-center justify-center gap-2.5 rounded-xl border border-black/10 bg-black/[.02] p-4 text-[13px] text-black/55">
+          <span className="border-brand-600 h-4 w-4 flex-none animate-spin rounded-full border-2 border-t-transparent" />
+          กำลังตรวจสอบข้อมูลบัตร…
         </div>
       )}
 
-      {ocrError && (
+      {!ocrLoading && ocrError && (
         <div className="mb-6 rounded-lg bg-amber-50 px-4 py-3 text-[13px] text-amber-700">
           {ocrError}
         </div>
       )}
 
-      {!ocrLoading &&
-        (idCardNumber || idCardNameTh || idCardNameEn || idCardAddress || idCardDob) && (
-          <div className="mb-6 rounded-xl border border-black/10 bg-black/[.02] p-4 text-[13px]">
-            <div className="mb-3 font-semibold text-black/70">ตรวจสอบข้อมูลจากบัตรประชาชน</div>
-            <OcrField label="เลขบัตรประชาชน" value={idCardNumber} onChange={setIdCardNumber} />
-            <OcrField label="ชื่อ-นามสกุล (ไทย)" value={idCardNameTh} onChange={setIdCardNameTh} />
-            <OcrField
-              label="ชื่อ-นามสกุล (อังกฤษ)"
-              value={idCardNameEn}
-              onChange={setIdCardNameEn}
-            />
-            <OcrField label="ที่อยู่" value={idCardAddress} onChange={setIdCardAddress} />
-            <OcrField label="วันเกิด" value={idCardDob} onChange={setIdCardDob} type="date" last />
-            <p className="mt-3 text-[11.5px] text-black/40">
-              ระบบอ่านข้อมูลอัตโนมัติ กรุณาตรวจสอบและแก้ไขให้ถูกต้องก่อนสร้างบัญชี
-            </p>
-          </div>
-        )}
+      {/* อ่านไม่ครบ = ต้องอัปโหลดใหม่อย่างเดียว ไม่มีให้กรอกเอง และกดสร้างบัญชีไม่ได้จนกว่าจะผ่าน */}
+      {!ocrLoading && !ocrError && ocrMissingFields.length > 0 && (
+        <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3.5 text-[13px] text-amber-800">
+          <p className="mb-1 font-semibold">ภาพไม่ชัดเจน อ่านข้อมูลได้ไม่ครบ</p>
+          <p className="text-[12.5px]">
+            อ่านไม่ได้: {ocrMissingFields.map((f) => OCR_FIELD_LABELS[f] ?? f).join(", ")} — กรุณา
+            อัปโหลดรูปใหม่ให้เห็นบัตรเต็มใบ ชัดเจน ไม่มีแสงสะท้อนหรือเงาบัง
+          </p>
+        </div>
+      )}
+
+      {/* อ่านครบทุกฟิลด์ = ซ่อนฟอร์มไปเลย เหลือแค่แถบยืนยันว่าตรวจเสร็จแล้ว
+          (ข้อมูลที่อ่านได้ยังถูกส่งไปตอนสร้างบัญชีตามปกติ) */}
+      {!ocrLoading && !ocrError && ocrDone && ocrMissingFields.length === 0 && (
+        <div className="mb-6 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3.5 text-[13px] font-semibold text-emerald-800">
+          ✓ ตรวจสอบข้อมูลบัตรเสร็จสิ้น
+        </div>
+      )}
 
       <div className="mb-6 flex flex-wrap gap-2.5">
         <button
@@ -409,32 +489,6 @@ export function SignupForm({ onRegistered }: Props) {
 
       <PdpaModal open={pdpaModalOpen} onClose={() => setPdpaModalOpen(false)} />
     </form>
-  );
-}
-
-function OcrField({
-  label,
-  value,
-  onChange,
-  type = "text",
-  last = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: string;
-  last?: boolean;
-}) {
-  return (
-    <div className={last ? "" : "mb-3"}>
-      <label className="mb-1 block text-[12px] text-black/50">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="focus:border-brand-400 w-full rounded-lg border border-black/[.14] px-3 py-2 text-[13.5px] outline-none transition-colors"
-      />
-    </div>
   );
 }
 

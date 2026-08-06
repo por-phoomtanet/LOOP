@@ -75,11 +75,11 @@ async function main() {
   // ---- สินค้าตัวอย่าง (ACTIVE) สำหรับแสดงหน้าแรก ----
   const sellerPasswordHash = await hashPassword("Seller123!");
   const seller = await prisma.user.upsert({
-    where: { email: "seller@renty.dev" },
+    where: { email: "seller@rently.dev" },
     update: { passwordHash: sellerPasswordHash, roleId: userRole.id },
     create: {
-      name: "renty Demo Shop",
-      email: "seller@renty.dev",
+      name: "rently Demo Shop",
+      email: "seller@rently.dev",
       passwordHash: sellerPasswordHash,
       phone: "0810000000",
       accountType: "SHOP",

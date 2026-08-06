@@ -17,4 +17,5 @@ export type User = {
   email: string;
   role: string;
   accountType: "INDIVIDUAL" | "SHOP";
+  profileImageUrl?: string | null;
 };

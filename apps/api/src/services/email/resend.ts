@@ -16,7 +16,7 @@ function getConfig() {
   // แต่ส่งได้แค่หาอีเมลเจ้าของบัญชี Resend เท่านั้น ใช้ทดสอบตอน dev ได้
   // ใช้ || ไม่ใช่ ?? เพราะ docker-compose ตั้ง env ที่ไม่ได้กำหนดค่าให้เป็น "" (empty string)
   // ไม่ใช่ undefined — ?? จะไม่ fallback ให้ในกรณีนั้น
-  const from = process.env.RESEND_FROM_EMAIL || "renty <onboarding@resend.dev>";
+  const from = process.env.RESEND_FROM_EMAIL || "rently <onboarding@resend.dev>";
   return { apiKey, from };
 }
 
@@ -32,7 +32,7 @@ export async function sendOtpEmail(to: string, code: string): Promise<void> {
     body: JSON.stringify({
       from,
       to: [to],
-      subject: `รหัสยืนยันตัวตน renty: ${code}`,
+      subject: `รหัสยืนยันตัวตน rently: ${code}`,
       html: `<p>รหัสยืนยันตัวตนของคุณคือ</p><p style="font-size:28px;font-weight:700;letter-spacing:4px">${code}</p><p>รหัสนี้หมดอายุใน ${OTP_TTL_MINUTES} นาที ถ้าคุณไม่ได้ทำรายการนี้ กรุณาเพิกเฉยต่ออีเมลฉบับนี้</p>`,
     }),
   });

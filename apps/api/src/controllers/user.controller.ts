@@ -3,6 +3,17 @@ import { saveImage } from "../plugins/upload";
 import { paginationSchema } from "../schemas/pagination.schema";
 import { BadRequestError } from "../utils/errors";
 
+export async function uploadProfileImage(
+  actingUserId: number,
+  targetUserId: number,
+  file: File | undefined,
+) {
+  if (!file) throw new BadRequestError("กรุณาอัปโหลดรูปโปรไฟล์");
+  const filename = await saveImage("profiles", file);
+  const result = await userService.uploadProfileImage(actingUserId, targetUserId, filename);
+  return { data: result, message: "ok" };
+}
+
 export async function uploadIdCard(
   actingUserId: number,
   targetUserId: number,

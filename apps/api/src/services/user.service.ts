@@ -15,6 +15,17 @@ function assertOwner(actingUserId: number, targetUserId: number) {
   }
 }
 
+export async function uploadProfileImage(
+  actingUserId: number,
+  targetUserId: number,
+  filename: string,
+) {
+  assertOwner(actingUserId, targetUserId);
+  const url = publicUrlFor("profiles", filename);
+  await userRepository.setProfileImage(targetUserId, url);
+  return { profileImageUrl: url };
+}
+
 export async function uploadIdCard(actingUserId: number, targetUserId: number, filename: string) {
   assertOwner(actingUserId, targetUserId);
   const url = publicUrlFor("id-cards", filename);

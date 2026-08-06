@@ -15,7 +15,7 @@ const prompt = Prompt({
 });
 
 export const metadata: Metadata = {
-  title: "renty — Peer-to-Peer Rental Marketplace",
+  title: "rently — Peer-to-Peer Rental Marketplace",
   description: "เช่าอะไรก็ได้จากคนใกล้ตัวคุณ",
 };
 

@@ -31,6 +31,8 @@ export type MyListing = {
   pricePerDay: string;
   price3Day: string | null;
   price7Day: string | null;
+  price15Day: string | null;
+  price30Day: string | null;
   location: string;
   lat: number | null;
   lng: number | null;
@@ -49,6 +51,8 @@ export type ProductInput = {
   pricePerDay: number;
   price3Day?: number;
   price7Day?: number;
+  price15Day?: number;
+  price30Day?: number;
   location: string;
   lat?: number;
   lng?: number;
@@ -63,6 +67,8 @@ export type ProductCardData = {
   pricePerDay: string;
   price3Day: string | null;
   price7Day: string | null;
+  price15Day: string | null;
+  price30Day: string | null;
   location: string;
   ratingAvg: number;
   reviewCount: number;

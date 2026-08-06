@@ -156,8 +156,8 @@ export function AdminSidebar() {
           <div className="flex items-center justify-center">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
               <Image
-                src="/brand/renty-logo-full.png"
-                alt="Renty Admin"
+                src="/brand/rently-logo-full.png"
+                alt="Rently Admin"
                 width={32}
                 height={32}
                 className="h-8 w-8 object-contain"
@@ -168,8 +168,8 @@ export function AdminSidebar() {
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm">
               <Image
-                src="/brand/renty-logo-full.png"
-                alt="Renty Admin"
+                src="/brand/rently-logo-full.png"
+                alt="Rently Admin"
                 width={32}
                 height={32}
                 className="h-8 w-8 object-contain"

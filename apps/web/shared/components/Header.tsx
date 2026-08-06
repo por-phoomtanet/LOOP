@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { LoginModal } from "@/modules/auth/components/LoginModal";
 import { ROUTES } from "@/constants";
+import { resolveUploadUrl } from "@/shared/lib/utils";
 import { useAuthStore } from "@/store/authStore";
 
 type Lang = "th" | "en";
@@ -139,8 +140,8 @@ export function Header() {
 
             <Link href="/" className="flex flex-none items-center">
               <Image
-                src="/brand/renty-logo.png"
-                alt="renty"
+                src="/brand/rently-logo.png"
+                alt="rently"
                 width={220}
                 height={150}
                 priority
@@ -251,9 +252,18 @@ export function Header() {
                 aria-label="Account menu"
                 className="relative flex h-[34px] w-[34px] rounded-full border-0 bg-none p-0"
               >
-                <div className="bg-brand-600 flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full text-[13px] font-bold text-white">
-                  {avatarLetter}
-                </div>
+                {mounted && user?.profileImageUrl ? (
+                  // eslint-disable-next-line
+                  <img
+                    src={resolveUploadUrl(user.profileImageUrl)}
+                    alt=""
+                    className="h-[34px] w-[34px] flex-none rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="bg-brand-600 flex h-[34px] w-[34px] flex-none items-center justify-center rounded-full text-[13px] font-bold text-white">
+                    {avatarLetter}
+                  </div>
+                )}
                 {isAdmin && (
                   <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-[#c96442]" />
                 )}

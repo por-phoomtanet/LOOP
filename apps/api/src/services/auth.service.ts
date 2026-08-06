@@ -23,6 +23,7 @@ export async function login(email: string, password: string) {
       email: user.email,
       role: user.role.name,
       accountType: user.accountType,
+      profileImageUrl: user.profileImageUrl,
     },
   };
 }
@@ -80,6 +81,7 @@ export async function register(input: {
       email: user.email,
       role: user.role,
       accountType: user.accountType,
+      profileImageUrl: user.profileImageUrl,
     },
   };
 }

@@ -9,6 +9,58 @@ const TINY_PNG = Buffer.from(
   "base64",
 );
 
+describe("POST /api/users/:id/profile-image", () => {
+  it("uploads a profile image for the authenticated owner", async () => {
+    const { token, userId } = await registerUser("profileimg");
+
+    const res = await request(baseUrl)
+      .post(`/api/users/${userId}/profile-image`)
+      .set("Authorization", `Bearer ${token}`)
+      .attach("file", TINY_PNG, { filename: "me.png", contentType: "image/png" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.profileImageUrl).toMatch(/^\/uploads\/profiles\//);
+  });
+
+  it("rejects upload for another user's account with 403", async () => {
+    const { userId: victimId } = await registerUser("profileVictim");
+    const { token: attackerToken } = await registerUser("profileAttacker");
+
+    const res = await request(baseUrl)
+      .post(`/api/users/${victimId}/profile-image`)
+      .set("Authorization", `Bearer ${attackerToken}`)
+      .attach("file", TINY_PNG, { filename: "me.png", contentType: "image/png" });
+
+    expect(res.status).toBe(403);
+  });
+
+  it("rejects request with no file attached", async () => {
+    const { token, userId } = await registerUser("profilenofile");
+
+    const res = await request(baseUrl)
+      .post(`/api/users/${userId}/profile-image`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
+  });
+
+  it("returns the uploaded profile image on the next login", async () => {
+    const { token, userId, email } = await registerUser("profilelogin");
+
+    await request(baseUrl)
+      .post(`/api/users/${userId}/profile-image`)
+      .set("Authorization", `Bearer ${token}`)
+      .attach("file", TINY_PNG, { filename: "me.png", contentType: "image/png" });
+
+    const login = await request(baseUrl)
+      .post("/api/auth/login")
+      .send({ email, password: "password123" });
+
+    expect(login.status).toBe(200);
+    expect(login.body.data.user.profileImageUrl).toMatch(/^\/uploads\/profiles\//);
+  });
+});
+
 describe("POST /api/users/:id/id-card", () => {
   it("uploads an id card image for the authenticated owner", async () => {
     const { token, userId } = await registerUser("idcard");

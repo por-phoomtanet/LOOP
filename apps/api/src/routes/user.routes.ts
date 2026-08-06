@@ -11,6 +11,18 @@ const paymentProfileSchema = z.object({
 export const userRoutes = new Elysia({ prefix: "/api/users" })
   .use(authMacro)
   .post(
+    "/:id/profile-image",
+    ({ params, body, user }) => {
+      const file = (body as { file?: unknown } | undefined)?.file;
+      return userController.uploadProfileImage(
+        user.userId,
+        Number(params.id),
+        file instanceof File ? file : undefined,
+      );
+    },
+    { auth: true },
+  )
+  .post(
     "/:id/id-card",
     ({ params, body, user }) => {
       const file = (body as { file?: unknown } | undefined)?.file;

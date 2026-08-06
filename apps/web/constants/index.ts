@@ -9,7 +9,9 @@ export const ROUTES = {
   shop: "/shop",
   login: "/login",
   signup: "/signup",
-  listItem: "/list-item",
+  // ลิงก์ "ลงประกาศให้เช่า" ทั่วเว็บ (Header/Footer/หน้าแรก) ชี้มาแท็บสร้างประกาศใน
+  // /my-listings เลย (ฟอร์มลงประกาศย้ายมาอยู่ inline ในแท็บแล้ว ไม่ใช่หน้าแยก /list-item อีกต่อไป)
+  listItem: "/my-listings?tab=create",
   myListings: "/my-listings",
   myRentals: "/my-rentals",
   paymentProfile: "/payment-profile",

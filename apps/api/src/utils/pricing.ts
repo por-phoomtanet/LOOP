@@ -2,6 +2,8 @@ type RentPriceTiers = {
   pricePerDay: number;
   price3Day?: number | null;
   price7Day?: number | null;
+  price15Day?: number | null;
+  price30Day?: number | null;
 };
 
 // จำนวนคืนระหว่างวันเช็คอิน-เช็คเอาท์ — ปัดขึ้นเสมอ (กันกรณีเวลาไม่ตรงเที่ยงคืนพอดี)
@@ -16,6 +18,8 @@ export function resolveRentPrice(nights: number, tiers: RentPriceTiers): number 
     { days: 1, price: tiers.pricePerDay },
     ...(tiers.price3Day != null ? [{ days: 3, price: tiers.price3Day }] : []),
     ...(tiers.price7Day != null ? [{ days: 7, price: tiers.price7Day }] : []),
+    ...(tiers.price15Day != null ? [{ days: 15, price: tiers.price15Day }] : []),
+    ...(tiers.price30Day != null ? [{ days: 30, price: tiers.price30Day }] : []),
   ];
 
   const matched = table.find((t) => nights <= t.days);

@@ -58,6 +58,9 @@ export async function analyzeSlip(file: File): Promise<SlipAnalysis> {
     },
     body: JSON.stringify({
       model,
+      // OCR = งาน extract ตรงๆ ต้อง 0 เสมอ — ค่า default (1.0) ทำให้โมเดลแต่งยอดเงิน/ชื่อ
+      // ที่ดูสมเหตุสมผลขึ้นมาเองตอนอ่านไม่ออก ซึ่งอันตรายมากกับการตรวจสลิป
+      temperature: 0,
       // จำกัดให้ route ไปเฉพาะ provider ที่ไม่เก็บ/ไม่ train ข้อมูล — สลิปมีชื่อ-นามสกุลจริงของผู้ใช้
       // ดู CLAUDE.md Dev Standard #23
       provider: { data_collection: "deny" },

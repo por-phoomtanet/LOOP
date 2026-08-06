@@ -50,6 +50,53 @@ describe("resolveRentPrice", () => {
     const noSevenDay = { pricePerDay: 150, price3Day: 250 };
     expect(resolveRentPrice(4, noSevenDay)).toBe(400); // 250 + 1*150
   });
+
+  describe("15-day and 30-day tiers", () => {
+    const allTiers = {
+      pricePerDay: 150,
+      price3Day: 250,
+      price7Day: 500,
+      price15Day: 900,
+      price30Day: 1600,
+    };
+
+    it("rounds up to the 15-day tier for 8-14 nights", () => {
+      expect(resolveRentPrice(8, allTiers)).toBe(900);
+      expect(resolveRentPrice(14, allTiers)).toBe(900);
+    });
+
+    it("charges the 15-day price exactly at the boundary", () => {
+      expect(resolveRentPrice(15, allTiers)).toBe(900);
+    });
+
+    it("rounds up to the 30-day tier for 16-29 nights", () => {
+      expect(resolveRentPrice(16, allTiers)).toBe(1600);
+      expect(resolveRentPrice(29, allTiers)).toBe(1600);
+    });
+
+    it("charges the 30-day price exactly at the boundary", () => {
+      expect(resolveRentPrice(30, allTiers)).toBe(1600);
+    });
+
+    it("extends beyond the 30-day tier using the daily rate", () => {
+      expect(resolveRentPrice(31, allTiers)).toBe(1750); // 1600 + 1*150
+      expect(resolveRentPrice(35, allTiers)).toBe(2350); // 1600 + 5*150
+    });
+
+    it("skips missing middle tiers and rounds straight to the 30-day tier", () => {
+      const only30 = { pricePerDay: 150, price30Day: 1600 };
+      expect(resolveRentPrice(1, only30)).toBe(150);
+      expect(resolveRentPrice(2, only30)).toBe(1600);
+      expect(resolveRentPrice(30, only30)).toBe(1600);
+      expect(resolveRentPrice(32, only30)).toBe(1900); // 1600 + 2*150
+    });
+
+    it("still works when only the 15-day tier is added to the old tiers", () => {
+      const no30 = { pricePerDay: 150, price3Day: 250, price7Day: 500, price15Day: 900 };
+      expect(resolveRentPrice(10, no30)).toBe(900);
+      expect(resolveRentPrice(16, no30)).toBe(1050); // 900 + 1*150
+    });
+  });
 });
 
 describe("diffInDays", () => {

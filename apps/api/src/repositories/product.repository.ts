@@ -69,6 +69,8 @@ export const productRepository = {
     pricePerDay: number;
     price3Day: number | null;
     price7Day: number | null;
+    price15Day: number | null;
+    price30Day: number | null;
     location: string;
     lat: number | null;
     lng: number | null;
@@ -92,6 +94,8 @@ export const productRepository = {
       pricePerDay: number;
       price3Day: number | null;
       price7Day: number | null;
+      price15Day: number | null;
+      price30Day: number | null;
       location: string;
       lat: number | null;
       lng: number | null;

@@ -1,5 +1,5 @@
+import { Suspense } from "react";
 import { MyListingsTable } from "@/modules/products/components/MyListingsTable";
-import { Footer } from "@/shared/components/Footer";
 import { Header } from "@/shared/components/Header";
 import { AuthGuard } from "@/shared/guards/AuthGuard";
 
@@ -8,9 +8,11 @@ export default function Page() {
     <>
       <Header />
       <AuthGuard>
-        <MyListingsTable />
+        {/* MyListingsTable ใช้ useSearchParams() (อ่าน ?tab=create) — ต้องมี Suspense ครอบ */}
+        <Suspense fallback={null}>
+          <MyListingsTable />
+        </Suspense>
       </AuthGuard>
-      <Footer />
     </>
   );
 }

@@ -25,6 +25,8 @@ export async function createRental(
     pricePerDay: pricePerDaySnap,
     price3Day: product.price3Day != null ? Number(product.price3Day) : null,
     price7Day: product.price7Day != null ? Number(product.price7Day) : null,
+    price15Day: product.price15Day != null ? Number(product.price15Day) : null,
+    price30Day: product.price30Day != null ? Number(product.price30Day) : null,
   });
 
   const rental = await rentalRepository.create({

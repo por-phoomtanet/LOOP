@@ -67,6 +67,7 @@ model User {
   role               Role               @relation(fields: [roleId], references: [id])
   verificationStatus VerificationStatus @default(PENDING) // PENDING = ระหว่างรอยืนยัน OTP เท่านั้น, APPROVED ตั้งอัตโนมัติทันทีที่ OTP ผ่าน (ดู Phase 3)
   idCardImageUrl     String? // อัปโหลดตอน signup KYC
+  profileImageUrl    String? // รูปโปรไฟล์ที่ผู้ใช้อัปโหลดเองตอนสมัคร (ไม่บังคับ) — ต่างจาก idCardImageUrl ที่เป็นเอกสารยืนยันตัวตน
   faceVerified       Boolean            @default(false)
   legalName          String? // ชื่อ-นามสกุลจริงตามบัญชีธนาคาร ใช้เทียบกับชื่อผู้รับในสลิป (Phase 10) — คนละฟิลด์กับ name ที่เป็นชื่อแสดงในระบบ
   promptPayQrUrl     String? // รูป QR พร้อมเพย์ที่เจ้าของอัปโหลดเอง (Phase 10)
@@ -140,6 +141,8 @@ model Product {
   pricePerDay Decimal
   price3Day   Decimal? // ราคาขั้นบันได optional — ดู Dev Standard #21 (resolveRentPrice, ปัดขึ้น tier ถัดไปเสมอ)
   price7Day   Decimal?
+  price15Day  Decimal?
+  price30Day  Decimal?
   location    String
   lat         Float? // พิกัดจากแผนที่ (optional — ประกาศเดิมก่อนมี map ยังไม่มีค่า)
   lng         Float?

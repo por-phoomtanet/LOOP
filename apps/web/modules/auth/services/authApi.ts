@@ -43,6 +43,15 @@ export const authApi = {
     return api.post<ApiResponse<{ verified: boolean }>>("/auth/register/otp/verify", { code });
   },
 
+  uploadProfileImage(userId: number, file: File) {
+    const form = new FormData();
+    form.append("file", file);
+    return api.post<ApiResponse<{ profileImageUrl: string }>>(
+      `/users/${userId}/profile-image`,
+      form,
+    );
+  },
+
   uploadIdCard(userId: number, file: File) {
     const form = new FormData();
     form.append("file", file);

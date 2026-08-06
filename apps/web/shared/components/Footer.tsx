@@ -102,7 +102,7 @@ export function Footer() {
         </div>
 
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/15 pt-4 text-[12.5px] text-white/50 md:mt-8 md:pt-6">
-          <span>© 2026 renty · สงวนลิขสิทธิ์</span>
+          <span>© 2026 rently · สงวนลิขสิทธิ์</span>
           <span>
             ทำด้วย <span style={{ color: ORANGE }}>♥</span> เพื่อชุมชนคนชอบเช่า
           </span>

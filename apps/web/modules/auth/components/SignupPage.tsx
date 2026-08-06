@@ -17,9 +17,21 @@ export function SignupPage() {
     result: RegisterResult,
     idCardFile: File | null,
     faceVerifiedMock: boolean,
+    profileFile: File | null,
   ) {
     // login เข้า authStore ทันที — อีเมลยืนยันผ่าน signup-otp มาก่อนหน้าแล้ว บัญชีนี้ APPROVED ทันที
     setAuth(result.user, result.token);
+
+    if (profileFile) {
+      try {
+        const res = await authApi.uploadProfileImage(result.user.id, profileFile);
+        // อัปเดต store ให้ avatar ขึ้นทันทีโดยไม่ต้อง login ใหม่ (register response ยังไม่มี url
+        // เพราะเพิ่งอัปโหลดหลังสร้างบัญชีเสร็จ)
+        setAuth({ ...result.user, profileImageUrl: res.data.data.profileImageUrl }, result.token);
+      } catch {
+        // ไม่ block signup flow ถ้าอัปโหลดรูปโปรไฟล์ไม่สำเร็จ — ตั้งทีหลังได้
+      }
+    }
 
     if (idCardFile) {
       try {
@@ -47,7 +59,7 @@ export function SignupPage() {
         </div>
         <h1 className="font-arch mb-2 text-[24px] font-extrabold">สร้างบัญชีสำเร็จ!</h1>
         <p className="mb-8 text-[14px] text-black/60">
-          ยินดีต้อนรับสู่ renty — เริ่มเช่าหรือปล่อยเช่าสินค้าได้ทันที
+          ยินดีต้อนรับสู่ rently — เริ่มเช่าหรือปล่อยเช่าสินค้าได้ทันที
         </p>
         <Link
           href="/"

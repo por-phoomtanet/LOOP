@@ -16,6 +16,8 @@ type ProductInput = {
   pricePerDay: number;
   price3Day?: number;
   price7Day?: number;
+  price15Day?: number;
+  price30Day?: number;
   location: string;
   lat?: number;
   lng?: number;
@@ -45,6 +47,8 @@ export async function listProductsForAdmin() {
     pricePerDay: p.pricePerDay,
     price3Day: p.price3Day,
     price7Day: p.price7Day,
+    price15Day: p.price15Day,
+    price30Day: p.price30Day,
     status: p.status,
     ratingAvg: p.ratingAvg,
     location: p.location,
@@ -67,6 +71,8 @@ export async function getProductForAdmin(id: number) {
     pricePerDay: p.pricePerDay,
     price3Day: p.price3Day,
     price7Day: p.price7Day,
+    price15Day: p.price15Day,
+    price30Day: p.price30Day,
     location: p.location,
     status: p.status,
     ratingAvg: p.ratingAvg,
@@ -91,6 +97,8 @@ export async function listPublicProducts(
     pricePerDay: p.pricePerDay,
     price3Day: p.price3Day,
     price7Day: p.price7Day,
+    price15Day: p.price15Day,
+    price30Day: p.price30Day,
     location: p.location,
     ratingAvg: p.ratingAvg,
     reviewCount: p.reviewCount,
@@ -108,6 +116,8 @@ export async function createProduct(input: ProductInput, userId: number) {
     pricePerDay: input.pricePerDay,
     price3Day: input.price3Day ?? null,
     price7Day: input.price7Day ?? null,
+    price15Day: input.price15Day ?? null,
+    price30Day: input.price30Day ?? null,
     location: input.location,
     lat: input.lat ?? null,
     lng: input.lng ?? null,
@@ -185,6 +195,8 @@ export async function listMyListings(userId: number) {
     pricePerDay: p.pricePerDay,
     price3Day: p.price3Day,
     price7Day: p.price7Day,
+    price15Day: p.price15Day,
+    price30Day: p.price30Day,
     location: p.location,
     lat: p.lat,
     lng: p.lng,
