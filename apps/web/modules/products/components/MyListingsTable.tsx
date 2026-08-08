@@ -166,19 +166,9 @@ export function MyListingsTable() {
                         <p className="mt-[3px] text-[13px] text-black/55">
                           ฿{listing.pricePerDay} / วัน
                         </p>
-                        {(listing.price3Day ||
-                          listing.price7Day ||
-                          listing.price15Day ||
-                          listing.price30Day) && (
+                        {listing.priceTiers.length > 0 && (
                           <p className="mt-0.5 text-[11.5px] text-black/40">
-                            {[
-                              listing.price3Day && `3 วัน ฿${listing.price3Day}`,
-                              listing.price7Day && `7 วัน ฿${listing.price7Day}`,
-                              listing.price15Day && `15 วัน ฿${listing.price15Day}`,
-                              listing.price30Day && `30 วัน ฿${listing.price30Day}`,
-                            ]
-                              .filter(Boolean)
-                              .join(" · ")}
+                            {listing.priceTiers.map((t) => `${t.days} วัน ฿${t.price}`).join(" · ")}
                           </p>
                         )}
                       </div>

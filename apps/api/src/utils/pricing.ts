@@ -1,10 +1,4 @@
-type RentPriceTiers = {
-  pricePerDay: number;
-  price3Day?: number | null;
-  price7Day?: number | null;
-  price15Day?: number | null;
-  price30Day?: number | null;
-};
+export type RentPriceTier = { days: number; price: number };
 
 // จำนวนคืนระหว่างวันเช็คอิน-เช็คเอาท์ — ปัดขึ้นเสมอ (กันกรณีเวลาไม่ตรงเที่ยงคืนพอดี)
 export function diffInDays(startDate: Date, endDate: Date): number {
@@ -12,19 +6,19 @@ export function diffInDays(startDate: Date, endDate: Date): number {
   return Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / msPerDay));
 }
 
-// ปัดขึ้น tier ถัดไปเสมอ (แบบ A) — ดูสูตรเต็มใน CLAUDE.md Dev Standard #21
-export function resolveRentPrice(nights: number, tiers: RentPriceTiers): number {
-  const table = [
-    { days: 1, price: tiers.pricePerDay },
-    ...(tiers.price3Day != null ? [{ days: 3, price: tiers.price3Day }] : []),
-    ...(tiers.price7Day != null ? [{ days: 7, price: tiers.price7Day }] : []),
-    ...(tiers.price15Day != null ? [{ days: 15, price: tiers.price15Day }] : []),
-    ...(tiers.price30Day != null ? [{ days: 30, price: tiers.price30Day }] : []),
-  ];
+// ปัดขึ้น tier ถัดไปเสมอ (แบบ A) — เจ้าของกำหนดจำนวนวัน+ราคาของแต่ละ tier เองได้อิสระ
+// (ไม่จำกัดแค่ 3/7/15/30 วันอีกต่อไป) tiers ไม่ต้องเรียงมาก่อน ฟังก์ชันเรียงให้เอง
+// ดูสูตรเต็มใน CLAUDE.md Dev Standard #21
+export function resolveRentPrice(
+  nights: number,
+  pricePerDay: number,
+  tiers: RentPriceTier[] = [],
+): number {
+  const table = [{ days: 1, price: pricePerDay }, ...tiers].sort((a, b) => a.days - b.days);
 
   const matched = table.find((t) => nights <= t.days);
   if (matched) return matched.price;
 
   const highest = table[table.length - 1];
-  return highest.price + (nights - highest.days) * tiers.pricePerDay;
+  return highest.price + (nights - highest.days) * pricePerDay;
 }

@@ -632,29 +632,25 @@ if (!canCancel) throw new BadRequestError('ไม่สามารถยกเ�
 ```
 Frontend: countdown ใช้ `setInterval` ทุก 1 วินาที เริ่มใน `useEffect`/mount และ clear ตอน unmount เสมอ (กัน memory leak ตามที่เจอใน prototype เดิม)
 
-### 21. Tiered Pricing (เฉพาะ LOOP — ราคาขั้นบันไดตามจำนวนวัน, ปัดขึ้น tier ถัดไปเสมอ)
-`Product` มีราคาได้สูงสุด 5 ระดับ: `pricePerDay` (บังคับ, ฐานราคา 1 วัน), `price3Day`/`price7Day`/`price15Day`/`price30Day` (optional ทั้งหมด — เจ้าของเลือกตั้งกี่ระดับก็ได้) ตัดสินใจใช้ **แบบ A: ปัดขึ้น tier ถัดไปเสมอ** (ไม่ผสม tier แบบ greedy) เพราะ deterministic และปลอดภัยต่อการ snapshot ราคาตอนสร้าง Rental (Dev Standard #19):
+### 21. Tiered Pricing (เฉพาะ LOOP — ราคาขั้นบันไดตามจำนวนวัน custom, ปัดขึ้น tier ถัดไปเสมอ)
+`Product.pricePerDay` เป็นฐานราคา 1 วัน (บังคับเสมอ) ส่วนราคาขั้นบันไดที่เหลือเก็บใน child table `ProductPriceTier` (`{ id, productId, days, price }`, unique บน `[productId, days]`) — **เจ้าของกำหนดจำนวนวัน + ราคาของแต่ละ tier เองได้อิสระ** ไม่ผูกกับ 3/7/15/30 อีกต่อไป (ก่อนหน้านี้เป็น 4 คอลัมน์คงที่บน `Product`, ย้ายมาเป็นตารางลูกเพื่อให้ตั้งจำนวน tier/จำนวนวันเท่าไหร่ก็ได้ — เช่น 2 วันสำหรับชุดแต่งงาน, 90 วันสำหรับเฟอร์นิเจอร์) เงื่อนไข: `days > 1` เสมอ (1 วันคือ `pricePerDay` อยู่แล้ว ห้ามซ้ำ) และห้ามมี `days` ซ้ำกันภายใน product เดียวกัน (validate ใน `product.service.ts::assertValidTiers`, throw 400 ถ้าไม่ผ่าน) — ยังคงใช้ **แบบ A: ปัดขึ้น tier ถัดไปเสมอ** (ไม่ผสม tier แบบ greedy) เพราะ deterministic และปลอดภัยต่อการ snapshot ราคาตอนสร้าง Rental (Dev Standard #19):
 ```ts
 // utils/pricing.ts — pure function, ไม่รู้จัก Prisma/req/res
-function resolveRentPrice(nights: number, tiers: RentPriceTiers) {
-  const table = [
-    { days: 1, price: tiers.pricePerDay },
-    ...(tiers.price3Day != null ? [{ days: 3, price: tiers.price3Day }] : []),
-    ...(tiers.price7Day != null ? [{ days: 7, price: tiers.price7Day }] : []),
-    ...(tiers.price15Day != null ? [{ days: 15, price: tiers.price15Day }] : []),
-    ...(tiers.price30Day != null ? [{ days: 30, price: tiers.price30Day }] : []),
-  ] // เรียงตาม days อยู่แล้วเพราะ push ตามลำดับ 1→3→7→15→30
+type RentPriceTier = { days: number; price: number }
+
+function resolveRentPrice(nights: number, pricePerDay: number, tiers: RentPriceTier[] = []) {
+  const table = [{ days: 1, price: pricePerDay }, ...tiers].sort((a, b) => a.days - b.days)
 
   const matched = table.find((t) => nights <= t.days)
   if (matched) return matched.price // ปัดขึ้น tier ที่ใกล้สุดที่ >= nights (แบบ A)
 
   const highest = table[table.length - 1]
-  return highest.price + (nights - highest.days) * tiers.pricePerDay // เกิน tier สูงสุด → tier + ส่วนเกินคิดรายวันจาก pricePerDay
+  return highest.price + (nights - highest.days) * pricePerDay // เกิน tier สูงสุด → tier + ส่วนเกินคิดรายวันจาก pricePerDay
 }
 ```
-ตัวอย่าง (`pricePerDay=150, price3Day=250, price7Day=500, price15Day=900, price30Day=1600`): nights=1→150 · nights=2→250 (ปัดขึ้น tier 3 วัน) · nights=3→250 · nights=4-6→500 (ปัดขึ้น tier 7 วัน) · nights=8-14→900 (ปัดขึ้น tier 15 วัน) · nights=16-29→1600 (ปัดขึ้น tier 30 วัน) · nights=31→1600+1×150=1750 (เกิน tier สูงสุด คิดส่วนเกินรายวัน) — tier ไหนเป็น `null` ให้ข้ามไปเลย (เช่น ตั้งแค่ `price30Day` → nights=2..30 ปัดขึ้นตรงไป tier 30 วันทั้งหมด)
+รับ tiers เป็น array ยาวเท่าไหร่ก็ได้ ไม่ต้องเรียงมาก่อน (ฟังก์ชันเรียงเอง) ตัวอย่าง (`pricePerDay=150`, tiers = `3→250, 7→500, 15→900, 30→1600`): nights=1→150 · nights=2→250 (ปัดขึ้น tier 3 วัน) · nights=3→250 · nights=4-6→500 (ปัดขึ้น tier 7 วัน) · nights=8-14→900 (ปัดขึ้น tier 15 วัน) · nights=16-29→1600 (ปัดขึ้น tier 30 วัน) · nights=31→1600+1×150=1750 (เกิน tier สูงสุด คิดส่วนเกินรายวัน) — ไม่ตั้ง tier ไหนก็ข้ามไปเลย เช่น tiers = `[{days:90, price:6000}]` → nights=2..90 ปัดขึ้นตรงไป tier 90 วันทั้งหมด
 
-**เพิ่ม tier ใหม่ต้องแก้ให้ครบทุกจุด** ไม่ใช่แค่ `pricing.ts` — `schema.prisma`, `product.routes.ts` (createSchema), `product.service.ts` (input type + ทุก mapper ที่ return ราคา), `product.repository.ts`, **`rental.service.ts` ตอนเรียก `resolveRentPrice()`** (ลืมจุดนี้ = tier ใหม่ไม่มีผลกับราคาจริงตอนเช่า), `apps/web/modules/products/types.ts`, `ListItemForm.tsx` (state + payload + input), `ProductCard.tsx`/`MyListingsTable.tsx` (แสดงผล)
+**เพิ่ม/แก้ tier ต้องแก้ให้ครบทุกจุด** ไม่ใช่แค่ `pricing.ts` — `product.repository.ts` (`priceTiersInclude`, `create`/`update` nested write — `update` ลบทั้งชุดแล้วสร้างใหม่เสมอเมื่อ `priceTiers !== undefined` ไม่ diff ทีละแถว เพราะไม่มีอะไรอ้างอิง `ProductPriceTier.id` จากนอกไฟล์นี้), `product.service.ts` (`assertValidTiers`, `mapTiers` ในทุก mapper ที่ return ราคา), `product.routes.ts` (`priceTierSchema`), **`rental.service.ts` ตอนเรียก `resolveRentPrice()`** (ลืมจุดนี้ = tier ที่ตั้งไว้ไม่มีผลกับราคาจริงตอนเช่า แม้จะแสดงถูกต้องในหน้าเว็บก็ตาม — เคยเกือบพลาดจุดนี้มาแล้วตอนเพิ่ม 15/30 วัน), `apps/web/modules/products/types.ts` (`PriceTier`), `ListItemForm.tsx` (state เป็น array ของ `{days, price}` แถวที่เพิ่ม/ลบได้ — pre-fill เริ่มต้นด้วย `3/7/15/30` แถวว่างไว้ให้ก่อนตาม UX เดิม แต่ผู้ใช้แก้จำนวนวันหรือเพิ่ม/ลบแถวได้อิสระ), `ProductCard.tsx`/`MyListingsTable.tsx` (แสดงผลจาก `priceTiers` array แทน field คงที่)
 
 `deposit` **ไม่เปลี่ยน** — ยังคงคิดจาก `pricePerDay * 2` เท่าเดิมเสมอ (ไม่ผูกกับ tier เพราะเป็นเงินประกันค่าสินค้า ไม่ใช่ค่าเช่า)
 
@@ -1399,4 +1395,28 @@ function resolveRentPrice(nights: number, tiers: RentPriceTiers) {
   - `SignupPage.tsx` ตัด stage `"otp"` ออก (register เสร็จ = verified แล้ว ไปหน้า "done" ตรงๆ) — `OtpStep.tsx` เดิม (Phase 12) ไม่ได้ลบ แค่ไม่มีใครเรียกใช้แล้ว เผื่อ endpoint post-registration OTP เดิม (`/register/otp/request`/`verify`, ยังทำงานอยู่ไม่ได้ถูกลบ) ถูกใช้ใหม่ในอนาคต
   - 🧪 test: `npx tsc`/`eslint` ทั้ง api/web ผ่าน ✅ | `bun test` (apps/api) → **120/120 ผ่าน** ✅ | `next build` ผ่านครบ 17/17 pages ✅
   - 📝 commit: รวมอยู่ใน `feat: verify email before account creation via inline signup otp`
+
+---
+
+### Phase 14 — ราคาขั้นบันไดแบบ Custom (เจ้าของกำหนดจำนวนวัน+ราคาเอง)
+
+> **ที่มา:** Phase 8 (คอลัมน์คงที่ `price3Day`/`price7Day`/`price15Day`/`price30Day`) จำกัดเกินไป — สินค้าบางอย่างมีจังหวะเช่าที่ไม่ตรงกับ 4 ค่านี้เลย (เช่น ชุดแต่งงาน 2 วัน, เฟอร์นิเจอร์ 90 วัน) ตัดสินใจให้ระบบยืดหยุ่นเต็มที่: **เจ้าของกำหนดทั้งจำนวนวันและราคาของแต่ละระดับเอง** ไม่จำกัดจำนวน tier — แต่ฟอร์มยัง pre-fill ด้วย 3/7/15/30 วัน (ค่าเริ่มต้นเดิม) ให้คนทั่วไปกรอกแบบเดิมได้โดยไม่รู้สึกว่าซับซ้อนขึ้น ส่วนคนที่ต้องการวันอื่นก็แก้ตัวเลขหรือเพิ่ม/ลบแถวเองได้ — ย้ายจาก 4 คอลัมน์คงที่บน `Product` ไปเป็นตารางลูก `ProductPriceTier`
+
+- [x] 14.1 DB: ย้าย `price3Day`/`price7Day`/`price15Day`/`price30Day` → `ProductPriceTier` child table (`{productId, days, price}`, unique `[productId, days]`, `onDelete: Cascade`)
+  - migration เขียน SQL มือ (ไม่ปล่อยให้ `prisma migrate dev` diff อัตโนมัติ) เพราะต้อง data-migrate ค่าเดิมก่อนลบคอลัมน์: `INSERT INTO "ProductPriceTier" SELECT id, N, priceNDay FROM "Product" WHERE priceNDay IS NOT NULL` (4 statement ต่อ tier) ก่อน `ALTER TABLE "Product" DROP COLUMN`
+  - 🧪 test: migration `20260807002258_restructure_product_price_tiers` apply สำเร็จทั้ง dev db (`loop`) และ test db (`loop_test`, ดู Dev Standard #26) ✅
+  - 📝 commit: `feat: let owners set custom price tier days and prices per product`
+
+- [x] 14.2 API: `resolveRentPrice(nights, pricePerDay, tiers)` — เปลี่ยน signature รับ tiers เป็น array ยาวเท่าไหร่ก็ได้ (ไม่ผูกกับ 3/7/15/30 คงที่อีกต่อไป) เรียงลำดับเองภายในฟังก์ชัน — ดูสูตรเต็มใน Dev Standard #21
+  - `product.repository.ts`: `create`/`update` เขียน nested relation ผ่าน `priceTiersInclude`, `update` ลบทั้งชุด+สร้างใหม่เสมอเมื่อส่ง `priceTiers` มา (ไม่ diff ทีละแถว — ไม่มีอะไรอ้างอิง tier id จากนอกไฟล์นี้)
+  - `product.service.ts`: `assertValidTiers()` กัน `days<=1` และ `days` ซ้ำกันภายใน product เดียวกัน (400)
+  - `rental.service.ts::createRental` อัปเดตให้เรียก `resolveRentPrice()` แบบ signature ใหม่ (จุดที่ Dev Standard #21 เตือนไว้ว่าเป็นจุดที่ลืมง่ายที่สุด — แก้ครบในรอบนี้)
+  - 🧪 test: `bun test` (apps/api) → **146/146 ผ่าน** (เพิ่มเคส custom-day tier ใน `pricing.test.ts`/`product.test.ts`/`rental.test.ts` รวม duplicate days → 400, days<=1 → 400, custom day เช่น 5/90 วัน, tiers ไม่เรียงมาก่อน, update แทนที่ทั้งชุด/ล้างทั้งชุด) ✅ | `npx tsc -p apps/api/tsconfig.json --noEmit` ผ่าน ✅ | `eslint` ผ่าน ✅
+  - 📝 commit: รวมอยู่ใน `feat: let owners set custom price tier days and prices per product`
+
+- [x] 14.3 Web: `ListItemForm.tsx` — เปลี่ยนจาก 4 ช่องราคาคงที่เป็นรายการแถว `{จำนวนวัน, ราคา}` เพิ่ม/ลบแถวได้อิสระ pre-fill เริ่มต้นด้วย 3/7/15/30 วัน (ค่าเดิม, ราคาว่างไว้) แต่แก้จำนวนวันหรือลบทิ้งได้เต็มที่ — validate ฝั่ง client ก่อนส่ง (ห้าม `days<=1`, ห้ามซ้ำ) สะท้อน error ผ่าน banner เดิมของฟอร์ม
+  - `types.ts` เพิ่ม `PriceTier = {days, price}`, แทนที่ field คงที่ 4 ตัวใน `MyListing`/`ProductInput`/`ProductCardData`
+  - `ProductCard.tsx`/`MyListingsTable.tsx` แสดงผลจาก `product.priceTiers`/`listing.priceTiers` array แทน field คงที่
+  - 🧪 test: `npx tsc -p apps/web/tsconfig.json --noEmit` ผ่าน ✅ | `eslint` ผ่าน ✅ | `next build` ผ่านครบ 17/17 pages ✅
+  - 📝 commit: รวมอยู่ใน `feat: let owners set custom price tier days and prices per product`
 

@@ -22,6 +22,11 @@ export type PickupOption = {
   label: string;
 };
 
+export type PriceTier = {
+  days: number;
+  price: string;
+};
+
 export type MyListing = {
   id: number;
   title: string;
@@ -29,10 +34,7 @@ export type MyListing = {
   categoryId: number;
   categoryName: string;
   pricePerDay: string;
-  price3Day: string | null;
-  price7Day: string | null;
-  price15Day: string | null;
-  price30Day: string | null;
+  priceTiers: PriceTier[];
   location: string;
   lat: number | null;
   lng: number | null;
@@ -49,10 +51,7 @@ export type ProductInput = {
   description: string;
   categoryId: number;
   pricePerDay: number;
-  price3Day?: number;
-  price7Day?: number;
-  price15Day?: number;
-  price30Day?: number;
+  priceTiers?: { days: number; price: number }[];
   location: string;
   lat?: number;
   lng?: number;
@@ -65,10 +64,7 @@ export type ProductCardData = {
   categorySlug: string;
   ownerName: string;
   pricePerDay: string;
-  price3Day: string | null;
-  price7Day: string | null;
-  price15Day: string | null;
-  price30Day: string | null;
+  priceTiers: PriceTier[];
   location: string;
   ratingAvg: number;
   reviewCount: number;

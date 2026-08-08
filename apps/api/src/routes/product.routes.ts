@@ -5,15 +5,17 @@ import { authMacro } from "../plugins/auth";
 import { toFileArray } from "../plugins/upload";
 import { validate } from "../plugins/validate";
 
+const priceTierSchema = z.object({
+  days: z.number().int().positive(),
+  price: z.number().positive(),
+});
+
 const createSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   categoryId: z.number().int().positive(),
   pricePerDay: z.number().positive(),
-  price3Day: z.number().positive().optional(),
-  price7Day: z.number().positive().optional(),
-  price15Day: z.number().positive().optional(),
-  price30Day: z.number().positive().optional(),
+  priceTiers: z.array(priceTierSchema).optional(),
   location: z.string().min(1),
   lat: z.number().optional(),
   lng: z.number().optional(),

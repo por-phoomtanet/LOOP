@@ -139,10 +139,6 @@ model Product {
   ownerId     Int
   owner       User          @relation("ProductOwner", fields: [ownerId], references: [id])
   pricePerDay Decimal
-  price3Day   Decimal? // ราคาขั้นบันได optional — ดู Dev Standard #21 (resolveRentPrice, ปัดขึ้น tier ถัดไปเสมอ)
-  price7Day   Decimal?
-  price15Day  Decimal?
-  price30Day  Decimal?
   location    String
   lat         Float? // พิกัดจากแผนที่ (optional — ประกาศเดิมก่อนมี map ยังไม่มีค่า)
   lng         Float?
@@ -159,7 +155,21 @@ model Product {
 
   images        ProductImage[]
   pickupOptions PickupOption[]
+  priceTiers    ProductPriceTier[]
   rentals       Rental[]
+}
+
+// ราคาขั้นบันไดแบบ custom — เจ้าของกำหนดจำนวนวัน+ราคาเองได้อิสระ (ไม่จำกัดแค่ 3/7/15/30 อีกต่อไป)
+// ดู Dev Standard #21 (resolveRentPrice, ปัดขึ้น tier ถัดไปเสมอ)
+model ProductPriceTier {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  days      Int // ต้อง > 1 เสมอ (1 วันคือ pricePerDay ของ Product เอง ไม่ซ้ำกับตารางนี้)
+  price     Decimal
+  createdAt DateTime @default(now())
+
+  @@unique([productId, days])
 }
 
 model ProductImage {

@@ -36,7 +36,12 @@ async function setupOwnerWithProduct(
   {
     withPaymentProfile = true,
     pricePerDay = 150,
-  }: { withPaymentProfile?: boolean; pricePerDay?: number } = {},
+    priceTiers,
+  }: {
+    withPaymentProfile?: boolean;
+    pricePerDay?: number;
+    priceTiers?: { days: number; price: number }[];
+  } = {},
 ) {
   const { token: ownerToken, userId: ownerId } = await registerUser(`${prefix}owner`);
 
@@ -61,6 +66,7 @@ async function setupOwnerWithProduct(
       categoryId,
       pricePerDay,
       location: "กรุงเทพฯ",
+      ...(priceTiers ? { priceTiers } : {}),
     });
 
   return { ownerId, ownerToken, productId: productRes.body.data.id as number };
@@ -85,6 +91,21 @@ describe("POST /api/products/:id/rentals", () => {
     expect(res.status).toBe(201);
     expect(Number(res.body.data.totalAmount)).toBe(150);
     expect(res.body.data.status).toBe("PENDING_PAYMENT");
+  });
+
+  it("computes totalAmount using the owner's custom price tiers (not just 3/7/15/30)", async () => {
+    const { productId } = await setupOwnerWithProduct("rentalcustomtier", {
+      priceTiers: [
+        { days: 5, price: 600 },
+        { days: 10, price: 1000 },
+      ],
+    });
+    const { token: renterToken } = await registerUser("rentalcustomtierrenter");
+
+    // 4 คืน → ปัดขึ้น tier 5 วัน (600) ไม่ใช่คิดรายวัน 4*150
+    const res = await createRental(renterToken, productId, 4);
+    expect(res.status).toBe(201);
+    expect(Number(res.body.data.totalAmount)).toBe(600);
   });
 
   it("rejects renting a product that is not active", async () => {

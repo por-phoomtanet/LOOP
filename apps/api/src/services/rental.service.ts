@@ -21,13 +21,11 @@ export async function createRental(
   const endDate = new Date(input.endDate);
   const nights = diffInDays(startDate, endDate);
   const pricePerDaySnap = Number(product.pricePerDay);
-  const totalAmount = resolveRentPrice(nights, {
-    pricePerDay: pricePerDaySnap,
-    price3Day: product.price3Day != null ? Number(product.price3Day) : null,
-    price7Day: product.price7Day != null ? Number(product.price7Day) : null,
-    price15Day: product.price15Day != null ? Number(product.price15Day) : null,
-    price30Day: product.price30Day != null ? Number(product.price30Day) : null,
-  });
+  const totalAmount = resolveRentPrice(
+    nights,
+    pricePerDaySnap,
+    product.priceTiers.map((t) => ({ days: t.days, price: Number(t.price) })),
+  );
 
   const rental = await rentalRepository.create({
     productId,

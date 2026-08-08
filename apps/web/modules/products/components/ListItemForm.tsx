@@ -22,6 +22,7 @@ type Props = {
 };
 
 type PendingPickupOption = { id?: number; type: PickupMethod; label: string };
+type TierRow = { days: string; price: string };
 
 const FIXED_PICKUP_LABELS: Record<"GRAB" | "POST", string> = {
   GRAB: "จัดส่งผ่าน Grab",
@@ -29,6 +30,17 @@ const FIXED_PICKUP_LABELS: Record<"GRAB" | "POST", string> = {
 };
 
 const MAX_IMAGES = 10; // ตรงกับ limit ฝั่ง API (.array("files", 10))
+
+// pre-fill ด้วยจำนวนวันที่นิยม (3/7/15/30) ไว้ให้ก่อน — เจ้าของแก้จำนวนวัน/ราคาเอง
+// หรือลบ/เพิ่มแถวได้อิสระ ไม่ได้บังคับใช้ 4 ค่านี้อีกต่อไป
+const DEFAULT_TIER_DAYS = ["3", "7", "15", "30"];
+
+function initialTierRows(listing?: MyListing): TierRow[] {
+  if (listing && listing.priceTiers.length > 0) {
+    return listing.priceTiers.map((t) => ({ days: String(t.days), price: t.price }));
+  }
+  return DEFAULT_TIER_DAYS.map((days) => ({ days, price: "" }));
+}
 
 export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
   const isEdit = !!listing;
@@ -38,10 +50,7 @@ export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
   const [description, setDescription] = useState(listing?.description ?? "");
   const [categoryId, setCategoryId] = useState<number | "">(listing?.categoryId ?? "");
   const [pricePerDay, setPricePerDay] = useState(listing?.pricePerDay ?? "");
-  const [price3Day, setPrice3Day] = useState(listing?.price3Day ?? "");
-  const [price7Day, setPrice7Day] = useState(listing?.price7Day ?? "");
-  const [price15Day, setPrice15Day] = useState(listing?.price15Day ?? "");
-  const [price30Day, setPrice30Day] = useState(listing?.price30Day ?? "");
+  const [priceTiers, setPriceTiers] = useState<TierRow[]>(() => initialTierRows(listing));
   const [location, setLocation] = useState(listing?.location ?? "");
   const [lat, setLat] = useState<number | null>(listing?.lat ?? null);
   const [lng, setLng] = useState<number | null>(listing?.lng ?? null);
@@ -106,13 +115,28 @@ export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
     }
   }
 
+  function updateTierDays(index: number, value: string) {
+    setPriceTiers((prev) => prev.map((row, i) => (i === index ? { ...row, days: value } : row)));
+  }
+
+  function updateTierPrice(index: number, value: string) {
+    setPriceTiers((prev) => prev.map((row, i) => (i === index ? { ...row, price: value } : row)));
+  }
+
+  function addTierRow() {
+    setPriceTiers((prev) => [...prev, { days: "", price: "" }]);
+  }
+
+  function removeTierRow(index: number) {
+    setPriceTiers((prev) => prev.filter((_, i) => i !== index));
+  }
+
   function resetForm() {
     setTitle("");
     setDescription("");
     setCategoryId("");
     setPricePerDay("");
-    setPrice3Day("");
-    setPrice7Day("");
+    setPriceTiers(initialTierRows());
     setLocation("");
     setLat(null);
     setLng(null);
@@ -128,6 +152,19 @@ export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
     e.preventDefault();
     if (!canSubmit || submitting) return;
 
+    const filledTiers = priceTiers
+      .filter((t) => t.days.trim() !== "" && t.price.trim() !== "")
+      .map((t) => ({ days: Number(t.days), price: Number(t.price) }));
+    const tierDays = filledTiers.map((t) => t.days);
+    if (new Set(tierDays).size !== tierDays.length) {
+      setError("จำนวนวันในตารางราคาห้ามซ้ำกัน");
+      return;
+    }
+    if (filledTiers.some((t) => t.days <= 1)) {
+      setError("จำนวนวันของแต่ละระดับราคาต้องมากกว่า 1 วัน");
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
     try {
@@ -136,10 +173,7 @@ export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
         description,
         categoryId: Number(categoryId),
         pricePerDay: Number(pricePerDay),
-        ...(price3Day !== "" ? { price3Day: Number(price3Day) } : {}),
-        ...(price7Day !== "" ? { price7Day: Number(price7Day) } : {}),
-        ...(price15Day !== "" ? { price15Day: Number(price15Day) } : {}),
-        ...(price30Day !== "" ? { price30Day: Number(price30Day) } : {}),
+        priceTiers: filledTiers,
         location,
         ...(lat != null && lng != null ? { lat, lng } : {}),
       };
@@ -343,63 +377,70 @@ export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="mb-2 block text-[13px] font-semibold text-black/60">
-              ราคา 3 วัน <span className="font-normal text-black/40">(ไม่บังคับ)</span>
+        <div>
+          <div className="mb-2 flex items-center justify-between">
+            <label className="text-[13px] font-semibold text-black/60">
+              ราคาตามจำนวนวันเช่า <span className="font-normal text-black/40">(ไม่บังคับ)</span>
             </label>
-            <div className="focus-within:border-brand-400 flex items-center gap-2 rounded-[10px] border border-black/[.15] px-3.5 transition-colors">
-              <span className="flex-none text-[14.5px] text-black/45">฿</span>
-              <input
-                type="number"
-                value={price3Day}
-                onChange={(e) => setPrice3Day(e.target.value)}
-                className="w-full border-0 py-3 text-[14.5px] text-black outline-none"
-              />
-            </div>
+            <button
+              type="button"
+              onClick={addTierRow}
+              className="text-brand-600 text-[13px] font-semibold"
+            >
+              + เพิ่มระดับราคา
+            </button>
           </div>
-          <div>
-            <label className="mb-2 block text-[13px] font-semibold text-black/60">
-              ราคา 7 วัน <span className="font-normal text-black/40">(ไม่บังคับ)</span>
-            </label>
-            <div className="focus-within:border-brand-400 flex items-center gap-2 rounded-[10px] border border-black/[.15] px-3.5 transition-colors">
-              <span className="flex-none text-[14.5px] text-black/45">฿</span>
-              <input
-                type="number"
-                value={price7Day}
-                onChange={(e) => setPrice7Day(e.target.value)}
-                className="w-full border-0 py-3 text-[14.5px] text-black outline-none"
-              />
+          {priceTiers.length === 0 ? (
+            <p className="text-[12.5px] text-black/40">
+              ยังไม่มีระดับราคา — กด &quot;+ เพิ่มระดับราคา&quot; เพื่อเพิ่ม
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {priceTiers.map((row, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="flex w-[108px] flex-none items-center gap-1.5 rounded-[10px] border border-black/[.15] px-3 py-2.5">
+                    <input
+                      type="number"
+                      min={2}
+                      value={row.days}
+                      onChange={(e) => updateTierDays(i, e.target.value)}
+                      placeholder="จำนวนวัน"
+                      className="w-full border-0 text-[14px] text-black outline-none [appearance:textfield]"
+                    />
+                    <span className="flex-none text-[12.5px] text-black/45">วัน</span>
+                  </div>
+                  <div className="focus-within:border-brand-400 flex flex-1 items-center gap-2 rounded-[10px] border border-black/[.15] px-3.5 transition-colors">
+                    <span className="flex-none text-[14.5px] text-black/45">฿</span>
+                    <input
+                      type="number"
+                      value={row.price}
+                      onChange={(e) => updateTierPrice(i, e.target.value)}
+                      placeholder="ราคา"
+                      className="w-full border-0 py-2.5 text-[14.5px] text-black outline-none"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeTierRow(i)}
+                    aria-label="ลบระดับราคานี้"
+                    className="flex-none border-0 bg-transparent p-1 text-black/35 hover:text-black"
+                  >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M18 6L6 18" />
+                      <path d="M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
             </div>
-          </div>
-          <div>
-            <label className="mb-2 block text-[13px] font-semibold text-black/60">
-              ราคา 15 วัน <span className="font-normal text-black/40">(ไม่บังคับ)</span>
-            </label>
-            <div className="focus-within:border-brand-400 flex items-center gap-2 rounded-[10px] border border-black/[.15] px-3.5 transition-colors">
-              <span className="flex-none text-[14.5px] text-black/45">฿</span>
-              <input
-                type="number"
-                value={price15Day}
-                onChange={(e) => setPrice15Day(e.target.value)}
-                className="w-full border-0 py-3 text-[14.5px] text-black outline-none"
-              />
-            </div>
-          </div>
-          <div>
-            <label className="mb-2 block text-[13px] font-semibold text-black/60">
-              ราคา 30 วัน <span className="font-normal text-black/40">(ไม่บังคับ)</span>
-            </label>
-            <div className="focus-within:border-brand-400 flex items-center gap-2 rounded-[10px] border border-black/[.15] px-3.5 transition-colors">
-              <span className="flex-none text-[14.5px] text-black/45">฿</span>
-              <input
-                type="number"
-                value={price30Day}
-                onChange={(e) => setPrice30Day(e.target.value)}
-                className="w-full border-0 py-3 text-[14.5px] text-black outline-none"
-              />
-            </div>
-          </div>
+          )}
         </div>
 
         <div>

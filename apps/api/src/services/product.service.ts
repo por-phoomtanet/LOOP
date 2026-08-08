@@ -9,15 +9,14 @@ const FIXED_PICKUP_LABELS: Record<Exclude<PickupMethod, "MEETUP">, string> = {
   POST: "จัดส่งทางไปรษณีย์",
 };
 
+type PriceTierInput = { days: number; price: number };
+
 type ProductInput = {
   title: string;
   description: string;
   categoryId: number;
   pricePerDay: number;
-  price3Day?: number;
-  price7Day?: number;
-  price15Day?: number;
-  price30Day?: number;
+  priceTiers?: PriceTierInput[];
   location: string;
   lat?: number;
   lng?: number;
@@ -30,11 +29,26 @@ async function assertActiveCategory(categoryId: number) {
   }
 }
 
+// เจ้าของกำหนดจำนวนวัน+ราคาของแต่ละ tier เองได้อิสระ — กันแค่ค่าที่ทำให้ resolveRentPrice พังหรือกำกวม
+function assertValidTiers(tiers?: PriceTierInput[]) {
+  if (!tiers || tiers.length === 0) return;
+  const daysSeen = new Set<number>();
+  for (const t of tiers) {
+    if (t.days <= 1) throw new BadRequestError("จำนวนวันของราคาขั้นบันไดต้องมากกว่า 1 วัน");
+    if (daysSeen.has(t.days)) throw new BadRequestError("จำนวนวันในตารางราคาห้ามซ้ำกัน");
+    daysSeen.add(t.days);
+  }
+}
+
 async function findOwnedProduct(id: number, userId: number) {
   const product = await productRepository.findById(id);
   if (!product) throw new NotFoundError("ไม่พบประกาศนี้");
   if (product.ownerId !== userId) throw new ForbiddenError("ไม่มีสิทธิ์แก้ไขประกาศนี้");
   return product;
+}
+
+function mapTiers(p: { priceTiers: { days: number; price: unknown }[] }) {
+  return p.priceTiers.map((t) => ({ days: t.days, price: t.price }));
 }
 
 export async function listProductsForAdmin() {
@@ -45,10 +59,7 @@ export async function listProductsForAdmin() {
     categoryName: p.category.name,
     ownerName: p.owner.name,
     pricePerDay: p.pricePerDay,
-    price3Day: p.price3Day,
-    price7Day: p.price7Day,
-    price15Day: p.price15Day,
-    price30Day: p.price30Day,
+    priceTiers: mapTiers(p),
     status: p.status,
     ratingAvg: p.ratingAvg,
     location: p.location,
@@ -69,10 +80,7 @@ export async function getProductForAdmin(id: number) {
     ownerEmail: p.owner.email,
     ownerPhone: p.owner.phone,
     pricePerDay: p.pricePerDay,
-    price3Day: p.price3Day,
-    price7Day: p.price7Day,
-    price15Day: p.price15Day,
-    price30Day: p.price30Day,
+    priceTiers: mapTiers(p),
     location: p.location,
     status: p.status,
     ratingAvg: p.ratingAvg,
@@ -95,10 +103,7 @@ export async function listPublicProducts(
     categorySlug: p.category.slug,
     ownerName: p.owner.name,
     pricePerDay: p.pricePerDay,
-    price3Day: p.price3Day,
-    price7Day: p.price7Day,
-    price15Day: p.price15Day,
-    price30Day: p.price30Day,
+    priceTiers: mapTiers(p),
     location: p.location,
     ratingAvg: p.ratingAvg,
     reviewCount: p.reviewCount,
@@ -109,15 +114,13 @@ export async function listPublicProducts(
 
 export async function createProduct(input: ProductInput, userId: number) {
   await assertActiveCategory(input.categoryId);
+  assertValidTiers(input.priceTiers);
   return productRepository.create({
     title: input.title,
     description: input.description,
     categoryId: input.categoryId,
     pricePerDay: input.pricePerDay,
-    price3Day: input.price3Day ?? null,
-    price7Day: input.price7Day ?? null,
-    price15Day: input.price15Day ?? null,
-    price30Day: input.price30Day ?? null,
+    priceTiers: input.priceTiers ?? [],
     location: input.location,
     lat: input.lat ?? null,
     lng: input.lng ?? null,
@@ -132,6 +135,7 @@ export async function createProduct(input: ProductInput, userId: number) {
 export async function updateProduct(id: number, input: Partial<ProductInput>, userId: number) {
   await findOwnedProduct(id, userId);
   if (input.categoryId !== undefined) await assertActiveCategory(input.categoryId);
+  if (input.priceTiers !== undefined) assertValidTiers(input.priceTiers);
   return productRepository.update(id, { ...input, updatedById: userId });
 }
 
@@ -193,10 +197,7 @@ export async function listMyListings(userId: number) {
     categoryId: p.categoryId,
     categoryName: p.category.name,
     pricePerDay: p.pricePerDay,
-    price3Day: p.price3Day,
-    price7Day: p.price7Day,
-    price15Day: p.price15Day,
-    price30Day: p.price30Day,
+    priceTiers: mapTiers(p),
     location: p.location,
     lat: p.lat,
     lng: p.lng,

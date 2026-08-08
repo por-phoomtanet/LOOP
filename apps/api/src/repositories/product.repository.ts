@@ -1,11 +1,18 @@
 import type { PickupMethod, ProductStatus } from "@loop/db";
 import { prisma } from "@loop/db";
 
+const priceTiersInclude = {
+  priceTiers: { orderBy: { days: "asc" as const } },
+};
+
 const ownerListInclude = {
   category: { select: { name: true } },
   images: { orderBy: { sortOrder: "asc" as const } },
   pickupOptions: true,
+  ...priceTiersInclude,
 };
+
+type PriceTierInput = { days: number; price: number };
 
 export const productRepository = {
   findAllForAdmin() {
@@ -15,6 +22,7 @@ export const productRepository = {
         category: { select: { name: true } },
         owner: { select: { name: true } },
         images: { orderBy: { sortOrder: "asc" }, take: 1 },
+        ...priceTiersInclude,
       },
       orderBy: { id: "desc" },
     });
@@ -28,6 +36,7 @@ export const productRepository = {
         owner: { select: { name: true, email: true, phone: true } },
         images: { orderBy: { sortOrder: "asc" } },
         pickupOptions: true,
+        ...priceTiersInclude,
       },
     });
   },
@@ -51,6 +60,7 @@ export const productRepository = {
           category: { select: { name: true, slug: true } },
           owner: { select: { name: true } },
           images: { orderBy: { sortOrder: "asc" }, take: 1 },
+          ...priceTiersInclude,
         },
         orderBy: { id: "desc" },
         skip: (pagination.page - 1) * pagination.pageSize,
@@ -67,10 +77,7 @@ export const productRepository = {
     description: string;
     categoryId: number;
     pricePerDay: number;
-    price3Day: number | null;
-    price7Day: number | null;
-    price15Day: number | null;
-    price30Day: number | null;
+    priceTiers: PriceTierInput[];
     location: string;
     lat: number | null;
     lng: number | null;
@@ -78,11 +85,18 @@ export const productRepository = {
     createdById: number;
     status: ProductStatus;
   }) {
-    return prisma.product.create({ data });
+    const { priceTiers, ...rest } = data;
+    return prisma.product.create({
+      data: { ...rest, priceTiers: { create: priceTiers } },
+      include: priceTiersInclude,
+    });
   },
 
   findById(id: number) {
-    return prisma.product.findFirst({ where: { id, deletedAt: null } });
+    return prisma.product.findFirst({
+      where: { id, deletedAt: null },
+      include: priceTiersInclude,
+    });
   },
 
   update(
@@ -92,16 +106,27 @@ export const productRepository = {
       description: string;
       categoryId: number;
       pricePerDay: number;
-      price3Day: number | null;
-      price7Day: number | null;
-      price15Day: number | null;
-      price30Day: number | null;
+      priceTiers: PriceTierInput[];
       location: string;
       lat: number | null;
       lng: number | null;
     }> & { updatedById: number },
   ) {
-    return prisma.product.update({ where: { id }, data });
+    const { priceTiers, ...rest } = data;
+    if (priceTiers === undefined) {
+      return prisma.product.update({ where: { id }, data: rest, include: priceTiersInclude });
+    }
+    // แทนที่ tier ทั้งชุดเสมอ (ไม่ diff ทีละแถว) — ไม่มีอะไรอ้างอิง ProductPriceTier.id
+    // โดยตรงจากนอกไฟล์นี้ (Rental snapshot ราคาแยกไว้แล้ว ตาม Dev Standard #19) จึงลบ+สร้างใหม่ได้ปลอดภัย
+    return prisma.$transaction(async (tx) => {
+      await tx.productPriceTier.deleteMany({ where: { productId: id } });
+      if (priceTiers.length > 0) {
+        await tx.productPriceTier.createMany({
+          data: priceTiers.map((t) => ({ productId: id, days: t.days, price: t.price })),
+        });
+      }
+      return tx.product.update({ where: { id }, data: rest, include: priceTiersInclude });
+    });
   },
 
   setStatus(id: number, status: ProductStatus, updatedById: number) {

@@ -90,31 +90,52 @@ describe("PUT /api/products/:id", () => {
   });
 });
 
-describe("price3Day / price7Day tiers", () => {
-  it("persists optional tier prices on create and returns them via /api/me/listings", async () => {
+describe("priceTiers (custom days + price, chosen by the owner)", () => {
+  it("persists custom tier days/prices on create and returns them via /api/me/listings", async () => {
     const { token } = await registerUser("tiercreate");
     const categoryId = await activeCategoryId();
 
-    const created = await createProduct(token, categoryId, { price3Day: 250, price7Day: 500 });
+    const created = await createProduct(token, categoryId, {
+      priceTiers: [
+        { days: 3, price: 250 },
+        { days: 7, price: 500 },
+      ],
+    });
     expect(created.status).toBe(201);
-    expect(Number(created.body.data.price3Day)).toBe(250);
-    expect(Number(created.body.data.price7Day)).toBe(500);
+    expect(created.body.data.priceTiers).toHaveLength(2);
+    expect(Number(created.body.data.priceTiers[0].price)).toBe(250);
+    expect(Number(created.body.data.priceTiers[1].price)).toBe(500);
 
     const listings = await request(baseUrl)
       .get("/api/me/listings")
       .set("Authorization", `Bearer ${token}`);
     const listing = listings.body.data.find((p: { id: number }) => p.id === created.body.data.id);
-    expect(Number(listing.price3Day)).toBe(250);
-    expect(Number(listing.price7Day)).toBe(500);
+    expect(listing.priceTiers).toEqual([
+      { days: 3, price: "250" },
+      { days: 7, price: "500" },
+    ]);
   });
 
-  it("leaves tiers null when not provided, without breaking existing listings", async () => {
+  it("supports arbitrary custom day counts, not just 3/7/15/30", async () => {
+    const { token } = await registerUser("tiercustomdays");
+    const categoryId = await activeCategoryId();
+
+    const created = await createProduct(token, categoryId, {
+      priceTiers: [
+        { days: 5, price: 450 },
+        { days: 90, price: 6000 },
+      ],
+    });
+    expect(created.status).toBe(201);
+    expect(created.body.data.priceTiers.map((t: { days: number }) => t.days)).toEqual([5, 90]);
+  });
+
+  it("leaves priceTiers empty when not provided, without breaking existing listings", async () => {
     const { token } = await registerUser("tiernone");
     const categoryId = await activeCategoryId();
 
     const created = await createProduct(token, categoryId);
-    expect(created.body.data.price3Day).toBeNull();
-    expect(created.body.data.price7Day).toBeNull();
+    expect(created.body.data.priceTiers).toEqual([]);
   });
 
   it("lets the owner set tiers via update", async () => {
@@ -125,11 +146,78 @@ describe("price3Day / price7Day tiers", () => {
     const res = await request(baseUrl)
       .put(`/api/products/${created.body.data.id}`)
       .set("Authorization", `Bearer ${token}`)
-      .send({ price3Day: 250, price7Day: 500 });
+      .send({ priceTiers: [{ days: 3, price: 250 }] });
 
     expect(res.status).toBe(200);
-    expect(Number(res.body.data.price3Day)).toBe(250);
-    expect(Number(res.body.data.price7Day)).toBe(500);
+    expect(
+      res.body.data.priceTiers.map((t: { days: number; price: string }) => ({
+        days: t.days,
+        price: t.price,
+      })),
+    ).toEqual([{ days: 3, price: "250" }]);
+  });
+
+  it("replaces the full tier set on update (removes tiers no longer sent)", async () => {
+    const { token } = await registerUser("tierreplace");
+    const categoryId = await activeCategoryId();
+    const created = await createProduct(token, categoryId, {
+      priceTiers: [
+        { days: 3, price: 250 },
+        { days: 7, price: 500 },
+      ],
+    });
+
+    const res = await request(baseUrl)
+      .put(`/api/products/${created.body.data.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ priceTiers: [{ days: 7, price: 600 }] });
+
+    expect(res.status).toBe(200);
+    expect(
+      res.body.data.priceTiers.map((t: { days: number; price: string }) => ({
+        days: t.days,
+        price: t.price,
+      })),
+    ).toEqual([{ days: 7, price: "600" }]);
+  });
+
+  it("clears all tiers when an empty array is sent on update", async () => {
+    const { token } = await registerUser("tierclear");
+    const categoryId = await activeCategoryId();
+    const created = await createProduct(token, categoryId, {
+      priceTiers: [{ days: 3, price: 250 }],
+    });
+
+    const res = await request(baseUrl)
+      .put(`/api/products/${created.body.data.id}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ priceTiers: [] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.priceTiers).toEqual([]);
+  });
+
+  it("rejects a tier with days <= 1 (1 day is already pricePerDay)", async () => {
+    const { token } = await registerUser("tierdayone");
+    const categoryId = await activeCategoryId();
+
+    const created = await createProduct(token, categoryId, {
+      priceTiers: [{ days: 1, price: 100 }],
+    });
+    expect(created.status).toBe(400);
+  });
+
+  it("rejects duplicate day counts within the same product", async () => {
+    const { token } = await registerUser("tierdupe");
+    const categoryId = await activeCategoryId();
+
+    const created = await createProduct(token, categoryId, {
+      priceTiers: [
+        { days: 5, price: 400 },
+        { days: 5, price: 450 },
+      ],
+    });
+    expect(created.status).toBe(400);
   });
 });
 

@@ -72,15 +72,10 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           </span>
           <span className="text-[13px] text-black/50">/ วัน</span>
         </div>
-        {(product.price3Day || product.price7Day || product.price15Day || product.price30Day) && (
+        {product.priceTiers.length > 0 && (
           <div className="mt-1 text-[11.5px] text-black/45">
-            {[
-              product.price3Day && `3 วัน ฿${Number(product.price3Day).toLocaleString("th-TH")}`,
-              product.price7Day && `7 วัน ฿${Number(product.price7Day).toLocaleString("th-TH")}`,
-              product.price15Day && `15 วัน ฿${Number(product.price15Day).toLocaleString("th-TH")}`,
-              product.price30Day && `30 วัน ฿${Number(product.price30Day).toLocaleString("th-TH")}`,
-            ]
-              .filter(Boolean)
+            {product.priceTiers
+              .map((t) => `${t.days} วัน ฿${Number(t.price).toLocaleString("th-TH")}`)
               .join(" · ")}
           </div>
         )}
