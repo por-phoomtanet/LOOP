@@ -45,6 +45,11 @@ export async function updatePaymentProfile(
   return { data: result, message: "ok" };
 }
 
+export async function getPaymentProfile(actingUserId: number, targetUserId: number) {
+  const result = await userService.getPaymentProfile(actingUserId, targetUserId);
+  return { data: result, message: "ok" };
+}
+
 export async function uploadPromptPayQr(
   actingUserId: number,
   targetUserId: number,

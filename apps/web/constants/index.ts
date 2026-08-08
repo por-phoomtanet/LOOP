@@ -14,7 +14,8 @@ export const ROUTES = {
   listItem: "/my-listings?tab=create",
   myListings: "/my-listings",
   myRentals: "/my-rentals",
-  paymentProfile: "/payment-profile",
+  // ย้ายจากหน้าแยก /payment-profile มาเป็นแท็บ "ตั้งค่าการให้เช่า" ใน /my-listings
+  paymentProfile: "/my-listings?tab=settings",
   admin: "/dashboard",
   adminUsers: "/users",
 } as const;

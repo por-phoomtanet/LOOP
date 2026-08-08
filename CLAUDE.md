@@ -1485,3 +1485,23 @@ function resolveRentPrice(nights: number, pricePerDay: number, tiers: RentPriceT
   - 🧪 test: `npx tsc`/`eslint` ผ่าน ✅ | `next build` ผ่านครบ 18/18 pages (`/checkout/[productId]` ใหม่) ✅ | **verify จริงด้วย Playwright** (login จริงผ่านฟอร์ม → ทดสอบ 2 เส้นทาง): กดเช่าจากหน้าเต็ม → ไป `/checkout/:id` ✅ | กดเช่าจากใน modal → ไป `/checkout/:id` เช่นกัน **และไม่มี overlay ค้าง** (นับ `.fixed.inset-0` = 0 หลัง navigate) ✅
   - 📝 commit: รวมอยู่ใน `feat: show product detail as an intercepting-route modal, move checkout to its own page`
 
+---
+
+### Phase 17 — ย้าย "ตั้งค่าการรับเงิน" มาเป็นแท็บ "ตั้งค่าการให้เช่า" ใน /my-listings
+
+> **ที่มา:** หน้า `/payment-profile` (Phase 10.8 — กรอก `legalName`/อัปโหลด `promptPayQrUrl` ใช้เช็คชื่อผู้รับตอนตรวจสลิป) เดิมเป็นหน้าแยกเข้าถึงได้แค่ผ่าน dropdown เมนูผู้ใช้ — ขอให้ย้ายมารวมเป็นอีกแท็บใน `/my-listings` แทน ให้เจ้าของจัดการทุกอย่างที่เกี่ยวกับการปล่อยเช่า (ลงประกาศ/รายการสินค้า/ตั้งค่ารับเงิน) อยู่ในหน้าเดียวเหมือนกันหมด ตาม pattern แท็บที่มีอยู่แล้ว
+
+- [x] 17.1 Web: `MyListingsTable.tsx` เพิ่มแท็บ "ตั้งค่าการให้เช่า" (คั่นระหว่าง "รายการสินค้า" กับ "ออเดอร์" ที่ปิดใช้งานอยู่)
+  - `PaymentProfileForm.tsx` เพิ่ม prop `embedded` (ตัด `mx-auto max-w-[460px] px-6 py-12` เหลือแค่ `px-5 py-6 sm:px-6` เมื่อฝังในแท็บ — pattern เดียวกับ `ListItemForm`) — คงหัวข้อ/คำอธิบายในฟอร์มไว้เหมือนเดิมแม้ฝังในแท็บ เพราะแท็บบาร์อย่างเดียวไม่ได้อธิบายว่าทำไมต้องกรอก
+  - ลบหน้า `app/(marketplace)/payment-profile/page.tsx` ทิ้ง (ไม่มี route แยกอีกต่อไป)
+  - `ROUTES.paymentProfile` เปลี่ยนจาก `/payment-profile` เป็น `/my-listings?tab=settings` (pattern เดียวกับ `ROUTES.listItem` ที่ชี้ไป `?tab=create` อยู่แล้ว) — `Header.tsx` dropdown item ไม่ต้องแก้โค้ด แค่เปลี่ยน label จาก "ตั้งค่าการรับเงิน"/"Payment settings" เป็น "ตั้งค่าการให้เช่า"/"Rental settings"
+  - 🧪 test: `npx tsc`/`eslint` ผ่าน ✅ | `next build` ผ่านครบ 16/16 pages (ลดลงจาก 18 เพราะ `/payment-profile` ถูกลบ) ✅ | **verify จริงด้วย Playwright**: login → `/my-listings` → คลิกแท็บ "ตั้งค่าการให้เช่า" → เห็นฟอร์มกรอกชื่อ+อัปโหลด QR ในแท็บถูกต้อง ✅ | เข้า `/my-listings?tab=settings` ตรงๆ ก็เปิดแท็บนี้ทันทีเหมือนกัน ✅
+  - 📝 commit: `feat: move payment profile into a my-listings settings tab`
+
+- [x] 17.2 API + Web: ล็อกแท็บ "+ ลงประกาศให้เช่า" จนกว่าจะตั้งค่าการรับเงินครบ (ชื่อ-นามสกุลจริง + รูป QR พร้อมเพย์)
+  - API: เพิ่ม `GET /api/users/:id/payment-profile` (owner-only, `assertOwner`) คืน `{ legalName, promptPayQrUrl }` ของ user นั้น (`null` ถ้ายังไม่ตั้งค่า) — ใช้เช็คว่า "ตั้งค่าครบหรือยัง" จากฝั่ง frontend โดยไม่ต้องเดา
+  - Web: `MyListingsTable.tsx` fetch payment profile ของ user ปัจจุบันตอน mount (+ ทุกครั้งที่บันทึกสำเร็จในแท็บตั้งค่า ผ่าน `onSaved` callback ใหม่ของ `PaymentProfileForm`) — ถ้ายังไม่ครบ (`legalName`/`promptPayQrUrl` ค่าใดค่าหนึ่งเป็น `null`): ปุ่มแท็บ "+ ลงประกาศให้เช่า" ขึ้น badge เล็ก "ตั้งค่าก่อน" และคลิกแล้วเด้งไปแท็บ "ตั้งค่าการให้เช่า" แทน (ไม่ใช่ฟอร์มลงประกาศ) พร้อม banner สีเหลืองอธิบายเหตุผล (`PaymentProfileForm` เพิ่ม prop `notice`) — ครอบคลุมทั้งกดแท็บเองและเข้าลิงก์ `?tab=create` ตรงๆ จากที่อื่นในเว็บ (useEffect เช็คซ้ำ)
+  - ไม่ล็อกแท็บ "แก้ไข" ประกาศเดิม — ใช้เฉพาะตอนสร้างประกาศใหม่ ตามที่ขอ (ประกาศเก่าที่ live อยู่แล้วไม่ควรถูกบล็อกจากการแก้ไข)
+  - 🧪 test: เพิ่ม 4 เคสใน `user.test.ts` (`GET /api/users/:id/payment-profile` — คืน `null` ตอนยังไม่ตั้งค่า, คืนค่าจริงหลังตั้งค่าแล้ว, 403 ข้ามบัญชี, 401 ไม่มี token) → `bun test` **157/157 ผ่าน** ✅ | `npx tsc`/`eslint` ผ่านทั้ง api/web ✅ | `next build` ผ่าน ✅ | **verify จริงด้วย Playwright**: บัญชีที่ยังไม่ตั้งค่า → เห็น badge "ตั้งค่าก่อน" บนแท็บ → คลิกแท็บ → เด้งไปตั้งค่าพร้อม banner ✅ | กรอก+บันทึกสำเร็จ → badge หายทันทีไม่ต้องรีเฟรช → คลิกแท็บลงประกาศอีกครั้ง → เห็นฟอร์มลงประกาศจริงแล้ว ✅
+  - 📝 commit: `feat: require a complete payment profile before creating a new listing`
+

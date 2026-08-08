@@ -54,6 +54,13 @@ export async function updatePaymentProfile(
   return { legalName: updated.legalName };
 }
 
+export async function getPaymentProfile(actingUserId: number, targetUserId: number) {
+  assertOwner(actingUserId, targetUserId);
+  const user = await userRepository.findById(targetUserId);
+  if (!user) throw new NotFoundError("ไม่พบผู้ใช้นี้");
+  return { legalName: user.legalName, promptPayQrUrl: user.promptPayQrUrl };
+}
+
 export async function uploadPromptPayQr(
   actingUserId: number,
   targetUserId: number,

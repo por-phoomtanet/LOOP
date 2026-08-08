@@ -3,10 +3,24 @@
 import axios from "axios";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { PaymentProfileForm } from "@/modules/auth/components/PaymentProfileForm";
+import { authApi } from "@/modules/auth/services/authApi";
 import { resolveUploadUrl } from "@/shared/lib/utils";
+import { useAuthStore } from "@/store/authStore";
 import { productsApi } from "../services/productsApi";
 import type { MyListing } from "../types";
 import { ListItemForm } from "./ListItemForm";
+
+const PAYMENT_PROFILE_NOTICE =
+  "ต้องตั้งค่าการรับเงิน (ชื่อ-นามสกุลจริง + รูป QR พร้อมเพย์) ให้ครบก่อน ถึงจะลงประกาศให้เช่าได้";
+
+type Tab = "listings" | "create" | "settings";
+
+function initialTab(tabParam: string | null): Tab {
+  if (tabParam === "create") return "create";
+  if (tabParam === "settings") return "settings";
+  return "listings";
+}
 
 const STATUS_BADGE: Record<MyListing["status"], { bg: string; color: string; label: string }> = {
   ACTIVE: { bg: "rgba(23,138,90,.1)", color: "#178a5a", label: "ใช้งาน" },
@@ -16,15 +30,17 @@ const STATUS_BADGE: Record<MyListing["status"], { bg: string; color: string; lab
 
 export function MyListingsTable() {
   const searchParams = useSearchParams();
-  // ลิงก์ "ลงประกาศให้เช่า" ทั่วเว็บ (Header/Footer/หน้าแรก) มาลง ?tab=create ให้เปิดแท็บนี้ทันที
-  const [activeTab, setActiveTab] = useState<"listings" | "create">(
-    searchParams.get("tab") === "create" ? "create" : "listings",
-  );
+  // ลิงก์ "ลงประกาศให้เช่า"/"ตั้งค่าการให้เช่า" ทั่วเว็บ (Header/Footer/หน้าแรก) มาลง
+  // ?tab=create หรือ ?tab=settings ให้เปิดแท็บนั้นทันที
+  const [activeTab, setActiveTab] = useState<Tab>(() => initialTab(searchParams.get("tab")));
   const [listings, setListings] = useState<MyListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<MyListing | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const user = useAuthStore((s) => s.user);
+  // null = ยังไม่รู้ (กำลังโหลด) — ต้องรอผลนี้ก่อนถึงจะฟันธงได้ว่าล็อกแท็บลงประกาศหรือไม่
+  const [paymentProfileComplete, setPaymentProfileComplete] = useState<boolean | null>(null);
 
   function load() {
     setLoading(true);
@@ -35,9 +51,31 @@ export function MyListingsTable() {
       .finally(() => setLoading(false));
   }
 
+  function refetchPaymentProfile() {
+    if (!user) return;
+    authApi
+      .getPaymentProfile(user.id)
+      .then((res) => {
+        const { legalName, promptPayQrUrl } = res.data.data;
+        setPaymentProfileComplete(!!legalName && !!promptPayQrUrl);
+      })
+      .catch(() => setPaymentProfileComplete(false));
+  }
+
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    refetchPaymentProfile();
+  }, [user]);
+
+  // เผื่อเข้ามาตรงๆ ผ่านลิงก์ ?tab=create ทั่วเว็บ (Header/Footer) ทั้งที่ยังตั้งค่าการรับเงินไม่ครบ
+  useEffect(() => {
+    if (paymentProfileComplete === false && activeTab === "create") {
+      setActiveTab("settings");
+    }
+  }, [paymentProfileComplete, activeTab]);
 
   function extractError(err: unknown) {
     const msg = axios.isAxiosError(err) ? err.response?.data?.error : undefined;
@@ -74,6 +112,11 @@ export function MyListingsTable() {
 
   // แก้ไขและลงประกาศใหม่ใช้แท็บ+ฟอร์มเดียวกัน (ไม่แยกเป็น modal อีกต่อไป) — สลับกันด้วย editing
   function openCreateTab() {
+    // ล็อกแท็บลงประกาศไว้จนกว่าจะตั้งค่าการรับเงินครบ (เช็คชื่อผู้รับตอนตรวจสลิปได้)
+    if (paymentProfileComplete === false) {
+      setActiveTab("settings");
+      return;
+    }
     setEditing(null);
     setActiveTab("create");
   }
@@ -101,11 +144,20 @@ export function MyListingsTable() {
         <button
           type="button"
           onClick={openCreateTab}
-          className={`whitespace-nowrap rounded-full px-[18px] py-2.5 text-[13.5px] font-semibold transition-all ${
+          className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-[18px] py-2.5 text-[13.5px] font-semibold transition-all ${
             activeTab === "create" ? "bg-brand-600 text-white" : "text-black/55 hover:bg-white"
           }`}
         >
           + ลงประกาศให้เช่า
+          {paymentProfileComplete === false && (
+            <span
+              className={`rounded-full px-1.5 py-0.5 text-[10px] ${
+                activeTab === "create" ? "bg-white/20" : "bg-black/10"
+              }`}
+            >
+              ตั้งค่าก่อน
+            </span>
+          )}
         </button>
         <button
           type="button"
@@ -115,6 +167,15 @@ export function MyListingsTable() {
           }`}
         >
           รายการสินค้า
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("settings")}
+          className={`whitespace-nowrap rounded-full px-[18px] py-2.5 text-[13.5px] font-semibold transition-all ${
+            activeTab === "settings" ? "bg-brand-600 text-white" : "text-black/55 hover:bg-white"
+          }`}
+        >
+          ตั้งค่าการให้เช่า
         </button>
         <button
           type="button"
@@ -137,6 +198,14 @@ export function MyListingsTable() {
               setActiveTab("listings");
               load();
             }}
+          />
+        </div>
+      ) : activeTab === "settings" ? (
+        <div className="mt-6 rounded-[14px] border border-black/10 bg-white">
+          <PaymentProfileForm
+            embedded
+            onSaved={refetchPaymentProfile}
+            notice={paymentProfileComplete === false ? PAYMENT_PROFILE_NOTICE : undefined}
           />
         </div>
       ) : (

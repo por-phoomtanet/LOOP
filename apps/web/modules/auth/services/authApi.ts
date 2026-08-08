@@ -62,6 +62,12 @@ export const authApi = {
     return api.post<ApiResponse<{ faceVerified: boolean }>>(`/users/${userId}/face-verify`, {});
   },
 
+  getPaymentProfile(userId: number) {
+    return api.get<ApiResponse<{ legalName: string | null; promptPayQrUrl: string | null }>>(
+      `/users/${userId}/payment-profile`,
+    );
+  },
+
   updatePaymentProfile(userId: number, legalName: string) {
     return api.patch<ApiResponse<{ legalName: string }>>(`/users/${userId}/payment-profile`, {
       legalName,

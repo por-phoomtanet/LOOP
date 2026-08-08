@@ -145,3 +145,53 @@ describe("POST /api/users/:id/face-verify", () => {
     expect(res.status).toBe(403);
   });
 });
+
+describe("GET /api/users/:id/payment-profile", () => {
+  it("returns null fields for a freshly registered user", async () => {
+    const { token, userId } = await registerUser("payprofilenew");
+
+    const res = await request(baseUrl)
+      .get(`/api/users/${userId}/payment-profile`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ legalName: null, promptPayQrUrl: null });
+  });
+
+  it("reflects legalName and promptPayQrUrl after they are set", async () => {
+    const { token, userId } = await registerUser("payprofileset");
+
+    await request(baseUrl)
+      .patch(`/api/users/${userId}/payment-profile`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ legalName: "ภูมิธเนศ อินทยุง" });
+    await request(baseUrl)
+      .post(`/api/users/${userId}/payment-qr`)
+      .set("Authorization", `Bearer ${token}`)
+      .attach("file", TINY_PNG, { filename: "qr.png", contentType: "image/png" });
+
+    const res = await request(baseUrl)
+      .get(`/api/users/${userId}/payment-profile`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.legalName).toBe("ภูมิธเนศ อินทยุง");
+    expect(res.body.data.promptPayQrUrl).toMatch(/^\/uploads\/promptpay-qr\//);
+  });
+
+  it("rejects reading another user's payment profile with 403", async () => {
+    const { userId: victimId } = await registerUser("payprofileVictim");
+    const { token: attackerToken } = await registerUser("payprofileAttacker");
+
+    const res = await request(baseUrl)
+      .get(`/api/users/${victimId}/payment-profile`)
+      .set("Authorization", `Bearer ${attackerToken}`);
+
+    expect(res.status).toBe(403);
+  });
+
+  it("requires authentication", async () => {
+    const res = await request(baseUrl).get("/api/users/1/payment-profile");
+    expect(res.status).toBe(401);
+  });
+});

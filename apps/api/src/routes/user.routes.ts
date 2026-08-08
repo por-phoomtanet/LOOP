@@ -44,6 +44,11 @@ export const userRoutes = new Elysia({ prefix: "/api/users" })
     ({ params, user }) => userController.faceVerify(user.userId, Number(params.id)),
     { auth: true },
   )
+  .get(
+    "/:id/payment-profile",
+    ({ params, user }) => userController.getPaymentProfile(user.userId, Number(params.id)),
+    { auth: true },
+  )
   .patch(
     "/:id/payment-profile",
     ({ params, body, user }) =>
