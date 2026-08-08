@@ -19,10 +19,19 @@ export const metadata: Metadata = {
   description: "เช่าอะไรก็ได้จากคนใกล้ตัวคุณ",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+  modal,
+}: {
+  children: React.ReactNode;
+  modal: React.ReactNode;
+}) {
   return (
     <html lang="th" className={`${archivo.variable} ${prompt.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {modal}
+      </body>
     </html>
   );
 }

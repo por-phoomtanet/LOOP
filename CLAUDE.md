@@ -1420,3 +1420,68 @@ function resolveRentPrice(nights: number, pricePerDay: number, tiers: RentPriceT
   - 🧪 test: `npx tsc -p apps/web/tsconfig.json --noEmit` ผ่าน ✅ | `eslint` ผ่าน ✅ | `next build` ผ่านครบ 17/17 pages ✅
   - 📝 commit: รวมอยู่ใน `feat: let owners set custom price tier days and prices per product`
 
+---
+
+### Phase 15 — หน้ารายละเอียดสินค้า + แก้ UX จุดเล็กๆ (ปักหมุด/preview รูป/ราคาติดลบ/การ์ดมือถือ)
+
+> **ที่มา:** ทดลองใช้งานจริงแล้วรีเควสต์แก้ทีละจุด: อยากคลิกสินค้าแล้วเห็นรายละเอียดเต็ม (ไม่ใช่กดเช่าตรงๆ จากการ์ด), ปักหมุดตำแหน่งรับสินค้าต้องขยับ/ซูมแผนที่เองทุกครั้งน่ารำคาญ, รหัสไปรษณีย์จาก reverse-geocode ผิดบ่อย, พรีวิวรูปเปิดแท็บใหม่แทนที่จะเป็น lightbox ในหน้า, ราคาใส่ติดลบได้, การ์ดสินค้าบนมือถือตัวหนังสือใหญ่/มีข้อมูลเกินจำเป็น (ชื่อผู้ขาย/รีวิว)
+
+- [x] 15.1 API: `GET /api/products/:id` (public) — รายละเอียดสินค้าเต็ม + สินค้าคล้ายกัน
+  - `findActivePublicById` (`status: ACTIVE` และไม่ถูกลบเท่านั้น — เงื่อนไขเดียวกับ list สาธารณะ) + `findSimilar(categoryId, excludeId, limit=4)` เรียงตาม id ล่าสุด
+  - คืน `description`, `images` (ทุกรูป), `priceTiers`, `pickupOptions`, `ownerName`, `similar: ProductCardData[]`
+  - 🧪 test: เพิ่ม 7 เคสใน `product.test.ts` (detail ครบฟิลด์, ไม่ต้อง auth, similar ไม่รวมตัวเอง, 404 ตอน UNDER_REVIEW/PAUSED/ลบแล้ว/ไม่มีอยู่จริง) → `bun test` **153/153 ผ่าน** ✅
+  - 📝 commit: `feat: add product detail page, fix pickup map/image upload UX`
+
+- [x] 15.2 Web: หน้า `/products/[id]` (`ProductDetailPage.tsx`) — gallery, ราคา+tier, รายละเอียด, การรับสินค้า, เจ้าของ, สินค้าคล้ายกัน
+  - `ProductCard.tsx` เปลี่ยนจากปุ่ม "เช่าสินค้านี้" เป็นคลิกทั้งกล่อง `router.push` ไปหน้ารายละเอียด (ปุ่มบันทึก ♡ ยัง `stopPropagation` กันลัดไปหน้ารายละเอียดตอนกดบันทึก)
+  - 🧪 test: `npx tsc`/`eslint` ผ่าน ✅ | `next build` ผ่านครบ 18/18 pages (`/products/[id]` เป็น dynamic route ใหม่) ✅
+  - 📝 commit: รวมอยู่ใน `feat: add product detail page, fix pickup map/image upload UX`
+
+- [x] 15.3 Web: `LocationField.tsx`/`LeafletMap.tsx` — แก้ UX ปักหมุดตำแหน่งรับสินค้า 3 จุด
+  - เปิด modal ปักหมุดแล้วขอตำแหน่งปัจจุบันอัตโนมัติทันที (เงียบถ้าถูกปฏิเสธ ไม่โชว์ error รบกวน — ปุ่ม "ใช้ตำแหน่งปัจจุบัน" เดิมยังกดซ้ำเพื่อลองใหม่ได้)
+  - ตัดรหัสไปรษณีย์ออกจากที่อยู่ที่ auto-fill จาก Nominatim reverse-geocode เสมอ (ข้อมูล postcode ของ Nominatim สำหรับพื้นที่ไทยไม่แม่น — ตัดทิ้งดีกว่าเติมเลขผิดให้อัตโนมัติ ผู้ใช้กรอกเองถ้าต้องการ)
+  - `LeafletMap.tsx`: ปักหมุดเองด้วยการคลิกบนแผนที่ไม่ pan/ซูมซ้ำอีกต่อไป (เดิม effect sync ตำแหน่งจาก prop จะ `setView` ทุกครั้งรวมถึงตอนที่พิกัดมาจาก click บนแผนที่เอง ทำให้กระตุกทั้งที่ marker ถูกวางตรงจุดคลิกอยู่แล้ว — เพิ่ม `internalPickRef` แยกพิกัดที่มาจาก click ภายใน ไม่ให้ trigger `setView` ซ้ำ)
+  - 🧪 test: `npx tsc`/`eslint` ผ่าน ✅
+  - 📝 commit: รวมอยู่ใน `feat: add product detail page, fix pickup map/image upload UX`
+
+- [x] 15.4 Web: แก้ไขประกาศใช้แท็บ+ฟอร์มเดียวกับลงประกาศใหม่ (ไม่แยก modal) + fix ตัวนับรูปภาพตอนแก้ไข
+  - `MyListingsTable.tsx`: ลบ modal แก้ไขแยกทิ้งทั้งหมด — ปุ่ม "แก้ไข" สลับไปแท็บ "+ ลงประกาศให้เช่า" พร้อม pre-fill ข้อมูล (ใช้ `key` บังคับ remount `ListItemForm` เวลาสลับ target ที่แก้ไข กันข้อมูลค้าง)
+  - `ListItemForm.tsx`: รูปเดิมของประกาศ (ตอนแก้ไข) ใส่เข้า antd `Upload`'s `fileList` ตั้งแต่แรกเลย (แทนที่จะโชว์แยกเป็นบล็อกเล็ก 64px ด้านบน) — ทำให้ตัวนับ `(x/10)` และแถวรูปภาพ render รวมเป็นแถวเดียวกับปุ่ม "+ อัปโหลด" เหมือนตอนลงประกาศใหม่ทุกประการ — รูปเดิม (`uid` ขึ้นต้น `existing-`) ลบออกจากรายการไม่ได้ (ยังไม่มี endpoint ลบรูปเดี่ยว ดู `onRemove`)
+  - 🧪 test: `npx tsc`/`eslint` ผ่าน ✅ | `next build` ผ่าน ✅
+  - 📝 commit: รวมอยู่ใน `feat: add product detail page, fix pickup map/image upload UX`
+
+- [x] 15.5 Web: พรีวิวรูปใช้ antd `Image` lightbox แทน `window.open`
+  - `ListItemForm.tsx` (รูปสินค้า), `SignupForm.tsx` (รูปโปรไฟล์ + รูปบัตรประชาชน) — ทั้ง 3 จุดเปลี่ยนจาก `window.open(src)` เป็น controlled `<Image preview={{visible: true, ...}}>` ตาม pattern ทางการของ antd (มี toolbar ซูม/หมุน/ดาวน์โหลดในตัว)
+  - 🧪 test: `npx tsc`/`eslint` ผ่าน ✅
+  - 📝 commit: รวมอยู่ใน `feat: add product detail page, fix pickup map/image upload UX`
+
+- [x] 15.6 Web: ราคาใส่ติดลบไม่ได้ + การ์ดสินค้าปรับให้กระชับขึ้นบนมือถือ
+  - `ListItemForm.tsx`: ช่องราคาต่อวัน/ราคาขั้นบันได เพิ่ม `min={0}` และ strip เครื่องหมาย `-` ออกใน `onChange` ตรงๆ (แค่ `min` attribute ไม่พอ เพราะ browser ไม่ block การพิมพ์ `-` ในช่อง `type="number"`)
+  - `ProductCard.tsx`: ตัวหนังสือเล็กลง 1 ระดับบนมือถือ (คง desktop เดิมผ่าน `sm:`), ตัดแถวราคาขั้นบันไดบนมือถือ (โชว์แค่ราคา/วัน), ตัดชื่อผู้ขาย+รีวิวออกทั้งหมด, ชื่อสินค้า `line-clamp-2`
+  - 🧪 test: `npx tsc`/`eslint` ผ่าน ✅ | `next build` ผ่านครบ 17/17 pages ✅
+  - 📝 commit: รวมอยู่ใน `feat: add product detail page, fix pickup map/image upload UX`
+
+---
+
+### Phase 16 — หน้ารายละเอียดสินค้าแบบ Modal (Intercepting Route) + แยกหน้าเช่าสินค้าเป็นหน้า Checkout
+
+> **ที่มา:** Phase 15.2 ทำหน้ารายละเอียดเป็นหน้าเต็มธรรมดา แต่ขอให้คลิกสินค้าจากในเว็บ (หน้าแรก/ช้อป/สินค้าคล้ายกัน) แล้วเห็นเป็น modal ทับหน้าเดิมแทนที่จะเด้งไปหน้าใหม่เต็มจอ โดย URL ยังต้องแชร์ลิงก์/รีเฟรชแล้วเห็นหน้าเต็มได้ตามปกติ (ตรงกับ pattern ที่ตั้งใจไว้ตั้งแต่ต้นใน Monorepo Structure: "รายละเอียดสินค้า (modal อาจ intercept route)") — ใช้ฟีเจอร์ Parallel + Intercepting Routes ของ Next.js App Router — ส่วนฟอร์มเลือกวันเช่า ("เช่าสินค้านี้") ก็ขอให้ไม่เป็น modal ซ้อนอีกชั้น ทดลองทำเป็น inline section ในหน้ารายละเอียดก่อน สุดท้ายขอให้แยกเป็นหน้า checkout ของตัวเองไปเลย
+
+- [x] 16.1 Web: แยก `ProductDetailPage.tsx` ออกเป็น `ProductDetailView.tsx` (gallery/ข้อมูล/สินค้าคล้ายกัน ล้วนๆ ไม่มี container/back-link ของตัวเอง) ให้ใช้ร่วมกันได้ทั้งแบบเต็มหน้าและแบบ modal — `ProductDetailPage.tsx` เหลือแค่ container + back-link ห่อ `ProductDetailView`
+  - 🧪 test: `npx tsc`/`eslint` ผ่าน ✅
+  - 📝 commit: `feat: show product detail as an intercepting-route modal, move checkout to its own page`
+
+- [x] 16.2 Web: `ProductDetailModal.tsx` + intercepting route — คลิกสินค้าจากในเว็บเห็นเป็น modal, เข้า URL ตรง/รีเฟรชเห็นหน้าเต็มตามปกติ
+  - `app/layout.tsx` เพิ่มรับ+render parallel slot `modal` ควบคู่ `children`
+  - `app/@modal/default.tsx` (คืน `null` — required fallback ของ parallel route) + `app/@modal/(.)products/[id]/page.tsx` (intercept path เดียวกับ `/products/[id]` ที่ segment level เดียวกับ root) → render `ProductDetailModal` (backdrop + card, ปิดด้วย `router.back()`)
+  - `ProductCard.tsx` ยังคง `router.push('/products/:id')` เหมือนเดิม — ไม่ต้องแก้ เพราะ Next.js resolve interception จาก soft navigation อัตโนมัติไม่ว่าจะยิงผ่าน `<Link>` หรือ `router.push()`
+  - 🧪 **verify จริงด้วย Playwright** (ติดตั้ง `playwright`+chromium ใหม่ในเครื่องนี้เพราะไม่มีมาก่อน) ยิงใส่ dev server จริง: คลิกจาก `/shop` → URL เปลี่ยนเป็น `/products/:id` + เห็น backdrop ทับหน้าเดิม (shop grid ยังอยู่ข้างหลัง) ✅ | เข้า URL ตรง/รีเฟรช → เห็นหน้าเต็มพร้อม back-link ไม่มี overlay ✅ | ปุ่มปิด (✕/คลิก backdrop) เรียก `router.back()` กลับไป `/shop` overlay หายสนิท ✅ | `next build` ผ่านครบ 18/18 pages (`/(.)products/[id]` ขึ้นเป็น route แยกจาก `/products/[id]`) ✅
+  - 📝 commit: รวมอยู่ใน `feat: show product detail as an intercepting-route modal, move checkout to its own page`
+
+- [x] 16.3 Web: ฟอร์มเช่าสินค้า — ลอง inline section ก่อน สุดท้ายแยกเป็นหน้า `/checkout/[productId]`
+  - `RentalRequestModal.tsx` → เปลี่ยนชื่อ+ปรับเป็น `RentalRequestForm.tsx` (ไม่ใช่ `fixed inset-0` overlay อีกต่อไป — คง input/ปุ่ม style เดิมตามระบบ) ลองใช้แบบ toggle ขยาย/ยุบ inline ใน `ProductDetailView` ก่อน แล้วเปลี่ยนเป็นหน้าแยกตามที่ขอภายหลัง
+  - หน้าใหม่ `app/(marketplace)/checkout/[productId]/page.tsx` (ห่อด้วย `AuthGuard` — สร้างคำขอเช่าต้อง login) + `modules/rentals/components/CheckoutPage.tsx` (kicker + สรุปสินค้าย่อ [รูป/ที่ตั้ง/ราคา] + `RentalRequestForm`) ปุ่ม "ยกเลิก" พา `router.push('/shop')` (ตามที่ขอ ไม่ใช่ history back)
+  - ปุ่ม "เช่าสินค้านี้" ใน `ProductDetailView` เปลี่ยนจาก `router.push` เป็น **hard navigate** (`window.location.href`) ไป `/checkout/:id` โดยตั้งใจ — เจอบั๊กจริงตอนทดสอบ: ถ้าหน้ารายละเอียดกำลังแสดงเป็น modal (จาก 16.2) แล้วกด "เช่าสินค้านี้" ด้วย `router.push` (soft navigation) parallel slot `@modal` จะไม่ล้างสถานะเดิม (พฤติกรรมที่ตั้งใจของ Next.js เอง: slot ที่ path ใหม่ไม่ตรงจะคงค่าที่ render อยู่ล่าสุดไว้จนกว่าจะมี hard navigation) ทำให้ backdrop ของ modal เดิมค้างทับหน้า checkout — แก้ด้วย hard navigate แทน
+  - 🧪 test: `npx tsc`/`eslint` ผ่าน ✅ | `next build` ผ่านครบ 18/18 pages (`/checkout/[productId]` ใหม่) ✅ | **verify จริงด้วย Playwright** (login จริงผ่านฟอร์ม → ทดสอบ 2 เส้นทาง): กดเช่าจากหน้าเต็ม → ไป `/checkout/:id` ✅ | กดเช่าจากใน modal → ไป `/checkout/:id` เช่นกัน **และไม่มี overlay ค้าง** (นับ `.fixed.inset-0` = 0 หลัง navigate) ✅
+  - 📝 commit: รวมอยู่ใน `feat: show product detail as an intercepting-route modal, move checkout to its own page`
+
