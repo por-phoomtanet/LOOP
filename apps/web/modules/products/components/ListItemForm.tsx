@@ -2,7 +2,7 @@
 
 // ต้อง import ก่อน antd/antd-img-crop เพื่อให้ crop modal ใช้ createRoot ของ React 19
 import "@ant-design/v5-patch-for-react-19";
-import { Upload } from "antd";
+import { Image, Upload } from "antd";
 import type { UploadFile } from "antd";
 import ImgCrop from "antd-img-crop";
 import axios from "axios";
@@ -31,9 +31,9 @@ const FIXED_PICKUP_LABELS: Record<"GRAB" | "POST", string> = {
 
 const MAX_IMAGES = 10; // ตรงกับ limit ฝั่ง API (.array("files", 10))
 
-// pre-fill ด้วยจำนวนวันที่นิยม (3/7/15/30) ไว้ให้ก่อน — เจ้าของแก้จำนวนวัน/ราคาเอง
+// pre-fill ด้วยจำนวนวันที่นิยม (3/5/7/15) ไว้ให้ก่อน — เจ้าของแก้จำนวนวัน/ราคาเอง
 // หรือลบ/เพิ่มแถวได้อิสระ ไม่ได้บังคับใช้ 4 ค่านี้อีกต่อไป
-const DEFAULT_TIER_DAYS = ["3", "7", "15", "30"];
+const DEFAULT_TIER_DAYS = ["3", "5", "7"];
 
 function initialTierRows(listing?: MyListing): TierRow[] {
   if (listing && listing.priceTiers.length > 0) {
@@ -54,7 +54,18 @@ export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
   const [location, setLocation] = useState(listing?.location ?? "");
   const [lat, setLat] = useState<number | null>(listing?.lat ?? null);
   const [lng, setLng] = useState<number | null>(listing?.lng ?? null);
-  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  // รูปเดิมของประกาศ (ตอนแก้ไข) ใส่เข้า fileList ตั้งแต่แรก ให้ antd Upload render รวมแถวเดียวกับ
+  // ปุ่ม "+ อัปโหลด" (แทนที่จะแยกโชว์เป็นบล็อกเล็กด้านบน) — uid ขึ้นต้นด้วย "existing-" ใช้กันลบ
+  // ทิ้งที่ backend ยังไม่มี endpoint ลบรูปเดี่ยว (ดู onRemove ด้านล่าง)
+  const [fileList, setFileList] = useState<UploadFile[]>(
+    () =>
+      listing?.images.map((img) => ({
+        uid: `existing-${img.id}`,
+        name: img.url,
+        status: "done" as const,
+        url: resolveUploadUrl(img.url),
+      })) ?? [],
+  );
   const [pickupOptions, setPickupOptions] = useState<PendingPickupOption[]>(
     listing?.pickupOptions ?? [],
   );
@@ -66,6 +77,7 @@ export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
 
   useEffect(() => {
     productsApi
@@ -120,7 +132,10 @@ export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
   }
 
   function updateTierPrice(index: number, value: string) {
-    setPriceTiers((prev) => prev.map((row, i) => (i === index ? { ...row, price: value } : row)));
+    const nonNegative = value.replace(/-/g, "");
+    setPriceTiers((prev) =>
+      prev.map((row, i) => (i === index ? { ...row, price: nonNegative } : row)),
+    );
   }
 
   function addTierRow() {
@@ -283,19 +298,6 @@ export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
             ({fileList.length}/{MAX_IMAGES}) — เพิ่มได้หลายรูป
           </span>
         </div>
-        {listing && listing.images.length > 0 && (
-          <div className="mb-2.5 flex flex-wrap gap-2">
-            {listing.images.map((img) => (
-              // eslint-disable-next-line
-              <img
-                key={img.id}
-                src={resolveUploadUrl(img.url)}
-                alt=""
-                className="h-16 w-16 rounded-lg object-cover"
-              />
-            ))}
-          </div>
-        )}
         <ImgCrop
           rotationSlider
           aspect={1}
@@ -324,9 +326,12 @@ export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
             customRequest={({ onSuccess }) => onSuccess?.("ok")}
             accept="image/png,image/jpeg,image/jpg"
             maxCount={MAX_IMAGES}
+            // รูปเดิม (uid ขึ้นต้น "existing-") ลบออกจากรายการไม่ได้ — backend ยังไม่มี
+            // endpoint ลบรูปเดี่ยว ลบได้แค่รูปที่เพิ่งเลือกใหม่ในรอบนี้เท่านั้น
+            onRemove={(file) => !file.uid.startsWith("existing-")}
             onPreview={async (file) => {
               const src = file.url ?? URL.createObjectURL(file.originFileObj as File);
-              window.open(src);
+              setPreviewSrc(src);
             }}
           >
             {fileList.length >= MAX_IMAGES ? null : (
@@ -370,8 +375,9 @@ export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
             <span className="flex-none text-[14.5px] text-black/45">฿</span>
             <input
               type="number"
+              min={0}
               value={pricePerDay}
-              onChange={(e) => setPricePerDay(e.target.value)}
+              onChange={(e) => setPricePerDay(e.target.value.replace(/-/g, ""))}
               className="w-full border-0 py-3 text-[14.5px] text-black outline-none"
             />
           </div>
@@ -413,6 +419,7 @@ export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
                     <span className="flex-none text-[14.5px] text-black/45">฿</span>
                     <input
                       type="number"
+                      min={0}
                       value={row.price}
                       onChange={(e) => updateTierPrice(i, e.target.value)}
                       placeholder="ราคา"
@@ -546,6 +553,20 @@ export function ListItemForm({ listing, onSaved, embedded = false }: Props) {
       >
         {submitting ? "กำลังบันทึก…" : isEdit ? "บันทึกการแก้ไข" : "ส่งประกาศ"}
       </button>
+
+      {previewSrc && (
+        <Image
+          style={{ display: "none" }}
+          src={previewSrc}
+          preview={{
+            visible: true,
+            src: previewSrc,
+            onVisibleChange: (visible) => {
+              if (!visible) setPreviewSrc(null);
+            },
+          }}
+        />
+      )}
     </form>
   );
 }

@@ -72,6 +72,33 @@ export const productRepository = {
     return { rows, total };
   },
 
+  findActivePublicById(id: number) {
+    return prisma.product.findFirst({
+      where: { id, status: "ACTIVE", deletedAt: null },
+      include: {
+        category: { select: { name: true, slug: true } },
+        owner: { select: { name: true } },
+        images: { orderBy: { sortOrder: "asc" } },
+        pickupOptions: true,
+        ...priceTiersInclude,
+      },
+    });
+  },
+
+  findSimilar(categoryId: number, excludeId: number, limit: number) {
+    return prisma.product.findMany({
+      where: { categoryId, id: { not: excludeId }, status: "ACTIVE", deletedAt: null },
+      include: {
+        category: { select: { name: true, slug: true } },
+        owner: { select: { name: true } },
+        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+        ...priceTiersInclude,
+      },
+      orderBy: { id: "desc" },
+      take: limit,
+    });
+  },
+
   create(data: {
     title: string;
     description: string;

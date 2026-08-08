@@ -35,6 +35,7 @@ const pickupOptionSchema = z.object({
 export const productRoutes = new Elysia({ prefix: "/api/products" })
   .use(authMacro)
   .get("/", ({ query }) => productController.publicList(query))
+  .get("/:id", ({ params }) => productController.publicGet(Number(params.id)))
   .post(
     "/",
     ({ body, user, set }) => {

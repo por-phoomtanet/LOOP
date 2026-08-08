@@ -25,6 +25,9 @@ export function LeafletMap({ lat, lng, onPick, className }: Props) {
   const iconRef = useRef<L.DivIcon | null>(null);
   const onPickRef = useRef(onPick);
   onPickRef.current = onPick;
+  // จำพิกัดที่เพิ่งคลิกปักเองบนแผนที่ไว้ — กัน effect sync ด้านล่าง pan/ซูมซ้ำตอนพิกัดวิ่งกลับมาทาง prop
+  // (ปักเองแล้วขนาด/มุมมองที่เห็นอยู่ควรคงเดิม ต่างจากตำแหน่งที่มาจากภายนอก เช่น กด "ใช้ตำแหน่งปัจจุบัน")
+  const internalPickRef = useRef<{ lat: number; lng: number } | null>(null);
 
   // init once
   useEffect(() => {
@@ -53,6 +56,7 @@ export function LeafletMap({ lat, lng, onPick, className }: Props) {
       const { lat: la, lng: ln } = e.latlng;
       if (markerRef.current) markerRef.current.setLatLng([la, ln]);
       else markerRef.current = L.marker([la, ln], { icon }).addTo(map);
+      internalPickRef.current = { lat: la, lng: ln };
       onPickRef.current(la, ln);
     });
 
@@ -68,11 +72,19 @@ export function LeafletMap({ lat, lng, onPick, className }: Props) {
     };
   }, []);
 
-  // sync ตำแหน่งจากภายนอก (เช่น กดใช้ตำแหน่งปัจจุบัน / เลือกที่บันทึกไว้)
+  // sync ตำแหน่งจากภายนอก (เช่น กดใช้ตำแหน่งปัจจุบัน / เลือกที่บันทึกไว้) — ปักหมุดเองบนแผนที่
+  // ไม่ต้อง pan/ซูมซ้ำ เพราะ marker ถูกวางตรงจุดคลิกไปแล้วในตัว handler ข้างบน
   useEffect(() => {
     const map = mapRef.current;
     const icon = iconRef.current;
     if (!map || !icon || lat == null || lng == null) return;
+
+    const internal = internalPickRef.current;
+    if (internal && internal.lat === lat && internal.lng === lng) {
+      internalPickRef.current = null;
+      return;
+    }
+
     map.setView([lat, lng], Math.max(map.getZoom(), 15));
     if (markerRef.current) markerRef.current.setLatLng([lat, lng]);
     else markerRef.current = L.marker([lat, lng], { icon }).addTo(map);

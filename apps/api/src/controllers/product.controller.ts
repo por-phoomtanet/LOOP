@@ -29,6 +29,11 @@ export async function publicList(query: unknown) {
   return { data, message: "ok", total, page, pageSize };
 }
 
+export async function publicGet(id: number) {
+  const result = await productService.getPublicProduct(id);
+  return { data: result, message: "ok" };
+}
+
 export async function create(body: unknown, userId: number) {
   const result = await productService.createProduct(body as CreateInput, userId);
   return { data: result, message: "ok" };

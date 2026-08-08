@@ -30,7 +30,13 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
       `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=th`,
     );
     const data = await res.json();
-    return typeof data.display_name === "string" ? data.display_name : "";
+    const displayName: string = typeof data.display_name === "string" ? data.display_name : "";
+    // ตัดรหัสไปรษณีย์ออก — ข้อมูล postcode ของ Nominatim (OSM ฟรี) สำหรับพื้นที่ไทยมักไม่ตรงความเป็นจริง
+    // (ไม่ใช่บั๊กโค้ดเรา แต่เป็นข้อจำกัดของฐานข้อมูล) ปล่อยให้ผู้ใช้กรอกเองถ้าต้องการดีกว่าเติมเลขผิดให้อัตโนมัติ
+    return displayName
+      .split(", ")
+      .filter((part) => !/^\d{5}$/.test(part.trim()))
+      .join(", ");
   } catch {
     return "";
   }
@@ -85,6 +91,14 @@ export function LocationField({ value, onChange }: Props) {
     setDraftAddress("");
     setError(null);
     setModalOpen(true);
+    // ปักหมุดตำแหน่งปัจจุบันอัตโนมัติทันทีที่เปิด modal — เงียบๆ ถ้าปฏิเสธ/ใช้งานไม่ได้
+    // (ไม่โชว์ error รบกวนตอนเพิ่งเปิด ผู้ใช้ยังปักหมุดเองบนแผนที่ หรือกด "ใช้ตำแหน่งปัจจุบัน" เพื่อลองใหม่ได้)
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => void handlePick(pos.coords.latitude, pos.coords.longitude),
+        () => {},
+      );
+    }
   }
 
   async function handlePick(lat: number, lng: number) {

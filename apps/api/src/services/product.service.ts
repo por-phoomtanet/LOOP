@@ -112,6 +112,45 @@ export async function listPublicProducts(
   return { data, total };
 }
 
+export async function getPublicProduct(id: number) {
+  const p = await productRepository.findActivePublicById(id);
+  if (!p) throw new NotFoundError("ไม่พบสินค้านี้");
+
+  const similarRows = await productRepository.findSimilar(p.categoryId, p.id, 4);
+
+  return {
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    categoryId: p.categoryId,
+    categoryName: p.category.name,
+    categorySlug: p.category.slug,
+    ownerName: p.owner.name,
+    pricePerDay: p.pricePerDay,
+    priceTiers: mapTiers(p),
+    location: p.location,
+    lat: p.lat,
+    lng: p.lng,
+    ratingAvg: p.ratingAvg,
+    reviewCount: p.reviewCount,
+    images: p.images.map((img) => img.url),
+    pickupOptions: p.pickupOptions.map((o) => ({ type: o.type, label: o.label })),
+    similar: similarRows.map((s) => ({
+      id: s.id,
+      title: s.title,
+      categoryName: s.category.name,
+      categorySlug: s.category.slug,
+      ownerName: s.owner.name,
+      pricePerDay: s.pricePerDay,
+      priceTiers: mapTiers(s),
+      location: s.location,
+      ratingAvg: s.ratingAvg,
+      reviewCount: s.reviewCount,
+      thumbnailUrl: s.images[0]?.url ?? null,
+    })),
+  };
+}
+
 export async function createProduct(input: ProductInput, userId: number) {
   await assertActiveCategory(input.categoryId);
   assertValidTiers(input.priceTiers);

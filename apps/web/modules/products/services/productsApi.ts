@@ -6,6 +6,7 @@ import type {
   PickupMethod,
   PickupOption,
   ProductCardData,
+  ProductDetail,
   ProductImage,
   ProductInput,
   SavedLocation,
@@ -18,6 +19,10 @@ export const productsApi = {
 
   getProducts(params?: { q?: string; category?: string; page?: number; pageSize?: number }) {
     return api.get<PaginatedResponse<ProductCardData>>("/products", { params });
+  },
+
+  getProduct(id: number) {
+    return api.get<ApiResponse<ProductDetail>>(`/products/${id}`);
   },
 
   createProduct(input: ProductInput) {

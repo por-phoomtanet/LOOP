@@ -72,6 +72,17 @@ export function MyListingsTable() {
     }
   }
 
+  // แก้ไขและลงประกาศใหม่ใช้แท็บ+ฟอร์มเดียวกัน (ไม่แยกเป็น modal อีกต่อไป) — สลับกันด้วย editing
+  function openCreateTab() {
+    setEditing(null);
+    setActiveTab("create");
+  }
+
+  function openEditTab(listing: MyListing) {
+    setEditing(listing);
+    setActiveTab("create");
+  }
+
   return (
     <div className="mx-auto w-full max-w-[1000px] px-4 py-8 md:px-8 md:py-12">
       <div className="mb-2">
@@ -89,7 +100,7 @@ export function MyListingsTable() {
       <div className="mb-1 mt-6 inline-flex flex-wrap gap-1 rounded-full bg-black/5 p-1">
         <button
           type="button"
-          onClick={() => setActiveTab("create")}
+          onClick={openCreateTab}
           className={`whitespace-nowrap rounded-full px-[18px] py-2.5 text-[13.5px] font-semibold transition-all ${
             activeTab === "create" ? "bg-brand-600 text-white" : "text-black/55 hover:bg-white"
           }`}
@@ -118,8 +129,11 @@ export function MyListingsTable() {
       {activeTab === "create" ? (
         <div className="mt-6 rounded-[14px] border border-black/10 bg-white">
           <ListItemForm
+            key={editing ? `edit-${editing.id}` : "create"}
             embedded
+            listing={editing ?? undefined}
             onSaved={() => {
+              setEditing(null);
               setActiveTab("listings");
               load();
             }}
@@ -192,7 +206,7 @@ export function MyListingsTable() {
                       )}
                       <button
                         type="button"
-                        onClick={() => setEditing(listing)}
+                        onClick={() => openEditTab(listing)}
                         className="whitespace-nowrap rounded-[8px] border-[1.5px] border-black/[.15] bg-white px-3 py-[7px] text-[12.5px] font-semibold text-black"
                       >
                         แก้ไข
@@ -223,30 +237,6 @@ export function MyListingsTable() {
             </div>
           )}
         </>
-      )}
-
-      {editing && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setEditing(null)} />
-          <div className="relative w-full max-w-[500px] rounded-2xl bg-white shadow-[0_20px_60px_rgba(10,10,10,.25)]">
-            <button
-              type="button"
-              aria-label="Close"
-              onClick={() => setEditing(null)}
-              className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border-0 bg-transparent text-black/40 hover:bg-black/5 hover:text-black"
-            >
-              ✕
-            </button>
-            <ListItemForm
-              embedded
-              listing={editing}
-              onSaved={() => {
-                setEditing(null);
-                load();
-              }}
-            />
-          </div>
-        </div>
       )}
     </div>
   );

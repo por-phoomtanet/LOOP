@@ -2,7 +2,7 @@
 
 // ต้อง import ก่อน antd/antd-img-crop เพื่อให้ crop modal ใช้ createRoot ของ React 19
 import "@ant-design/v5-patch-for-react-19";
-import { Upload } from "antd";
+import { Image, Upload } from "antd";
 import type { UploadFile } from "antd";
 import ImgCrop from "antd-img-crop";
 import axios from "axios";
@@ -45,6 +45,7 @@ export function SignupForm({ onRegistered }: Props) {
   const [pdpaModalOpen, setPdpaModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
 
   const [emailOtpSending, setEmailOtpSending] = useState(false);
   const [emailOtpSent, setEmailOtpSent] = useState(false);
@@ -267,7 +268,7 @@ export function SignupForm({ onRegistered }: Props) {
             maxCount={1}
             onPreview={async (file) => {
               const src = file.url ?? URL.createObjectURL(file.originFileObj as File);
-              window.open(src);
+              setPreviewSrc(src);
             }}
           >
             {profileFileList.length >= 1 ? null : (
@@ -382,7 +383,7 @@ export function SignupForm({ onRegistered }: Props) {
             maxCount={1}
             onPreview={async (file) => {
               const src = file.url ?? URL.createObjectURL(file.originFileObj as File);
-              window.open(src);
+              setPreviewSrc(src);
             }}
           >
             {idCardFileList.length >= 1 ? null : (
@@ -488,6 +489,20 @@ export function SignupForm({ onRegistered }: Props) {
       </button>
 
       <PdpaModal open={pdpaModalOpen} onClose={() => setPdpaModalOpen(false)} />
+
+      {previewSrc && (
+        <Image
+          style={{ display: "none" }}
+          src={previewSrc}
+          preview={{
+            visible: true,
+            src: previewSrc,
+            onVisibleChange: (visible) => {
+              if (!visible) setPreviewSrc(null);
+            },
+          }}
+        />
+      )}
     </form>
   );
 }

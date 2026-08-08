@@ -71,6 +71,26 @@ export type ProductCardData = {
   thumbnailUrl: string | null;
 };
 
+export type ProductDetail = {
+  id: number;
+  title: string;
+  description: string;
+  categoryId: number;
+  categoryName: string;
+  categorySlug: string;
+  ownerName: string;
+  pricePerDay: string;
+  priceTiers: PriceTier[];
+  location: string;
+  lat: number | null;
+  lng: number | null;
+  ratingAvg: number;
+  reviewCount: number;
+  images: string[];
+  pickupOptions: { type: PickupMethod; label: string }[];
+  similar: ProductCardData[];
+};
+
 export type SavedLocation = {
   id: number;
   label: string;

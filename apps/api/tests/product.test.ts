@@ -502,3 +502,104 @@ describe("GET /api/products (pagination)", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("GET /api/products/:id", () => {
+  it("returns full product detail with tiers, images, and pickup options for an active listing", async () => {
+    const { token } = await registerUser("detailview");
+    const categoryId = await activeCategoryId();
+    const created = await createProduct(token, categoryId, {
+      priceTiers: [{ days: 3, price: 250 }],
+    });
+    await request(baseUrl)
+      .post(`/api/products/${created.body.data.id}/pickup-options`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ type: "MEETUP", label: "BTS อโศก" });
+
+    const res = await request(baseUrl).get(`/api/products/${created.body.data.id}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.id).toBe(created.body.data.id);
+    expect(res.body.data.title).toBe("กล้องฟิล์ม Canon AE-1");
+    expect(res.body.data.priceTiers).toEqual([{ days: 3, price: "250" }]);
+    expect(res.body.data.pickupOptions).toEqual([{ type: "MEETUP", label: "BTS อโศก" }]);
+    expect(Array.isArray(res.body.data.similar)).toBe(true);
+    expect(res.body.data.images).toEqual([]);
+  });
+
+  it("does not require authentication", async () => {
+    const { token } = await registerUser("detailnoauth");
+    const categoryId = await activeCategoryId();
+    const created = await createProduct(token, categoryId);
+
+    const res = await request(baseUrl).get(`/api/products/${created.body.data.id}`);
+    expect(res.status).toBe(200);
+  });
+
+  it("includes other active products in the same category as similar, excluding itself", async () => {
+    const { token } = await registerUser("detailsimilar");
+    // ใช้หมวดหมู่แยกเฉพาะเทสนี้ (ไม่ใช้ activeCategoryId() ที่ทุกเทสไฟล์แชร์กัน) กัน flaky —
+    // similar ถูก take: 4 เรียง id desc ฝั่ง service ถ้าใช้หมวดร่วม เทสไฟล์อื่นที่รันขนานกัน
+    // อาจสร้างสินค้าแทรกจนดัน "other" หลุดจาก top-4 ได้
+    const adminToken = await (
+      await request(baseUrl)
+        .post("/api/auth/login")
+        .send({ email: "admin@loop.dev", password: "Admin123!" })
+    ).body.data.token;
+    const categoryRes = await request(baseUrl)
+      .post("/api/categories")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: `เทสสินค้าคล้ายกัน ${Date.now()}${Math.floor(Math.random() * 10000)}` });
+    const categoryId = categoryRes.body.data.id as number;
+
+    const created = await createProduct(token, categoryId);
+    const other = await createProduct(token, categoryId, { title: "เต็นท์ 4 คน" });
+
+    const res = await request(baseUrl).get(`/api/products/${created.body.data.id}`);
+    const similarIds = res.body.data.similar.map((s: { id: number }) => s.id);
+    expect(similarIds).toContain(other.body.data.id);
+    expect(similarIds).not.toContain(created.body.data.id);
+  });
+
+  it("returns 404 for a listing that is still UNDER_REVIEW", async () => {
+    const { token } = await registerUser("detailunreviewed");
+    const categoryId = await activeCategoryId();
+    const created = await createProduct(token, categoryId);
+    await prisma.product.update({
+      where: { id: created.body.data.id },
+      data: { status: "UNDER_REVIEW" },
+    });
+
+    const res = await request(baseUrl).get(`/api/products/${created.body.data.id}`);
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 404 for a paused listing", async () => {
+    const { token } = await registerUser("detailpaused");
+    const categoryId = await activeCategoryId();
+    const created = await createProduct(token, categoryId);
+    await prisma.product.update({
+      where: { id: created.body.data.id },
+      data: { status: "PAUSED" },
+    });
+
+    const res = await request(baseUrl).get(`/api/products/${created.body.data.id}`);
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 404 for a soft-deleted listing", async () => {
+    const { token } = await registerUser("detaildeleted");
+    const categoryId = await activeCategoryId();
+    const created = await createProduct(token, categoryId);
+    await request(baseUrl)
+      .delete(`/api/products/${created.body.data.id}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    const res = await request(baseUrl).get(`/api/products/${created.body.data.id}`);
+    expect(res.status).toBe(404);
+  });
+
+  it("returns 404 for a non-existent id", async () => {
+    const res = await request(baseUrl).get("/api/products/99999999");
+    expect(res.status).toBe(404);
+  });
+});
