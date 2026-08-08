@@ -1505,3 +1505,19 @@ function resolveRentPrice(nights: number, pricePerDay: number, tiers: RentPriceT
   - 🧪 test: เพิ่ม 4 เคสใน `user.test.ts` (`GET /api/users/:id/payment-profile` — คืน `null` ตอนยังไม่ตั้งค่า, คืนค่าจริงหลังตั้งค่าแล้ว, 403 ข้ามบัญชี, 401 ไม่มี token) → `bun test` **157/157 ผ่าน** ✅ | `npx tsc`/`eslint` ผ่านทั้ง api/web ✅ | `next build` ผ่าน ✅ | **verify จริงด้วย Playwright**: บัญชีที่ยังไม่ตั้งค่า → เห็น badge "ตั้งค่าก่อน" บนแท็บ → คลิกแท็บ → เด้งไปตั้งค่าพร้อม banner ✅ | กรอก+บันทึกสำเร็จ → badge หายทันทีไม่ต้องรีเฟรช → คลิกแท็บลงประกาศอีกครั้ง → เห็นฟอร์มลงประกาศจริงแล้ว ✅
   - 📝 commit: `feat: require a complete payment profile before creating a new listing`
 
+---
+
+### Phase 18 — บีบอัด/ย่อขนาดรูปที่อัปโหลดทั้งหมด (ประหยัดพื้นที่เก็บ)
+
+> **ที่มา:** รูปที่อัปโหลดเข้าระบบตอนนี้ (สินค้า, บัตรประชาชน, โปรไฟล์, QR พร้อมเพย์, สลิปโอนเงิน) เก็บตามขนาดต้นฉบับที่อัปโหลดมาเป๊ะๆ ไม่มีการย่อ/บีบอัดใดๆ เลย ทำให้พื้นที่เก็บ (`loop_uploads` volume) โตเร็วเกินจำเป็น โดยเฉพาะรูปจากมือถือที่มักมีขนาดหลาย MB ทั้งที่แสดงผลบนเว็บจริงๆ ไม่ต้องการความละเอียดสูงขนาดนั้น
+
+- [x] 18.1 API: ใช้ `sharp` (มีอยู่ในโปรเจกต์แล้ว ใช้ตอน crop โลโก้ Phase 6.1 แต่ไม่เคยถูกประกาศเป็น dependency จริงมาก่อน) resize + บีบอัดรูปที่จุดเดียวคือฟังก์ชัน `saveImage()` ใน `plugins/upload.ts` — ครอบคลุมทุกจุดอัปโหลดพร้อมกันโดยไม่ต้องแก้ทีละ route (รูปสินค้า, บัตรประชาชน, โปรไฟล์, QR พร้อมเพย์, สลิปโอนเงิน)
+  - resize ให้ด้านยาวสุดไม่เกิน 1600px (`fit: "inside", withoutEnlargement: true` — รูปที่เล็กกว่าอยู่แล้วไม่ขยาย) แล้ว re-encode ตาม mime จริง: **JPEG** บีบด้วย `quality: 85` + `mozjpeg: true` (รูปถ่ายจริงส่วนใหญ่ ลดขนาดไฟล์ได้มาก), **PNG** เก็บแบบ lossless ต่อ (`compressionLevel: 9`, ไม่บีบแบบ lossy) เพราะ PNG ส่วนใหญ่คือ QR พร้อมเพย์ที่ขอบต้องคมชัด กลัวบีบแรงแล้วสแกนไม่ติด
+  - นามสกุลไฟล์ที่บันทึกอิงจาก mime ที่ตรวจสอบแล้วจริง (ไม่ใช่ `path.extname(file.name)` เหมือนเดิม) เพราะเนื้อไฟล์ถูก re-encode ใหม่หมดแล้ว ต้องตรงกับ format ที่ encode จริง
+  - **ไม่กระทบ OCR/slip verification** — เช็คโค้ดแล้วทั้งสองจุด (`ocr.routes.ts` สำหรับบัตรประชาชนตอนสมัคร, `rental.service.ts::submitSlip` สำหรับสลิป) วิเคราะห์รูปจากไฟล์ต้นฉบับโดยตรงก่อน (หรือไม่ผ่าน) `saveImage()` เลย — resize เกิดขึ้นหลัง AI วิเคราะห์เสร็จแล้วเสมอ ไม่กระทบความแม่นยำ
+  - **พบระหว่างทำ:** `sharp` ไม่เคยถูกประกาศใน `package.json` ไฟล์ไหนเลยมาก่อน (อยู่ใน root `node_modules` เฉยๆ จากตอนทำ Phase 6.1) และ `bun.lock` ที่ root **หายไปทั้งไฟล์**ตั้งแต่หลัง commit `85990e6` (`Dockerfile` ของ `apps/api` ยัง `COPY package.json bun.lock ./` แล้ว `bun install --frozen-lockfile` อยู่ — ถ้าไม่มีไฟล์นี้ `docker compose build` จะพังตั้งแต่ต้น) — เพิ่ม `sharp` เข้า `apps/api/package.json` (`npm install` ที่ root อัปเดต `package-lock.json`) แล้วรัน `bun install` สร้าง `bun.lock` ใหม่ทั้งไฟล์ (เช็คแล้วมี `@img/sharp-linuxmusl-x64` ที่ Docker image (`oven/bun:1-alpine`, musl) ต้องใช้อยู่ในนั้นด้วย) — ตรวจสอบว่า binary hoisting ของ npm (`prisma`/`tsc`/`next`/`eslint` ใน `node_modules/.bin`) ไม่พังซ้ำเหมือนที่เคยเจอตอนต้น Phase 7 แล้ว ✅
+  - **ข้อแลกเปลี่ยน:** เพิ่ม CPU/เวลาเล็กน้อยตอนอัปโหลด (sharp เร็วอยู่แล้วแต่ก็มี overhead) และรูปที่อัปโหลดไปแล้วก่อนหน้านี้จะไม่ถูกบีบอัดย้อนหลัง เว้นแต่เขียนสคริปต์แยกไปรันทีเดียวกับของเก่าทั้งหมด (ยังไม่ได้ทำ — ของเก่ายังเป็นขนาดเดิม)
+  - 🧪 test: `bun test` (apps/api) → **157/157 ผ่าน** (ทุกเทสต์ที่อัปโหลดรูปวิ่งผ่าน sharp จริง ไม่มีอะไรพัง) ✅ | `npx tsc`/`eslint` ผ่าน ✅ | **verify จริงด้วยรูปสังเคราะห์ 3000×2000 (~1.86MB)** อัปโหลดผ่าน endpoint จริง (`POST /api/users/:id/profile-image`) → ไฟล์ที่เก็บจริงลดเหลือ **1600×1067, ~698KB** (ลดลง ~62% ทั้งที่เป็น random noise ซึ่งบีบอัดยากที่สุด รูปถ่ายจริงจะลดได้มากกว่านี้) ✅
+  - 📝 commit: `feat(api): resize and compress uploaded images with sharp`
+
+

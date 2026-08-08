@@ -1,5 +1,7 @@
 "use client";
 
+import "@ant-design/v5-patch-for-react-19";
+import { Image } from "antd";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { resolveUploadUrl } from "@/shared/lib/utils";
@@ -25,6 +27,24 @@ export function PaymentPage({ rentalId }: { rentalId: number }) {
       })
       .finally(() => setLoading(false));
   }, [rentalId]);
+
+  async function downloadQr() {
+    if (!info?.promptPayQrUrl) return;
+    // ใช้ fetch → blob แทน <a href download> ตรงๆ เพราะรูปอยู่คนละ origin กับหน้าเว็บ
+    // (เสิร์ฟจาก API ไม่ใช่ Next) — attribute download เฉยๆ ใช้ไม่ได้ข้าม origin
+    try {
+      const res = await fetch(resolveUploadUrl(info.promptPayQrUrl));
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = "promptpay-qr.jpg";
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      // เงียบไว้ — ผู้ใช้ยังคลิกขวา "บันทึกรูปภาพเป็น" บนรูปพรีวิวที่ขยายแล้วได้อยู่
+    }
+  }
 
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
@@ -91,12 +111,23 @@ export function PaymentPage({ rentalId }: { rentalId: number }) {
 
       <div className="mb-6 flex flex-col items-center rounded-2xl border border-black/10 bg-black/[.02] p-6">
         {info.promptPayQrUrl ? (
-          // eslint-disable-next-line
-          <img
-            src={resolveUploadUrl(info.promptPayQrUrl)}
-            alt="PromptPay QR"
-            className="mb-4 h-56 w-56 rounded-xl object-contain"
-          />
+          // antd Image ให้คลิกซูม/หมุน/ดาวน์โหลดได้ในตัว (ผู้เช่าอาจอยากเซฟรูปไปสแกนจาก
+          // แอปธนาคารแทนสแกนตรงจากจอ) — ไม่ใช้ <img> เฉยๆ เหมือนก่อนหน้านี้
+          <>
+            <Image
+              src={resolveUploadUrl(info.promptPayQrUrl)}
+              alt="PromptPay QR"
+              wrapperClassName="mb-2"
+              className="h-56 w-56 rounded-xl object-contain"
+            />
+            <button
+              type="button"
+              onClick={downloadQr}
+              className="text-brand-600 mb-4 text-[12.5px] font-semibold hover:underline"
+            >
+              ดาวน์โหลดรูป QR
+            </button>
+          </>
         ) : (
           <div className="mb-4 flex h-56 w-56 items-center justify-center rounded-xl bg-black/5 text-center text-[13px] text-black/40">
             เจ้าของยังไม่ได้ตั้งค่า QR พร้อมเพย์
